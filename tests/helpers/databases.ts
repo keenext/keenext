@@ -1,5 +1,5 @@
 import type { Kdbx, KdbxEntry } from 'kdbxweb'
-import { installArgon2 } from '@/core/argon2'
+import { installArgon2 } from '@/core/crypto'
 import { createCredentials, createDatabase, openDatabase } from '@/core/database'
 import { getField } from '@/core/entries'
 import { fixture } from './keepassxc'

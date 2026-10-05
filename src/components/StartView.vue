@@ -1,0 +1,110 @@
+<template>
+	<div class="start">
+		<NcEmptyContent
+			:name="t('keepassweb', 'KeePass databases')"
+			:description="t('keepassweb', 'Open a .kdbx database from your Nextcloud or create a new one. Works with KeePassXC, KeePass and KeePassDX.')">
+			<template #icon>
+				<NcIconSvgWrapper :path="mdiShieldKeyOutline" />
+			</template>
+			<template #action>
+				<div class="start__actions">
+					<NcButton variant="primary" @click="emit('open-database')">
+						<template #icon>
+							<NcIconSvgWrapper :path="mdiFolderOpenOutline" />
+						</template>
+						{{ t('keepassweb', 'Open database') }}
+					</NcButton>
+					<NcButton @click="emit('new-database')">
+						<template #icon>
+							<NcIconSvgWrapper :path="mdiPlus" />
+						</template>
+						{{ t('keepassweb', 'New database') }}
+					</NcButton>
+				</div>
+			</template>
+		</NcEmptyContent>
+
+		<section v-if="vault.recent.length > 0" class="start__recent">
+			<h3>{{ t('keepassweb', 'Recently opened') }}</h3>
+			<ul>
+				<NcListItem
+					v-for="file in vault.recent"
+					:key="file.fileId"
+					:name="file.name"
+					:details="formatRelative(file.openedAt)"
+					@click="open(file.fileId)">
+					<template #icon>
+						<NcIconSvgWrapper :path="mdiShieldKeyOutline" :size="32" />
+					</template>
+					<template #subname>
+						{{ file.path }}<template v-if="file.keyFile">
+							· {{ t('keepassweb', 'key file: {name}', { name: file.keyFile.name }) }}
+						</template>
+					</template>
+					<template #actions>
+						<NcActionButton close-after-click @click="remove(file.fileId)">
+							<template #icon>
+								<NcIconSvgWrapper :path="mdiClose" />
+							</template>
+							{{ t('keepassweb', 'Remove from list') }}
+						</NcActionButton>
+					</template>
+				</NcListItem>
+			</ul>
+		</section>
+	</div>
+</template>
+
+<script setup lang="ts">
+import { mdiClose, mdiFolderOpenOutline, mdiPlus, mdiShieldKeyOutline } from '@mdi/js'
+import { showError } from '@nextcloud/dialogs'
+import { formatRelativeTime, t } from '@nextcloud/l10n'
+import NcActionButton from '@nextcloud/vue/components/NcActionButton'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
+import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
+import NcListItem from '@nextcloud/vue/components/NcListItem'
+import { removeRecent } from '@/services/api'
+import { useVaultStore } from '@/stores/vault'
+
+const emit = defineEmits<{
+	'open-database': []
+	'new-database': []
+}>()
+
+const vault = useVaultStore()
+
+function formatRelative(seconds: number): string {
+	return formatRelativeTime(seconds * 1000)
+}
+
+async function open(fileId: number): Promise<void> {
+	try {
+		await vault.openFile(fileId)
+	} catch (error) {
+		showError(t('keepassweb', 'Could not open the database: {error}', { error: vault.describeError(error) }))
+	}
+}
+
+async function remove(fileId: number): Promise<void> {
+	vault.recent = await removeRecent(fileId)
+}
+</script>
+
+<style scoped>
+.start {
+	padding: 16px;
+}
+
+.start__actions {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 8px;
+}
+
+.start__recent {
+	max-width: 700px;
+	margin: 0 auto;
+}
+</style>

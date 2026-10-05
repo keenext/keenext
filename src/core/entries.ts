@@ -239,7 +239,7 @@ export function restoreHistory(db: Kdbx, entry: KdbxEntry, index: number): void 
 
 /** Adds a file to the draft; the binary is stored in the database pool right away and deduplicated by hash. */
 export async function attachFile(db: Kdbx, draft: EntryDraft, name: string, data: Uint8Array): Promise<void> {
-	const value = await db.createBinary(data)
+	const value = await db.createBinary(data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer)
 	const attachments = draft.attachments.filter((attachment) => attachment.name !== name)
 	draft.attachments = [...attachments, { name, value }]
 }

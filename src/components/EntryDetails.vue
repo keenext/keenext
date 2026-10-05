@@ -1,0 +1,383 @@
+<template>
+	<div class="entry-details">
+		<EntryEditor
+			v-if="creating || editing"
+			:database="database"
+			:entry="creating ? null : entry ?? null"
+			@saved="onSaved"
+			@cancel="onCancel" />
+
+		<template v-else-if="entry && view">
+			<header class="entry-details__header">
+				<img v-if="details.customIcon" :src="details.customIcon" alt="" class="entry-details__icon">
+				<NcIconSvgWrapper v-else :path="details.icon" :size="40" class="entry-details__icon" />
+				<div class="entry-details__heading">
+					<h2>{{ details.title || t('keepassweb', '(no title)') }}</h2>
+					<p class="entry-details__path">
+						{{ details.path }}
+					</p>
+				</div>
+				<NcButton v-if="database.writable" variant="primary" @click="editing = true">
+					<template #icon>
+						<NcIconSvgWrapper :path="mdiPencil" />
+					</template>
+					{{ t('keepassweb', 'Edit') }}
+				</NcButton>
+				<NcActions v-if="database.writable" :aria-label="t('keepassweb', 'More actions')">
+					<NcActionButton close-after-click @click="clone">
+						<template #icon>
+							<NcIconSvgWrapper :path="mdiContentDuplicate" />
+						</template>
+						{{ t('keepassweb', 'Clone entry') }}
+					</NcActionButton>
+					<NcActionButton close-after-click @click="moving = true">
+						<template #icon>
+							<NcIconSvgWrapper :path="mdiFolderMove" />
+						</template>
+						{{ t('keepassweb', 'Move to group') }}
+					</NcActionButton>
+					<NcActionButton close-after-click @click="remove">
+						<template #icon>
+							<NcIconSvgWrapper :path="mdiDelete" />
+						</template>
+						{{ details.inRecycleBin ? t('keepassweb', 'Delete permanently') : t('keepassweb', 'Delete') }}
+					</NcActionButton>
+				</NcActions>
+			</header>
+
+			<NcNoteCard v-if="details.expired" type="warning">
+				{{ t('keepassweb', 'This entry expired on {date}', { date: formatDate(details.expires) }) }}
+			</NcNoteCard>
+
+			<dl class="entry-details__fields">
+				<FieldRow :label="t('keepassweb', 'Username')" :value="details.username" @copy="copy(details.username, t('keepassweb', 'Username copied'))" />
+				<FieldRow :label="t('keepassweb', 'Password')" :value="details.password" secret @copy="copy(details.password, t('keepassweb', 'Password copied'))" />
+				<FieldRow :label="t('keepassweb', 'URL')" :value="details.url" link @copy="copy(details.url, t('keepassweb', 'URL copied'))" />
+				<TotpField v-if="details.totp" :config="details.totp" @copy="(code) => copy(code, t('keepassweb', 'TOTP copied'))" />
+				<FieldRow
+					v-for="field in details.customFields"
+					:key="field.key"
+					:label="field.key"
+					:value="field.value"
+					:secret="field.protected"
+					:multiline="field.value.includes('\n')"
+					@copy="copy(field.value, t('keepassweb', '{field} copied', { field: field.key }))" />
+				<FieldRow v-if="details.expires" :label="t('keepassweb', 'Expires')" :value="formatDate(details.expires)" @copy="copy(formatDate(details.expires), t('keepassweb', 'Copied'))" />
+			</dl>
+
+			<div v-if="details.tags.length > 0" class="entry-details__tags">
+				<NcChip v-for="tag in details.tags" :key="tag" :text="tag" no-close />
+			</div>
+
+			<section v-if="details.notes" class="entry-details__section">
+				<h3>{{ t('keepassweb', 'Notes') }}</h3>
+				<p class="entry-details__notes">
+					{{ details.notes }}
+				</p>
+			</section>
+
+			<section v-if="details.attachments.length > 0" class="entry-details__section">
+				<h3>{{ t('keepassweb', 'Attachments') }}</h3>
+				<ul>
+					<li v-for="attachment in details.attachments" :key="attachment.name" class="entry-details__attachment">
+						<NcIconSvgWrapper :path="mdiPaperclip" :size="20" />
+						<span>{{ attachment.name }}</span>
+						<span class="entry-details__muted">{{ formatSize(attachment.size) }}</span>
+						<NcButton variant="tertiary" :aria-label="t('keepassweb', 'Download {name}', { name: attachment.name })" @click="download(attachment.name)">
+							<template #icon>
+								<NcIconSvgWrapper :path="mdiDownload" />
+							</template>
+						</NcButton>
+					</li>
+				</ul>
+			</section>
+
+			<section v-if="details.history.length > 0" class="entry-details__section">
+				<h3>
+					<NcButton variant="tertiary" :aria-expanded="showHistory" @click="showHistory = !showHistory">
+						<template #icon>
+							<NcIconSvgWrapper :path="mdiHistory" />
+						</template>
+						{{ t('keepassweb', 'History ({count})', { count: details.history.length }) }}
+					</NcButton>
+				</h3>
+				<ul v-if="showHistory">
+					<li v-for="state in details.history" :key="state.index" class="entry-details__history">
+						<span>{{ formatDate(state.modified) }}</span>
+						<span class="entry-details__muted">{{ state.summary }}</span>
+						<NcActions v-if="database.writable" :aria-label="t('keepassweb', 'History actions')">
+							<NcActionButton close-after-click @click="restore(state.index)">
+								<template #icon>
+									<NcIconSvgWrapper :path="mdiRestore" />
+								</template>
+								{{ t('keepassweb', 'Restore this version') }}
+							</NcActionButton>
+							<NcActionButton close-after-click @click="removeHistoryState(state.index)">
+								<template #icon>
+									<NcIconSvgWrapper :path="mdiDelete" />
+								</template>
+								{{ t('keepassweb', 'Delete this version') }}
+							</NcActionButton>
+						</NcActions>
+					</li>
+				</ul>
+			</section>
+
+			<p class="entry-details__muted entry-details__times">
+				{{ t('keepassweb', 'Created {created}, modified {modified}', { created: formatDate(details.created), modified: formatDate(details.modified) }) }}
+			</p>
+		</template>
+
+		<NcEmptyContent v-else :name="t('keepassweb', 'Entry not found')" />
+
+		<MoveDialog
+			v-if="moving && entry"
+			:database="database"
+			:current-group="entry.parentGroup?.uuid.id ?? null"
+			@move="move"
+			@close="moving = false" />
+	</div>
+</template>
+
+<script setup lang="ts">
+import { mdiContentDuplicate, mdiDelete, mdiDownload, mdiFolderMove, mdiHistory, mdiPaperclip, mdiPencil, mdiRestore } from '@mdi/js'
+import { showConfirmation, showSuccess } from '@nextcloud/dialogs'
+import { formatFileSize } from '@nextcloud/files'
+import { t } from '@nextcloud/l10n'
+import NcActionButton from '@nextcloud/vue/components/NcActionButton'
+import NcActions from '@nextcloud/vue/components/NcActions'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcChip from '@nextcloud/vue/components/NcChip'
+import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
+import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
+import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
+import type { KdbxGroup } from 'kdbxweb'
+import { computed, ref } from 'vue'
+import { findEntry, useDatabaseView } from '@/composables/useDatabase'
+import {
+	attachmentData,
+	createEntry,
+	deleteEntry,
+	deleteHistory,
+	draftFromEntry,
+	entryPath,
+	getField,
+	isExpired,
+	isInRecycleBin,
+	moveEntry,
+	restoreHistory,
+	StandardField,
+} from '@/core/entries'
+import { resolvedField, resolvePlaceholders } from '@/core/placeholders'
+import { readTotp } from '@/core/totp'
+import { copySecret } from '@/services/clipboard'
+import { customIconUrl, standardIconPath } from '@/services/icons'
+import { useSettingsStore } from '@/stores/settings'
+import { type OpenDatabase, useVaultStore } from '@/stores/vault'
+import EntryEditor from './EntryEditor.vue'
+import FieldRow from './FieldRow.vue'
+import MoveDialog from './MoveDialog.vue'
+import TotpField from './TotpField.vue'
+
+const props = defineProps<{
+	database: OpenDatabase
+	creating: boolean
+}>()
+
+const emit = defineEmits<{
+	done: []
+}>()
+
+const vault = useVaultStore()
+const settingsStore = useSettingsStore()
+const view = useDatabaseView(() => props.database)
+const editing = ref(false)
+const moving = ref(false)
+const showHistory = ref(false)
+
+const entry = computed(() => view.value ? findEntry(view.value.db, props.database.selectedEntry) : undefined)
+
+/** OTP-related fields are shown as the TOTP row instead. */
+const hiddenFields = new Set(['otp', 'TOTP Seed', 'TOTP Settings'])
+
+const details = computed(() => {
+	const db = view.value!.db
+	const current = entry.value!
+	const resolve = (key: string) => resolvedField(db, current, key)
+	const draft = draftFromEntry(current)
+	return {
+		title: getField(current, StandardField.Title),
+		path: entryPath(current).join(' › '),
+		username: resolve(StandardField.UserName),
+		password: resolve(StandardField.Password),
+		url: resolve(StandardField.URL),
+		notes: getField(current, StandardField.Notes),
+		totp: readTotp(current),
+		customFields: draft.customFields
+			.filter((field) => !hiddenFields.has(field.key))
+			.map((field) => ({ ...field, value: resolvePlaceholders(db, current, field.value) })),
+		tags: draft.tags,
+		expires: draft.expires,
+		expired: isExpired(current),
+		attachments: draft.attachments.map((attachment) => ({ name: attachment.name, size: attachmentData(attachment).byteLength })),
+		history: current.history
+			.map((state, index) => ({ index, modified: state.times.lastModTime, summary: getField(state, StandardField.Title) }))
+			.reverse(),
+		created: current.times.creationTime,
+		modified: current.times.lastModTime,
+		inRecycleBin: isInRecycleBin(db, current),
+		icon: standardIconPath(current.icon),
+		customIcon: customIconUrl(db, current),
+	}
+})
+
+function formatDate(date: Date | null | undefined): string {
+	return date ? date.toLocaleString() : ''
+}
+
+function formatSize(bytes: number): string {
+	return formatFileSize(bytes)
+}
+
+async function copy(value: string, message: string): Promise<void> {
+	await copySecret(value, settingsStore.settings.clipboardClearSeconds)
+	showSuccess(message)
+}
+
+function download(name: string): void {
+	const attachment = draftFromEntry(entry.value!).attachments.find((candidate) => candidate.name === name)
+	if (!attachment) {
+		return
+	}
+	const url = URL.createObjectURL(new Blob([attachmentData(attachment) as Uint8Array<ArrayBuffer>]))
+	const link = document.createElement('a')
+	link.href = url
+	link.download = name
+	link.click()
+	setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+function onSaved(id: string): void {
+	editing.value = false
+	props.database.selectedEntry = id
+	emit('done')
+}
+
+function onCancel(): void {
+	editing.value = false
+	emit('done')
+}
+
+function clone(): void {
+	const source = entry.value!
+	const created = vault.change(props.database.id, (db) => {
+		const draft = draftFromEntry(source)
+		draft.title = t('keepassweb', '{title} - Clone', { title: draft.title })
+		const copy = createEntry(db, source.parentGroup ?? db.getDefaultGroup(), draft)
+		copy.icon = source.icon
+		copy.customIcon = source.customIcon
+		return copy
+	})
+	props.database.selectedEntry = created.uuid.id
+}
+
+function move(group: KdbxGroup): void {
+	const current = entry.value!
+	vault.change(props.database.id, (db) => moveEntry(db, current, group))
+	props.database.selectedGroup = group.uuid.id
+	moving.value = false
+}
+
+async function remove(): Promise<void> {
+	const current = entry.value!
+	if (details.value.inRecycleBin || !view.value!.db.meta.recycleBinEnabled) {
+		const confirmed = await showConfirmation({
+			name: t('keepassweb', 'Delete permanently'),
+			text: t('keepassweb', 'Permanently delete "{title}"? This cannot be undone.', { title: details.value.title }),
+			labelConfirm: t('keepassweb', 'Delete permanently'),
+			labelReject: t('keepassweb', 'Cancel'),
+			severity: 'warning',
+		})
+		if (!confirmed) {
+			return
+		}
+	}
+	vault.change(props.database.id, (db) => deleteEntry(db, current))
+	props.database.selectedEntry = null
+}
+
+function restore(index: number): void {
+	vault.change(props.database.id, (db) => restoreHistory(db, entry.value!, index))
+}
+
+function removeHistoryState(index: number): void {
+	vault.change(props.database.id, () => deleteHistory(entry.value!, index))
+}
+</script>
+
+<style scoped>
+.entry-details {
+	padding: 16px 24px;
+	max-width: 900px;
+}
+
+.entry-details__header {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 16px;
+}
+
+.entry-details__icon {
+	width: 40px;
+	height: 40px;
+	flex-shrink: 0;
+}
+
+.entry-details__heading {
+	flex: 1;
+	min-width: 0;
+}
+
+.entry-details__heading h2 {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.entry-details__path,
+.entry-details__muted {
+	color: var(--color-text-maxcontrast);
+}
+
+.entry-details__fields {
+	margin-bottom: 16px;
+}
+
+.entry-details__tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin-bottom: 16px;
+}
+
+.entry-details__section {
+	margin-bottom: 16px;
+}
+
+.entry-details__notes {
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+.entry-details__attachment,
+.entry-details__history {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.entry-details__times {
+	margin-top: 24px;
+	font-size: 0.9em;
+}
+</style>

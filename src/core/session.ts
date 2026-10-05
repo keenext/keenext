@@ -41,12 +41,16 @@ export class DatabaseSession {
 	revision = 0
 	private savedRevision = 0
 	private queue: Promise<unknown> = Promise.resolve()
+	/** Key of the file as stored; differs from db.credentials after a master key change until the next save. */
+	private storedCredentials: KdbxCredentials
 
 	private constructor(
 		readonly storage: DatabaseStorage,
 		public db: Kdbx,
 		private etag: string,
-	) {}
+	) {
+		this.storedCredentials = db.credentials
+	}
 
 	static async open(storage: DatabaseStorage, credentials: KdbxCredentials): Promise<DatabaseSession> {
 		const file = await storage.read()
@@ -107,8 +111,10 @@ export class DatabaseSession {
 			const revision = this.revision
 			const data = await saveDatabase(this.db)
 			try {
+				const credentials = this.db.credentials
 				const { etag } = await this.storage.write(data, this.etag)
 				this.etag = etag
+				this.storedCredentials = credentials
 				this.savedRevision = revision
 				this.db.removeLocalEditState()
 				return { pulled, pushed: true }
@@ -128,7 +134,7 @@ export class DatabaseSession {
 	 * otherwise it is merged in and the result counts as a local change.
 	 */
 	private async integrate(remote: StoredFile): Promise<void> {
-		const remoteDb = await openDatabase(remote.data, this.db.credentials)
+		const remoteDb = await openDatabase(remote.data, this.storedCredentials)
 		if (this.dirty) {
 			this.db.merge(remoteDb)
 		} else {
@@ -137,9 +143,5 @@ export class DatabaseSession {
 		}
 		this.etag = remote.etag
 		this.revision++
-	}
-
-	get credentials(): KdbxCredentials {
-		return this.db.credentials
 	}
 }

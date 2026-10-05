@@ -1,6 +1,6 @@
 import type { Kdbx } from 'kdbxweb'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { createCredentials, openDatabase, saveDatabase } from '@/core/database'
+import { createCredentials, openDatabase, prepareCredentials, saveDatabase, setCredentials } from '@/core/database'
 import { applyDraft, createEntry, draftFromEntry, emptyDraft, getField } from '@/core/entries'
 import { ConflictError, DatabaseSession, type DatabaseStorage, type StoredFile } from '@/core/session'
 import { entryByTitle, newDatabase } from '../helpers/databases'
@@ -131,5 +131,23 @@ describe('DatabaseSession', () => {
 		session.markChanged()
 		await expect(session.save()).rejects.toThrow('disk full')
 		expect(session.dirty).toBe(true)
+	})
+})
+
+describe('master key change', () => {
+	it('saves with the new key and still merges a remote change made with the old one', async () => {
+		const { storage, session } = await setup()
+		setCredentials(session.db, await prepareCredentials({ password: 'new' }))
+		session.markChanged()
+		await storage.editElsewhere((db) => {
+			createEntry(db, db.getDefaultGroup(), { ...emptyDraft(), title: 'Remote' })
+		})
+
+		expect(await session.save()).toEqual({ pulled: true, pushed: true })
+
+		const stored = (await storage.read()).data
+		await expect(openDatabase(stored, createCredentials({ password: 'test' }))).rejects.toThrow()
+		const reopened = await openDatabase(stored, createCredentials({ password: 'new' }))
+		expect(() => entryByTitle(reopened, 'Remote')).not.toThrow()
 	})
 })

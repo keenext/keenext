@@ -1,5 +1,8 @@
 import { argon2d, argon2id } from 'hash-wasm'
-import { CryptoEngine } from 'kdbxweb'
+import type { CryptoEngine } from 'kdbxweb'
+
+// No runtime import of kdbxweb here: this module is also the Argon2 worker's entire dependency tree.
+const ARGON2_ID: CryptoEngine.Argon2Type = 2
 
 export interface Argon2Request {
 	password: Uint8Array
@@ -29,25 +32,5 @@ export const computeArgon2: Argon2Compute = async (request) => {
 		parallelism: request.parallelism,
 		outputType: 'binary' as const,
 	}
-	return request.type === CryptoEngine.Argon2TypeArgon2id ? argon2id(options) : argon2d(options)
-}
-
-/**
- * Routes kdbxweb's Argon2 calls to `compute`. The browser passes a worker-backed
- * implementation so key derivation does not freeze the UI.
- */
-export function installArgon2(compute: Argon2Compute = computeArgon2): void {
-	CryptoEngine.setArgon2Impl(async (password, salt, memory, iterations, length, parallelism, type, version) => {
-		const hash = await compute({
-			password: new Uint8Array(password),
-			salt: new Uint8Array(salt),
-			memory,
-			iterations,
-			length,
-			parallelism,
-			type,
-			version,
-		})
-		return hash.buffer.slice(hash.byteOffset, hash.byteOffset + hash.byteLength) as ArrayBuffer
-	})
+	return request.type === ARGON2_ID ? argon2id(options) : argon2d(options)
 }

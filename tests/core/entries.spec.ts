@@ -116,7 +116,7 @@ describe('deleting', () => {
 		expect(isInRecycleBin(db, entry)).toBe(true)
 		expect(deleteEntry(db, entry)).toBe('deleted')
 		expect(entry.parentGroup).toBeUndefined()
-		expect(db.deletedObjects.some((object) => object.uuid.equals(entry.uuid))).toBe(true)
+		expect(db.deletedObjects.some((object) => object.uuid?.equals(entry.uuid))).toBe(true)
 	})
 
 	it('handles groups the same way and protects root and bin', async () => {

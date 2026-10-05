@@ -134,3 +134,71 @@ export function createDatabase(name: string, credentials: KdbxCredentials, kdf: 
 	db.getDefaultGroup().name = name
 	return db
 }
+
+export interface DatabaseSettings {
+	name: string
+	description: string
+	defaultUser: string
+	recycleBinEnabled: boolean
+	/** -1 = unlimited */
+	historyMaxItems: number
+	/** bytes, -1 = unlimited */
+	historyMaxSize: number
+	cipher: 'aes' | 'chacha20'
+	kdf: KdfSettings | { type: 'aes', rounds: number }
+	version: string
+}
+
+export function getDatabaseSettings(db: Kdbx): DatabaseSettings {
+	return {
+		name: db.meta.name ?? '',
+		description: db.meta.desc ?? '',
+		defaultUser: db.meta.defaultUser ?? '',
+		recycleBinEnabled: db.meta.recycleBinEnabled ?? true,
+		historyMaxItems: db.meta.historyMaxItems ?? 10,
+		historyMaxSize: db.meta.historyMaxSize ?? 6 * 1024 * 1024,
+		cipher: db.header.dataCipherUuid?.id === Consts.CipherId.ChaCha20 ? 'chacha20' : 'aes',
+		kdf: getKdf(db),
+		version: `${db.versionMajor}.${db.versionMinor}`,
+	}
+}
+
+/**
+ * Applies changed settings. Switching to an Argon2 KDF upgrades KDBX 3.1 files
+ * to KDBX 4, which older clients (KeePass < 2.35) cannot open.
+ */
+export function applyDatabaseSettings(db: Kdbx, settings: DatabaseSettings): void {
+	const current = getDatabaseSettings(db)
+	if (settings.name !== current.name) db.meta.name = settings.name
+	if (settings.description !== current.description) db.meta.desc = settings.description
+	if (settings.defaultUser !== current.defaultUser) db.meta.defaultUser = settings.defaultUser
+	if (settings.recycleBinEnabled !== current.recycleBinEnabled) db.meta.recycleBinEnabled = settings.recycleBinEnabled
+	if (settings.historyMaxItems !== current.historyMaxItems) db.meta.historyMaxItems = settings.historyMaxItems
+	if (settings.historyMaxSize !== current.historyMaxSize) db.meta.historyMaxSize = settings.historyMaxSize
+	if (settings.cipher !== current.cipher) {
+		db.header.dataCipherUuid = new KdbxUuid(settings.cipher === 'chacha20' ? Consts.CipherId.ChaCha20 : Consts.CipherId.Aes)
+	}
+	if (JSON.stringify(settings.kdf) !== JSON.stringify(current.kdf) && settings.kdf.type !== 'aes') {
+		if (db.versionMajor < 4) {
+			db.upgrade()
+		}
+		setKdf(db, settings.kdf)
+	}
+	db.cleanup({ historyRules: true })
+}
+
+/** Builds credentials for a new master key; at least one component is required. */
+export async function prepareCredentials(input: CredentialsInput): Promise<KdbxCredentials> {
+	if (input.password === undefined && input.keyFile === undefined) {
+		throw new Error('A password or a key file is required')
+	}
+	const credentials = createCredentials(input)
+	await credentials.ready
+	return credentials
+}
+
+/** Replaces the master key. The stored file keeps the old key until the next save. */
+export function setCredentials(db: Kdbx, credentials: KdbxCredentials): void {
+	db.credentials = credentials
+	db.meta.keyChanged = new Date()
+}

@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest'
-import { installArgon2 } from '@/core/argon2'
+import { installArgon2 } from '@/core/crypto'
 import { createCredentials, openDatabase, saveDatabase } from '@/core/database'
 import { applyDraft, attachFile, createEntry, deleteEntry, draftFromEntry, emptyDraft } from '@/core/entries'
 import { createGroup } from '@/core/groups'

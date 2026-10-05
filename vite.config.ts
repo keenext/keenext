@@ -22,6 +22,11 @@ export default createAppConfig({
 		},
 		worker: {
 			format: 'es',
+			rollupOptions: {
+				output: {
+					entryFileNames: 'js/[name]-[hash].mjs',
+				},
+			},
 		},
 	},
 })

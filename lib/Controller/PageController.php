@@ -43,6 +43,7 @@ final class PageController extends Controller {
 		}
 
 		Util::addScript(Application::APP_ID, Application::APP_ID . '-main');
+		Util::addStyle(Application::APP_ID, Application::APP_ID . '-main');
 		$response = new TemplateResponse(Application::APP_ID, 'main');
 
 		$csp = new ContentSecurityPolicy();
