@@ -23,7 +23,12 @@ export function useDatabaseView(database: MaybeRefOrGetter<OpenDatabase>): Compu
 	})
 }
 
-/** Lookup by UUID; selections are stored as UUIDs because a sync may replace the Kdbx instance. */
+/**
+ * Lookup by UUID. A sync may replace the Kdbx instance at any time, so
+ * selections are stored as UUIDs and mutations resolve their objects inside the
+ * `vault.change` callback instead of using objects captured earlier (before a
+ * confirmation dialog, while an editor was open).
+ */
 export function findEntry(db: Kdbx, uuid: string | null): KdbxEntry | undefined {
 	if (!uuid) {
 		return undefined

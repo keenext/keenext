@@ -194,7 +194,7 @@ import IconPickerDialog from './IconPickerDialog.vue'
 import PasswordGeneratorDialog from './PasswordGeneratorDialog.vue'
 import StrengthMeter from './StrengthMeter.vue'
 import TotpSetupDialog from './TotpSetupDialog.vue'
-import { findGroup, useDatabaseView } from '@/composables/useDatabase'
+import { findEntry, findGroup, useDatabaseView } from '@/composables/useDatabase'
 import { applyDraft, attachFile, createEntry, draftFromEntry, emptyDraft, isStandardField } from '@/core/entries'
 import { OTP_FIELD } from '@/core/totp'
 import { t } from '@/l10n'
@@ -304,17 +304,18 @@ function save(): void {
 		return
 	}
 	const values = plainDraft()
-	if (props.entry) {
-		const entry = props.entry
-		vault.change(props.database.id, (db) => applyDraft(db, entry, values))
-		emit('saved', entry.uuid.id)
-		return
-	}
-	const created = vault.change(props.database.id, (db) => {
+	const id = props.entry?.uuid.id
+	const saved = vault.change(props.database.id, (db) => {
+		const existing = id ? findEntry(db, id) : undefined
+		if (existing) {
+			applyDraft(db, existing, values)
+			return existing
+		}
+		// New, or deleted elsewhere while being edited: keep the edit as a new entry.
 		const group = findGroup(db, props.database.selectedGroup) ?? db.getDefaultGroup()
 		return createEntry(db, group, values)
 	})
-	emit('saved', created.uuid.id)
+	emit('saved', saved.uuid.id)
 }
 </script>
 

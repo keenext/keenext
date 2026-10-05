@@ -167,6 +167,12 @@ function writeDraft(db: Kdbx, entry: KdbxEntry, draft: EntryDraft): void {
 		entry.fields.set(field.key, makeField(field.value, field.protected))
 	}
 
+	for (const attachment of draft.attachments) {
+		// A draft may hold attachments of a Kdbx instance that a sync has replaced since.
+		if ('hash' in attachment.value && !db.binaries.getValueByHash(attachment.value.hash)) {
+			db.binaries.addWithHash(attachment.value)
+		}
+	}
 	entry.binaries = new Map(draft.attachments.map((attachment) => [attachment.name, attachment.value]))
 	entry.icon = draft.icon
 	entry.customIcon = draft.customIcon ? new KdbxUuid(draft.customIcon) : undefined

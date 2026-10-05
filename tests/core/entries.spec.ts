@@ -1,6 +1,7 @@
 import { ProtectedValue } from 'kdbxweb'
 import { describe, expect, it } from 'vitest'
 import { entryByTitle, newDatabase, openRichFixture } from '../helpers/databases.ts'
+import { createCredentials, openDatabase, saveDatabase } from '@/core/database'
 import {
 	applyDraft,
 	attachFile,
@@ -151,5 +152,20 @@ describe('icons', () => {
 		applyDraft(db, bank, { ...draftFromEntry(bank), customIcon: custom })
 		expect(bank.customIcon?.id).toBe(custom)
 		expect(bank.history.at(-1)!.icon).toBe(61)
+	})
+})
+
+describe('drafts across database instances', () => {
+	it('keeps attachments taken from an instance that was replaced by a sync', async () => {
+		const before = await openRichFixture()
+		const draft = draftFromEntry(entryByTitle(before, 'GitHub'))
+		await attachFile(before, draft, 'new.txt', new TextEncoder().encode('only in the old instance'))
+
+		const after = await openRichFixture()
+		applyDraft(after, entryByTitle(after, 'GitHub'), draft)
+		const reopened = await openDatabase(await saveDatabase(after), createCredentials({ password: 'test' }))
+
+		const attachment = draftFromEntry(entryByTitle(reopened, 'GitHub')).attachments.find((candidate) => candidate.name === 'new.txt')!
+		expect(new TextDecoder().decode(attachmentData(attachment))).toBe('only in the old instance')
 	})
 })

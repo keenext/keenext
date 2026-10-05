@@ -14,10 +14,9 @@
 
 <script setup lang="ts">
 import type { KdbxGroup } from 'kdbxweb'
-import type { Raw } from 'vue'
 import type { OpenDatabase } from '@/stores/vault'
 
-import { computed, markRaw, shallowRef } from 'vue'
+import { computed, shallowRef } from 'vue'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
 import NcSelect from '@nextcloud/vue/components/NcSelect'
 import { useDatabaseView } from '@/composables/useDatabase'
@@ -32,14 +31,13 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-	move: [group: KdbxGroup]
+	move: [groupId: string]
 	close: []
 }>()
 
 interface GroupOption {
 	id: string
 	label: string
-	group: Raw<KdbxGroup>
 }
 
 const view = useDatabaseView(() => props.database)
@@ -56,7 +54,7 @@ const options = computed<GroupOption[]>(() => {
 			return
 		}
 		const groupPath = [...path, group.name ?? '']
-		result.push({ id: group.uuid.id, label: groupPath.join(' › '), group: markRaw(group) })
+		result.push({ id: group.uuid.id, label: groupPath.join(' › ') })
 		group.groups.forEach((child) => walk(child, groupPath))
 	}
 	walk(db.getDefaultGroup(), [])
@@ -73,7 +71,7 @@ const buttons = computed(() => [
 		disabled: !selected.value || selected.value.id === props.currentGroup,
 		callback: () => {
 			if (selected.value) {
-				emit('move', selected.value.group)
+				emit('move', selected.value.id)
 			}
 		},
 	},

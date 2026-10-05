@@ -169,7 +169,6 @@
 </template>
 
 <script setup lang="ts">
-import type { KdbxGroup } from 'kdbxweb'
 import type { OpenDatabase } from '@/stores/vault'
 
 import { mdiContentDuplicate, mdiDelete, mdiDownload, mdiFolderMove, mdiHistory, mdiPaperclip, mdiPencil, mdiRestore } from '@mdi/js'
@@ -189,7 +188,7 @@ import FieldRow from './FieldRow.vue'
 import HistoryVersionDialog from './HistoryVersionDialog.vue'
 import MoveDialog from './MoveDialog.vue'
 import TotpField from './TotpField.vue'
-import { findEntry, useDatabaseView } from '@/composables/useDatabase'
+import { findEntry, findGroup, useDatabaseView } from '@/composables/useDatabase'
 import {
 	attachmentData,
 	createEntry,
@@ -300,24 +299,36 @@ function onCancel(): void {
 }
 
 function clone(): void {
-	const source = entry.value!
+	const id = entry.value!.uuid.id
 	const created = vault.change(props.database.id, (db) => {
+		const source = findEntry(db, id)
+		if (!source) {
+			return undefined
+		}
 		const draft = draftFromEntry(source)
 		draft.title = t('keepassweb', '{title} - Clone', { title: draft.title })
 		return createEntry(db, source.parentGroup ?? db.getDefaultGroup(), draft)
 	})
-	vault.select(props.database.id, { entry: created.uuid.id })
+	if (created) {
+		vault.select(props.database.id, { entry: created.uuid.id })
+	}
 }
 
-function move(group: KdbxGroup): void {
-	const current = entry.value!
-	vault.change(props.database.id, (db) => moveEntry(db, current, group))
-	vault.select(props.database.id, { group: group.uuid.id, entry: current.uuid.id })
+function move(groupId: string): void {
+	const id = entry.value!.uuid.id
+	vault.change(props.database.id, (db) => {
+		const current = findEntry(db, id)
+		const target = findGroup(db, groupId)
+		if (current && target) {
+			moveEntry(db, current, target)
+		}
+	})
+	vault.select(props.database.id, { group: groupId, entry: id })
 	moving.value = false
 }
 
 async function remove(): Promise<void> {
-	const current = entry.value!
+	const id = entry.value!.uuid.id
 	if (details.value.inRecycleBin || !view.value!.db.meta.recycleBinEnabled) {
 		const confirmed = await showConfirmation({
 			name: t('keepassweb', 'Delete permanently'),
@@ -330,17 +341,34 @@ async function remove(): Promise<void> {
 			return
 		}
 	}
-	vault.change(props.database.id, (db) => deleteEntry(db, current))
+	vault.change(props.database.id, (db) => {
+		const current = findEntry(db, id)
+		if (current) {
+			deleteEntry(db, current)
+		}
+	})
 	vault.select(props.database.id, { entry: null })
 }
 
 function restore(index: number): void {
-	vault.change(props.database.id, (db) => restoreHistory(db, entry.value!, index))
+	const id = entry.value!.uuid.id
+	vault.change(props.database.id, (db) => {
+		const current = findEntry(db, id)
+		if (current?.history[index]) {
+			restoreHistory(db, current, index)
+		}
+	})
 	historyIndex.value = null
 }
 
 function removeHistoryState(index: number): void {
-	vault.change(props.database.id, () => deleteHistory(entry.value!, index))
+	const id = entry.value!.uuid.id
+	vault.change(props.database.id, (db) => {
+		const current = findEntry(db, id)
+		if (current?.history[index]) {
+			deleteHistory(current, index)
+		}
+	})
 }
 </script>
 

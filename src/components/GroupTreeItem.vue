@@ -141,16 +141,22 @@ function toggle(open: boolean): void {
 }
 
 function submitDialog(values: GroupDraft): void {
+	const id = props.group.uuid.id
 	if (dialog.value === 'create') {
 		const created = vault.change(props.database.id, (db) => {
-			const group = createGroup(db, props.group, values.name)
+			const group = createGroup(db, findGroup(db, id) ?? db.getDefaultGroup(), values.name)
 			updateGroup(group, values)
 			return group
 		})
 		toggle(true)
 		vault.select(props.database.id, { group: created.uuid.id, entry: null })
 	} else {
-		vault.change(props.database.id, () => updateGroup(props.group, values))
+		vault.change(props.database.id, (db) => {
+			const group = findGroup(db, id)
+			if (group) {
+				updateGroup(group, values)
+			}
+		})
 	}
 	dialog.value = null
 }
@@ -188,22 +194,35 @@ function onDrop(event: DragEvent): void {
 	if (!payload || payload.database !== props.database.id) {
 		return
 	}
-	const db = props.database.session!.db
-	if (type === ENTRY_TYPE) {
-		const entry = findEntry(db, payload.uuid)
-		if (entry && entry.parentGroup !== props.group) {
-			vault.change(props.database.id, () => moveEntry(db, entry, props.group))
+	const targetId = props.group.uuid.id
+	vault.change(props.database.id, (db) => {
+		const target = findGroup(db, targetId)
+		if (!target) {
+			return
 		}
-		return
-	}
-	const group = findGroup(db, payload.uuid)
-	if (group && group !== props.group && group.parentGroup !== props.group && !isDescendant(props.group, group)) {
-		vault.change(props.database.id, () => moveGroup(db, group, props.group))
-	}
+		if (type === ENTRY_TYPE) {
+			const entry = findEntry(db, payload.uuid)
+			if (entry && entry.parentGroup !== target) {
+				moveEntry(db, entry, target)
+			}
+			return
+		}
+		const group = findGroup(db, payload.uuid)
+		if (group && group !== target && group.parentGroup !== target && !isDescendant(target, group)) {
+			moveGroup(db, group, target)
+		}
+	})
 }
 
-function move(target: KdbxGroup): void {
-	vault.change(props.database.id, (db) => moveGroup(db, props.group, target))
+function move(targetId: string): void {
+	const id = props.group.uuid.id
+	vault.change(props.database.id, (db) => {
+		const group = findGroup(db, id)
+		const target = findGroup(db, targetId)
+		if (group && target) {
+			moveGroup(db, group, target)
+		}
+	})
 	moving.value = false
 }
 
@@ -218,10 +237,16 @@ async function remove(): Promise<void> {
 	if (!confirmed) {
 		return
 	}
-	if (props.database.selectedGroup === props.group.uuid.id) {
+	const id = props.group.uuid.id
+	if (props.database.selectedGroup === id) {
 		vault.select(props.database.id, { group: props.group.parentGroup?.uuid.id ?? null })
 	}
-	vault.change(props.database.id, (db) => deleteGroup(db, props.group))
+	vault.change(props.database.id, (db) => {
+		const group = findGroup(db, id)
+		if (group) {
+			deleteGroup(db, group)
+		}
+	})
 }
 
 async function emptyBin(): Promise<void> {
