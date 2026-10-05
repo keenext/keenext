@@ -17,7 +17,7 @@
 		<template v-if="state.entryCount > 0" #counter>
 			<NcCounterBubble :count="state.entryCount" />
 		</template>
-		<template #actions>
+		<template v-if="database.writable" #actions>
 			<NcActionButton v-if="!state.isBin" closeAfterClick @click="dialog = 'create'">
 				<template #icon>
 					<NcIconSvgWrapper :path="mdiFolderPlus" />
