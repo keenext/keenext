@@ -12,7 +12,7 @@ export function useKeyboardShortcuts(actions: { newEntry: () => void }): void {
 		const active = vault.active
 		switch (event.key.toLowerCase()) {
 			case 's':
-				if (active?.session) {
+				if (active?.session && active.writable) {
 					event.preventDefault()
 					void vault.save(active.id)
 				}
@@ -22,7 +22,7 @@ export function useKeyboardShortcuts(actions: { newEntry: () => void }): void {
 				void vault.lockAll()
 				break
 			case 'n':
-				if (active?.session) {
+				if (active?.session && active.writable) {
 					event.preventDefault()
 					actions.newEntry()
 				}

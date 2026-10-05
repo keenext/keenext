@@ -82,7 +82,7 @@
 | Open `.kdbx` from the Files app | ✅ | Default action. |
 | "New KeePass database" in the Files "New" menu | ✅ | |
 | File picker, recently opened list | ✅ | Follows renames and moves; remembers the key file per database. |
-| Read-only shares | ✅ | Opened read-only. |
+| Read-only shares | ✅ | Opened read-only; editing actions and shortcuts are disabled. |
 | Public link shares | ❌ | |
 | Own file type icon for `.kdbx` | ❌ | Files shows the generic icon. |
 | Translations | ◐ | English, German (`de`, `de_DE`). |

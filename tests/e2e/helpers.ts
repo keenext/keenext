@@ -13,10 +13,10 @@ export const PASSWORD = 'admin'
 export const DIR = 'E2E'
 const storageDir = `/var/www/html/data/${USER}/files/${DIR}`
 
-export async function login(page: Page): Promise<void> {
+export async function login(page: Page, user = USER, password = PASSWORD): Promise<void> {
 	await page.goto('/login')
-	await page.locator('#user').fill(USER)
-	await page.locator('#password').fill(PASSWORD)
+	await page.locator('#user').fill(user)
+	await page.locator('#password').fill(password)
 	await page.locator('button[type="submit"]').click()
 	await page.waitForURL(/\/apps\//)
 }
@@ -121,4 +121,16 @@ export async function navigationActions(page: Page, name: string): Promise<void>
 	const item = page.locator('.app-navigation-entry').filter({ has: page.getByRole('link', { name, exact: true }) })
 	await item.hover()
 	await item.getByRole('button', { name: 'Actions' }).click()
+}
+
+/** A second user that the admin shares a file with, read-only. */
+export function shareReadOnly(name: string, recipient: string, password: string): void {
+	try {
+		execFileSync('docker', ['exec', '-u', 'www-data', '-e', `OC_PASS=${password}`, CONTAINER, 'php', 'occ', 'user:add', '--password-from-env', recipient], { stdio: 'pipe' })
+		execFileSync('docker', ['exec', '-u', 'www-data', CONTAINER, 'php', 'occ', 'user:setting', recipient, 'core', 'lang', 'en'])
+	} catch {
+		// Exists from an earlier run.
+	}
+	const base = process.env.NEXTCLOUD_URL ?? 'http://localhost:8091'
+	execFileSync('curl', ['-sf', '-u', `${USER}:${PASSWORD}`, '-H', 'OCS-APIRequest: true', '-X', 'POST', `${base}/ocs/v2.php/apps/files_sharing/api/v1/shares`, '-d', `path=/${DIR}/${name}`, '-d', 'shareType=0', '-d', `shareWith=${recipient}`, '-d', 'permissions=1'])
 }
