@@ -1,9 +1,11 @@
 import type { Kdbx } from 'kdbxweb'
+import type { DatabaseStorage, StoredFile } from '@/core/session'
+
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { entryByTitle, newDatabase } from '../helpers/databases.ts'
 import { createCredentials, openDatabase, prepareCredentials, saveDatabase, setCredentials } from '@/core/database'
 import { applyDraft, createEntry, draftFromEntry, emptyDraft, getField } from '@/core/entries'
-import { ConflictError, DatabaseSession, type DatabaseStorage, type StoredFile } from '@/core/session'
-import { entryByTitle, newDatabase } from '../helpers/databases'
+import { ConflictError, DatabaseSession } from '@/core/session'
 
 /** In-memory stand-in for a WebDAV file with ETag checks. */
 class MemoryStorage implements DatabaseStorage {

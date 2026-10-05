@@ -9,7 +9,7 @@
 				v-model="draft.password"
 				:label="t('keepassweb', 'Password')"
 				autocomplete="new-password"
-				:check-password-strength="false" />
+				:checkPasswordStrength="false" />
 			<NcButton :aria-label="t('keepassweb', 'Generate password')" :title="t('keepassweb', 'Generate password')" @click="generatorOpen = true">
 				<template #icon>
 					<NcIconSvgWrapper :path="mdiDiceMultiple" />
@@ -22,13 +22,13 @@
 		<NcSelect
 			v-model="draft.tags"
 			:options="knownTags"
-			:input-label="t('keepassweb', 'Tags')"
+			:inputLabel="t('keepassweb', 'Tags')"
 			multiple
 			taggable
-			:close-on-select="false" />
+			keepOpen />
 
 		<div class="entry-editor__expiry">
-			<NcCheckboxRadioSwitch :model-value="draft.expires !== null" @update:model-value="toggleExpiry">
+			<NcCheckboxRadioSwitch :modelValue="draft.expires !== null" @update:modelValue="toggleExpiry">
 				{{ t('keepassweb', 'Expires') }}
 			</NcCheckboxRadioSwitch>
 			<NcDateTimePickerNative
@@ -38,14 +38,31 @@
 				:label="t('keepassweb', 'Expiry date')" />
 		</div>
 
-		<NcTextArea v-model="draft.notes" :label="t('keepassweb', 'Notes')" resize="vertical" rows="4" />
+		<NcTextArea
+			v-model="draft.notes"
+			:label="t('keepassweb', 'Notes')"
+			resize="vertical"
+			rows="4" />
 
 		<section class="entry-editor__section">
 			<h3>{{ t('keepassweb', 'Additional attributes') }}</h3>
 			<div v-for="(field, index) in draft.customFields" :key="index" class="entry-editor__custom-field">
-				<NcTextField v-model="field.key" :label="t('keepassweb', 'Name')" :error="fieldErrors[index] !== undefined" :helper-text="fieldErrors[index]" />
-				<NcPasswordField v-if="field.protected" v-model="field.value" :label="t('keepassweb', 'Value')" :check-password-strength="false" />
-				<NcTextArea v-else v-model="field.value" :label="t('keepassweb', 'Value')" resize="vertical" rows="1" />
+				<NcTextField
+					v-model="field.key"
+					:label="t('keepassweb', 'Name')"
+					:error="fieldErrors[index] !== undefined"
+					:helperText="fieldErrors[index]" />
+				<NcPasswordField
+					v-if="field.protected"
+					v-model="field.value"
+					:label="t('keepassweb', 'Value')"
+					:checkPasswordStrength="false" />
+				<NcTextArea
+					v-else
+					v-model="field.value"
+					:label="t('keepassweb', 'Value')"
+					resize="vertical"
+					rows="1" />
 				<NcButton
 					variant="tertiary"
 					:pressed="field.protected"
@@ -97,7 +114,12 @@
 				</template>
 				{{ t('keepassweb', 'Add attachment') }}
 			</NcButton>
-			<input ref="fileInput" type="file" multiple hidden @change="addAttachments">
+			<input
+				ref="fileInput"
+				type="file"
+				multiple
+				hidden
+				@change="addAttachments">
 		</section>
 
 		<div class="entry-editor__actions">
@@ -127,8 +149,12 @@
 </template>
 
 <script setup lang="ts">
+import type { KdbxEntry } from 'kdbxweb'
+import type { EntryDraft } from '@/core/entries'
+import type { OpenDatabase } from '@/stores/vault'
+
 import { mdiCheck, mdiDelete, mdiDiceMultiple, mdiLock, mdiLockOpenVariant, mdiPaperclip, mdiPlus, mdiTimerOutline } from '@mdi/js'
-import { t } from '@nextcloud/l10n'
+import { computed, markRaw, reactive, ref, toRaw } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
 import NcDateTimePickerNative from '@nextcloud/vue/components/NcDateTimePickerNative'
@@ -137,15 +163,14 @@ import NcPasswordField from '@nextcloud/vue/components/NcPasswordField'
 import NcSelect from '@nextcloud/vue/components/NcSelect'
 import NcTextArea from '@nextcloud/vue/components/NcTextArea'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
-import type { KdbxEntry } from 'kdbxweb'
-import { computed, markRaw, reactive, ref, toRaw } from 'vue'
-import { findGroup, useDatabaseView } from '@/composables/useDatabase'
-import { applyDraft, attachFile, createEntry, draftFromEntry, emptyDraft, type EntryDraft, isStandardField } from '@/core/entries'
-import { OTP_FIELD } from '@/core/totp'
-import { type OpenDatabase, useVaultStore } from '@/stores/vault'
 import PasswordGeneratorDialog from './PasswordGeneratorDialog.vue'
 import StrengthMeter from './StrengthMeter.vue'
 import TotpSetupDialog from './TotpSetupDialog.vue'
+import { findGroup, useDatabaseView } from '@/composables/useDatabase'
+import { applyDraft, attachFile, createEntry, draftFromEntry, emptyDraft, isStandardField } from '@/core/entries'
+import { OTP_FIELD } from '@/core/totp'
+import { t } from '@/l10n'
+import { useVaultStore } from '@/stores/vault'
 
 const props = defineProps<{
 	database: OpenDatabase

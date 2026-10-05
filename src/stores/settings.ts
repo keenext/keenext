@@ -1,7 +1,9 @@
+import type { Settings } from '@/services/api'
+
 import { loadState } from '@nextcloud/initial-state'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { DEFAULT_SETTINGS, saveSettings, type Settings } from '@/services/api'
+import { DEFAULT_SETTINGS, saveSettings } from '@/services/api'
 
 export const useSettingsStore = defineStore('settings', () => {
 	const settings = ref<Settings>({ ...DEFAULT_SETTINGS, ...loadState<Partial<Settings>>('keepassweb', 'settings', {}) })

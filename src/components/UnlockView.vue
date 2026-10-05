@@ -11,12 +11,12 @@
 				ref="passwordField"
 				v-model="password"
 				:label="t('keepassweb', 'Password')"
-				:check-password-strength="false"
+				:checkPasswordStrength="false"
 				:disabled="busy"
 				autocomplete="current-password"
 				autofocus />
 
-			<KeyFileChooser v-model="keyFile" :start-at="database.path.slice(0, database.path.lastIndexOf('/')) || '/'" />
+			<KeyFileChooser v-model="keyFile" :startAt="database.path.slice(0, database.path.lastIndexOf('/')) || '/'" />
 
 			<NcNoteCard v-if="error" type="error">
 				{{ error }}
@@ -25,7 +25,11 @@
 				{{ t('keepassweb', 'You can only read this database; changes cannot be saved.') }}
 			</NcNoteCard>
 
-			<NcButton type="submit" variant="primary" wide :disabled="busy || (password === '' && !keyFile)">
+			<NcButton
+				type="submit"
+				variant="primary"
+				wide
+				:disabled="busy || (password === '' && !keyFile)">
 				<template #icon>
 					<NcLoadingIcon v-if="busy" :size="20" />
 					<NcIconSvgWrapper v-else :path="mdiLockOpenVariant" />
@@ -40,17 +44,20 @@
 </template>
 
 <script setup lang="ts">
+import type { KeyFileChoice } from '@/services/keyFile'
+import type { OpenDatabase } from '@/stores/vault'
+
 import { mdiLockOpenVariant, mdiShieldLockOutline } from '@mdi/js'
-import { t } from '@nextcloud/l10n'
+import { nextTick, ref } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
 import NcPasswordField from '@nextcloud/vue/components/NcPasswordField'
-import { nextTick, ref } from 'vue'
-import { type KeyFileChoice, resolveKeyFile } from '@/services/keyFile'
-import { type OpenDatabase, useVaultStore } from '@/stores/vault'
 import KeyFileChooser from './KeyFileChooser.vue'
+import { t } from '@/l10n'
+import { resolveKeyFile } from '@/services/keyFile'
+import { useVaultStore } from '@/stores/vault'
 
 const props = defineProps<{
 	database: OpenDatabase

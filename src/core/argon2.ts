@@ -1,5 +1,6 @@
-import { argon2d, argon2id } from 'hash-wasm'
 import type { CryptoEngine } from 'kdbxweb'
+
+import { argon2d, argon2id } from 'hash-wasm'
 
 // No runtime import of kdbxweb here: this module is also the Argon2 worker's entire dependency tree.
 const ARGON2_ID: CryptoEngine.Argon2Type = 2

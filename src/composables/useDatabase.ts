@@ -1,6 +1,8 @@
 import type { Kdbx, KdbxEntry, KdbxGroup } from 'kdbxweb'
-import { computed, type ComputedRef, type MaybeRefOrGetter, toValue } from 'vue'
+import type { ComputedRef, MaybeRefOrGetter } from 'vue'
 import type { OpenDatabase } from '@/stores/vault'
+
+import { computed, toValue } from 'vue'
 
 export interface DatabaseView {
 	db: Kdbx

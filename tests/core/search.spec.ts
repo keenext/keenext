@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
+import { entryByTitle, openRichFixture } from '../helpers/databases.ts'
 import { getField } from '@/core/entries'
-import { parseQuery, searchEntries } from '@/core/search'
 import { resolvedField, resolvePlaceholders } from '@/core/placeholders'
-import { entryByTitle, openRichFixture } from '../helpers/databases'
+import { parseQuery, searchEntries } from '@/core/search'
 
-const titles = async (query: string) => {
+async function titles(query: string) {
 	const db = await openRichFixture()
 	return searchEntries(db, query).map((entry) => getField(entry, 'Title')).sort()
 }

@@ -9,8 +9,16 @@
 
 		<template v-else-if="entry && view">
 			<header class="entry-details__header">
-				<img v-if="details.customIcon" :src="details.customIcon" alt="" class="entry-details__icon">
-				<NcIconSvgWrapper v-else :path="details.icon" :size="40" class="entry-details__icon" />
+				<img
+					v-if="details.customIcon"
+					:src="details.customIcon"
+					alt=""
+					class="entry-details__icon">
+				<NcIconSvgWrapper
+					v-else
+					:path="details.icon"
+					:size="40"
+					class="entry-details__icon" />
 				<div class="entry-details__heading">
 					<h2>{{ details.title || t('keepassweb', '(no title)') }}</h2>
 					<p class="entry-details__path">
@@ -24,19 +32,19 @@
 					{{ t('keepassweb', 'Edit') }}
 				</NcButton>
 				<NcActions v-if="database.writable" :aria-label="t('keepassweb', 'More actions')">
-					<NcActionButton close-after-click @click="clone">
+					<NcActionButton closeAfterClick @click="clone">
 						<template #icon>
 							<NcIconSvgWrapper :path="mdiContentDuplicate" />
 						</template>
 						{{ t('keepassweb', 'Clone entry') }}
 					</NcActionButton>
-					<NcActionButton close-after-click @click="moving = true">
+					<NcActionButton closeAfterClick @click="moving = true">
 						<template #icon>
 							<NcIconSvgWrapper :path="mdiFolderMove" />
 						</template>
 						{{ t('keepassweb', 'Move to group') }}
 					</NcActionButton>
-					<NcActionButton close-after-click @click="remove">
+					<NcActionButton closeAfterClick @click="remove">
 						<template #icon>
 							<NcIconSvgWrapper :path="mdiDelete" />
 						</template>
@@ -51,8 +59,16 @@
 
 			<dl class="entry-details__fields">
 				<FieldRow :label="t('keepassweb', 'Username')" :value="details.username" @copy="copy(details.username, t('keepassweb', 'Username copied'))" />
-				<FieldRow :label="t('keepassweb', 'Password')" :value="details.password" secret @copy="copy(details.password, t('keepassweb', 'Password copied'))" />
-				<FieldRow :label="t('keepassweb', 'URL')" :value="details.url" link @copy="copy(details.url, t('keepassweb', 'URL copied'))" />
+				<FieldRow
+					:label="t('keepassweb', 'Password')"
+					:value="details.password"
+					secret
+					@copy="copy(details.password, t('keepassweb', 'Password copied'))" />
+				<FieldRow
+					:label="t('keepassweb', 'URL')"
+					:value="details.url"
+					link
+					@copy="copy(details.url, t('keepassweb', 'URL copied'))" />
 				<TotpField v-if="details.totp" :config="details.totp" @copy="(code) => copy(code, t('keepassweb', 'TOTP copied'))" />
 				<FieldRow
 					v-for="field in details.customFields"
@@ -62,11 +78,19 @@
 					:secret="field.protected"
 					:multiline="field.value.includes('\n')"
 					@copy="copy(field.value, t('keepassweb', '{field} copied', { field: field.key }))" />
-				<FieldRow v-if="details.expires" :label="t('keepassweb', 'Expires')" :value="formatDate(details.expires)" @copy="copy(formatDate(details.expires), t('keepassweb', 'Copied'))" />
+				<FieldRow
+					v-if="details.expires"
+					:label="t('keepassweb', 'Expires')"
+					:value="formatDate(details.expires)"
+					@copy="copy(formatDate(details.expires), t('keepassweb', 'Copied'))" />
 			</dl>
 
 			<div v-if="details.tags.length > 0" class="entry-details__tags">
-				<NcChip v-for="tag in details.tags" :key="tag" :text="tag" no-close />
+				<NcChip
+					v-for="tag in details.tags"
+					:key="tag"
+					:text="tag"
+					noClose />
 			</div>
 
 			<section v-if="details.notes" class="entry-details__section">
@@ -106,13 +130,13 @@
 						<span>{{ formatDate(state.modified) }}</span>
 						<span class="entry-details__muted">{{ state.summary }}</span>
 						<NcActions v-if="database.writable" :aria-label="t('keepassweb', 'History actions')">
-							<NcActionButton close-after-click @click="restore(state.index)">
+							<NcActionButton closeAfterClick @click="restore(state.index)">
 								<template #icon>
 									<NcIconSvgWrapper :path="mdiRestore" />
 								</template>
 								{{ t('keepassweb', 'Restore this version') }}
 							</NcActionButton>
-							<NcActionButton close-after-click @click="removeHistoryState(state.index)">
+							<NcActionButton closeAfterClick @click="removeHistoryState(state.index)">
 								<template #icon>
 									<NcIconSvgWrapper :path="mdiDelete" />
 								</template>
@@ -133,17 +157,20 @@
 		<MoveDialog
 			v-if="moving && entry"
 			:database="database"
-			:current-group="entry.parentGroup?.uuid.id ?? null"
+			:currentGroup="entry.parentGroup?.uuid.id ?? null"
 			@move="move"
 			@close="moving = false" />
 	</div>
 </template>
 
 <script setup lang="ts">
+import type { KdbxGroup } from 'kdbxweb'
+import type { OpenDatabase } from '@/stores/vault'
+
 import { mdiContentDuplicate, mdiDelete, mdiDownload, mdiFolderMove, mdiHistory, mdiPaperclip, mdiPencil, mdiRestore } from '@mdi/js'
 import { showConfirmation, showSuccess } from '@nextcloud/dialogs'
 import { formatFileSize } from '@nextcloud/files'
-import { t } from '@nextcloud/l10n'
+import { computed, ref } from 'vue'
 import NcActionButton from '@nextcloud/vue/components/NcActionButton'
 import NcActions from '@nextcloud/vue/components/NcActions'
 import NcButton from '@nextcloud/vue/components/NcButton'
@@ -151,8 +178,10 @@ import NcChip from '@nextcloud/vue/components/NcChip'
 import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
-import type { KdbxGroup } from 'kdbxweb'
-import { computed, ref } from 'vue'
+import EntryEditor from './EntryEditor.vue'
+import FieldRow from './FieldRow.vue'
+import MoveDialog from './MoveDialog.vue'
+import TotpField from './TotpField.vue'
 import { findEntry, useDatabaseView } from '@/composables/useDatabase'
 import {
 	attachmentData,
@@ -170,14 +199,11 @@ import {
 } from '@/core/entries'
 import { resolvedField, resolvePlaceholders } from '@/core/placeholders'
 import { readTotp } from '@/core/totp'
+import { t } from '@/l10n'
 import { copySecret } from '@/services/clipboard'
 import { customIconUrl, standardIconPath } from '@/services/icons'
 import { useSettingsStore } from '@/stores/settings'
-import { type OpenDatabase, useVaultStore } from '@/stores/vault'
-import EntryEditor from './EntryEditor.vue'
-import FieldRow from './FieldRow.vue'
-import MoveDialog from './MoveDialog.vue'
-import TotpField from './TotpField.vue'
+import { useVaultStore } from '@/stores/vault'
 
 const props = defineProps<{
 	database: OpenDatabase
@@ -259,7 +285,7 @@ function download(name: string): void {
 
 function onSaved(id: string): void {
 	editing.value = false
-	props.database.selectedEntry = id
+	vault.select(props.database.id, { entry: id })
 	emit('done')
 }
 
@@ -278,13 +304,13 @@ function clone(): void {
 		copy.customIcon = source.customIcon
 		return copy
 	})
-	props.database.selectedEntry = created.uuid.id
+	vault.select(props.database.id, { entry: created.uuid.id })
 }
 
 function move(group: KdbxGroup): void {
 	const current = entry.value!
 	vault.change(props.database.id, (db) => moveEntry(db, current, group))
-	props.database.selectedGroup = group.uuid.id
+	vault.select(props.database.id, { group: group.uuid.id, entry: current.uuid.id })
 	moving.value = false
 }
 
@@ -303,7 +329,7 @@ async function remove(): Promise<void> {
 		}
 	}
 	vault.change(props.database.id, (db) => deleteEntry(db, current))
-	props.database.selectedEntry = null
+	vault.select(props.database.id, { entry: null })
 }
 
 function restore(index: number): void {

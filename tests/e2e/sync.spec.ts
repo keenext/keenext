@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { editElsewhere, fetchFromStorage, keepassxcAdd, keepassxcList, keepassxcShow, login, openInFiles, seedDatabase, unlock } from './helpers'
+import { editElsewhere, fetchFromStorage, keepassxcAdd, keepassxcList, keepassxcShow, login, openInFiles, seedDatabase, unlock } from './helpers.ts'
 
 test.beforeEach(async ({ page }) => {
 	await login(page)

@@ -1,5 +1,6 @@
 import type { KdbxEntry } from 'kdbxweb'
-import { getField } from './entries'
+
+import { getField } from './entries.ts'
 
 export type TotpAlgorithm = 'SHA-1' | 'SHA-256' | 'SHA-512'
 

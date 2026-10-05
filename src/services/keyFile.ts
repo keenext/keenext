@@ -1,4 +1,4 @@
-import { downloadFileById } from './webdav'
+import { downloadFileById } from './webdav.ts'
 
 /**
  * A key file is either a Nextcloud file (loaded on unlock, remembered by id)

@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest'
 import { ProtectedValue } from 'kdbxweb'
+import { describe, expect, it } from 'vitest'
+import { entryByTitle, newDatabase, openRichFixture } from '../helpers/databases.ts'
 import {
 	applyDraft,
 	attachFile,
@@ -15,7 +16,6 @@ import {
 	restoreHistory,
 } from '@/core/entries'
 import { createGroup, deleteGroup, emptyRecycleBin, moveGroup } from '@/core/groups'
-import { entryByTitle, newDatabase, openRichFixture } from '../helpers/databases'
 
 describe('reading a KeePassXC database', () => {
 	it('exposes standard and custom fields as a draft', async () => {

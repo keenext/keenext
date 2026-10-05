@@ -12,6 +12,8 @@ export default defineConfig({
 	test: {
 		environment: 'node',
 		include: ['tests/**/*.spec.ts'],
+		// Playwright tests, run with npm run test:e2e.
+		exclude: ['tests/e2e/**'],
 		testTimeout: 30_000,
 	},
 })

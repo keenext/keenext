@@ -1,6 +1,8 @@
-import { describe, expect, it } from 'vitest'
-import { base32Decode, base32Encode, buildOtpUri, parseOtpUri, readTotp, totpCode, totpRemaining, type TotpConfig } from '@/core/totp'
+import type { TotpConfig } from '@/core/totp'
+
 import { KdbxEntry, KdbxGroup, KdbxMeta, ProtectedValue } from 'kdbxweb'
+import { describe, expect, it } from 'vitest'
+import { base32Decode, base32Encode, buildOtpUri, parseOtpUri, readTotp, totpCode, totpRemaining } from '@/core/totp'
 
 const ascii = (text: string) => new TextEncoder().encode(text)
 

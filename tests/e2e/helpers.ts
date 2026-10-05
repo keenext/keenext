@@ -1,8 +1,10 @@
+import type { Page } from '@playwright/test'
+
+import { expect } from '@playwright/test'
 import { execFileSync } from 'node:child_process'
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { expect, type Page } from '@playwright/test'
 
 export const CONTAINER = process.env.NEXTCLOUD_CONTAINER ?? 'keepass-extension-nextcloud-1'
 export const USER = 'admin'

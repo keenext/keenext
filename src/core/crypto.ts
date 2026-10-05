@@ -1,5 +1,7 @@
+import type { Argon2Compute } from './argon2.ts'
+
 import { CryptoEngine } from 'kdbxweb'
-import { type Argon2Compute, computeArgon2 } from './argon2'
+import { computeArgon2 } from './argon2.ts'
 
 /**
  * Routes kdbxweb's Argon2 calls to `compute`. The browser passes a worker-backed

@@ -1,5 +1,6 @@
 import type { Kdbx, KdbxGroup } from 'kdbxweb'
-import { recycleBin } from './entries'
+
+import { recycleBin } from './entries.ts'
 
 export function createGroup(db: Kdbx, parent: KdbxGroup, name: string): KdbxGroup {
 	return db.createGroup(parent, name)
@@ -11,6 +12,11 @@ export function renameGroup(group: KdbxGroup, name: string, notes?: string): voi
 		group.notes = notes
 	}
 	group.times.update()
+}
+
+/** UI state stored in the file (KeePass "IsExpanded"); deliberately not recorded as a change. */
+export function setExpanded(group: KdbxGroup, expanded: boolean): void {
+	group.expanded = expanded
 }
 
 export function isDescendant(group: KdbxGroup, ancestor: KdbxGroup): boolean {

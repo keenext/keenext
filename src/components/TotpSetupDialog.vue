@@ -8,19 +8,23 @@
 				v-model="secretOrUri"
 				:label="t('keepassweb', 'Secret key or otpauth:// link')"
 				:error="secretOrUri !== '' && !config"
-				:helper-text="secretOrUri !== '' && !config ? t('keepassweb', 'Not a valid base32 secret or otpauth link') : ''" />
+				:helperText="secretOrUri !== '' && !config ? t('keepassweb', 'Not a valid base32 secret or otpauth link') : ''" />
 			<template v-if="!isUri">
 				<NcCheckboxRadioSwitch v-model="steam">
 					{{ t('keepassweb', 'Steam Guard codes') }}
 				</NcCheckboxRadioSwitch>
 				<div class="totp-setup__row">
 					<NcTextField v-model="period" :label="t('keepassweb', 'Period (seconds)')" type="number" />
-					<NcTextField v-if="!steam" v-model="digits" :label="t('keepassweb', 'Digits')" type="number" />
+					<NcTextField
+						v-if="!steam"
+						v-model="digits"
+						:label="t('keepassweb', 'Digits')"
+						type="number" />
 					<NcSelect
 						v-if="!steam"
 						v-model="algorithm"
 						:options="['SHA-1', 'SHA-256', 'SHA-512']"
-						:input-label="t('keepassweb', 'Algorithm')"
+						:inputLabel="t('keepassweb', 'Algorithm')"
 						:clearable="false" />
 				</div>
 			</template>
@@ -30,14 +34,16 @@
 </template>
 
 <script setup lang="ts">
-import { t } from '@nextcloud/l10n'
+import type { TotpAlgorithm, TotpConfig } from '@/core/totp'
+
+import { computed, ref } from 'vue'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
 import NcSelect from '@nextcloud/vue/components/NcSelect'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
-import { computed, ref } from 'vue'
-import { base32Decode, buildOtpUri, parseOtpUri, type TotpAlgorithm, type TotpConfig } from '@/core/totp'
 import TotpField from './TotpField.vue'
+import { base32Decode, buildOtpUri, parseOtpUri } from '@/core/totp'
+import { t } from '@/l10n'
 
 const props = defineProps<{
 	/** Current otpauth URI, empty if none. */

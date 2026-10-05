@@ -6,21 +6,23 @@
 		<NcSelect
 			v-model="selected"
 			:options="options"
-			:input-label="t('keepassweb', 'Group')"
+			:inputLabel="t('keepassweb', 'Group')"
 			:clearable="false"
 			label="label" />
 	</NcDialog>
 </template>
 
 <script setup lang="ts">
-import { t } from '@nextcloud/l10n'
+import type { KdbxGroup } from 'kdbxweb'
+import type { Raw } from 'vue'
+import type { OpenDatabase } from '@/stores/vault'
+
+import { computed, markRaw, shallowRef } from 'vue'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
 import NcSelect from '@nextcloud/vue/components/NcSelect'
-import type { KdbxGroup } from 'kdbxweb'
-import { computed, markRaw, type Raw, shallowRef } from 'vue'
 import { useDatabaseView } from '@/composables/useDatabase'
 import { isInRecycleBin, recycleBin } from '@/core/entries'
-import type { OpenDatabase } from '@/stores/vault'
+import { t } from '@/l10n'
 
 const props = defineProps<{
 	database: OpenDatabase

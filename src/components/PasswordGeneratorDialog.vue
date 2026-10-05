@@ -6,17 +6,33 @@
 		@update:open="(open) => open || emit('close')">
 		<div class="generator">
 			<div class="generator__mode">
-				<NcCheckboxRadioSwitch v-model="mode" value="password" type="radio" name="generator-mode" button-variant button-variant-grouped="horizontal">
+				<NcCheckboxRadioSwitch
+					v-model="mode"
+					value="password"
+					type="radio"
+					name="generator-mode"
+					buttonVariant
+					buttonVariantGrouped="horizontal">
 					{{ t('keepassweb', 'Password') }}
 				</NcCheckboxRadioSwitch>
-				<NcCheckboxRadioSwitch v-model="mode" value="passphrase" type="radio" name="generator-mode" button-variant button-variant-grouped="horizontal">
+				<NcCheckboxRadioSwitch
+					v-model="mode"
+					value="passphrase"
+					type="radio"
+					name="generator-mode"
+					buttonVariant
+					buttonVariantGrouped="horizontal">
 					{{ t('keepassweb', 'Passphrase') }}
 				</NcCheckboxRadioSwitch>
 			</div>
 
 			<div class="generator__preview">
 				<code class="generator__value">{{ value }}</code>
-				<NcButton variant="tertiary" :aria-label="t('keepassweb', 'Regenerate')" :title="t('keepassweb', 'Regenerate')" @click="regenerate">
+				<NcButton
+					variant="tertiary"
+					:aria-label="t('keepassweb', 'Regenerate')"
+					:title="t('keepassweb', 'Regenerate')"
+					@click="regenerate">
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiRefresh" />
 					</template>
@@ -30,14 +46,18 @@
 			<template v-if="mode === 'password'">
 				<label class="generator__range">
 					{{ t('keepassweb', 'Length: {length}', { length: passwordOptions.length }) }}
-					<input v-model.number="passwordOptions.length" type="range" min="4" max="128">
+					<input
+						v-model.number="passwordOptions.length"
+						type="range"
+						min="4"
+						max="128">
 				</label>
 				<div class="generator__groups">
 					<NcCheckboxRadioSwitch
 						v-for="group in groupLabels"
 						:key="group.id"
-						:model-value="passwordOptions.groups.includes(group.id)"
-						@update:model-value="(checked: boolean) => toggleGroup(group.id, checked)">
+						:modelValue="passwordOptions.groups.includes(group.id)"
+						@update:modelValue="(checked: boolean) => toggleGroup(group.id, checked)">
 						<code>{{ group.label }}</code>
 					</NcCheckboxRadioSwitch>
 				</div>
@@ -54,14 +74,18 @@
 			<template v-else>
 				<label class="generator__range">
 					{{ t('keepassweb', 'Words: {count}', { count: passphraseOptions.words }) }}
-					<input v-model.number="passphraseOptions.words" type="range" min="3" max="20">
+					<input
+						v-model.number="passphraseOptions.words"
+						type="range"
+						min="3"
+						max="20">
 				</label>
 				<NcTextField v-model="passphraseOptions.separator" :label="t('keepassweb', 'Word separator')" />
 				<NcSelect
 					v-model="passphraseOptions.wordCase"
 					:options="['lower', 'upper', 'title', 'mixed']"
-					:get-option-label="(option: string) => caseLabels[option as WordCase]"
-					:input-label="t('keepassweb', 'Word case')"
+					:getOptionLabel="(option: string) => caseLabels[option as WordCase]"
+					:inputLabel="t('keepassweb', 'Word case')"
 					:clearable="false" />
 			</template>
 		</div>
@@ -69,26 +93,24 @@
 </template>
 
 <script setup lang="ts">
+import type { CharacterGroup, PassphraseOptions, PasswordOptions, WordCase } from '@/core/generator'
+
 import { mdiRefresh } from '@mdi/js'
-import { t } from '@nextcloud/l10n'
+import { computed, reactive, ref, watch } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcSelect from '@nextcloud/vue/components/NcSelect'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
-import { computed, reactive, ref, watch } from 'vue'
+import StrengthMeter from './StrengthMeter.vue'
 import {
-	type CharacterGroup,
-	type PassphraseOptions,
-	type PasswordOptions,
 	DEFAULT_PASSPHRASE_OPTIONS,
 	DEFAULT_PASSWORD_OPTIONS,
 	generatePassphrase,
 	generatePassword,
-	type WordCase,
 } from '@/core/generator'
-import StrengthMeter from './StrengthMeter.vue'
+import { t } from '@/l10n'
 
 const emit = defineEmits<{
 	apply: [password: string]

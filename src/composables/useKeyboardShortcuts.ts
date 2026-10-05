@@ -11,28 +11,28 @@ export function useKeyboardShortcuts(actions: { newEntry: () => void }): void {
 		}
 		const active = vault.active
 		switch (event.key.toLowerCase()) {
-		case 's':
-			if (active?.session) {
+			case 's':
+				if (active?.session) {
+					event.preventDefault()
+					void vault.save(active.id)
+				}
+				break
+			case 'l':
 				event.preventDefault()
-				void vault.save(active.id)
-			}
-			break
-		case 'l':
-			event.preventDefault()
-			void vault.lockAll()
-			break
-		case 'n':
-			if (active?.session) {
-				event.preventDefault()
-				actions.newEntry()
-			}
-			break
-		case 'f':
-			if (active?.session) {
-				event.preventDefault()
-				document.querySelector<HTMLInputElement>('.entry-list__search input')?.focus()
-			}
-			break
+				void vault.lockAll()
+				break
+			case 'n':
+				if (active?.session) {
+					event.preventDefault()
+					actions.newEntry()
+				}
+				break
+			case 'f':
+				if (active?.session) {
+					event.preventDefault()
+					document.querySelector<HTMLInputElement>('.entry-list__search input')?.focus()
+				}
+				break
 		}
 	}
 

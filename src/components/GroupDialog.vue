@@ -2,7 +2,7 @@
 	<NcDialog
 		:name="title"
 		:buttons="buttons"
-		is-form
+		isForm
 		@submit="submit"
 		@update:open="(open) => open || emit('close')">
 		<NcTextField
@@ -18,11 +18,11 @@
 </template>
 
 <script setup lang="ts">
-import { t } from '@nextcloud/l10n'
+import { computed, ref } from 'vue'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
 import NcTextArea from '@nextcloud/vue/components/NcTextArea'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
-import { computed, ref } from 'vue'
+import { t } from '@/l10n'
 
 const props = defineProps<{
 	title: string

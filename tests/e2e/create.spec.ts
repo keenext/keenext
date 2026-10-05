@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { attempt, DIR, fetchFromStorage, keepassxcList, keepassxcShow, login, seedDatabase, storageHas, unlock } from './helpers'
+import { attempt, DIR, fetchFromStorage, keepassxcList, keepassxcShow, login, seedDatabase, storageHas, unlock } from './helpers.ts'
 
 test.beforeEach(async ({ page }) => {
 	await login(page)
@@ -26,7 +26,7 @@ test('creates a database from the Files "New" menu that KeePassXC can open', asy
 	await expect(page.locator('.entry-details h2')).toHaveText('First entry')
 
 	expect(storageHas(`${name}.kdbx`)).toBe(true)
-	await expect.poll(() => attempt(() => keepassxcShow(fetchFromStorage(`${name}.kdbx`), `/First entry`, ['Password'])), { timeout: 20_000 })
+	await expect.poll(() => attempt(() => keepassxcShow(fetchFromStorage(`${name}.kdbx`), '/First entry', ['Password'])), { timeout: 20_000 })
 		.toBe('first-password\n')
 })
 

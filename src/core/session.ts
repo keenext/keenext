@@ -1,5 +1,6 @@
 import type { Kdbx, KdbxCredentials } from 'kdbxweb'
-import { openDatabase, saveDatabase } from './database'
+
+import { openDatabase, saveDatabase } from './database.ts'
 
 export interface StoredFile {
 	data: ArrayBuffer

@@ -6,10 +6,10 @@
 </template>
 
 <script setup lang="ts">
-import { t } from '@nextcloud/l10n'
-import NcProgressBar from '@nextcloud/vue/components/NcProgressBar'
 import { computed } from 'vue'
+import NcProgressBar from '@nextcloud/vue/components/NcProgressBar'
 import { estimateStrength } from '@/core/generator'
+import { t } from '@/l10n'
 
 const props = defineProps<{
 	password: string

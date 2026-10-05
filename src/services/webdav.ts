@@ -1,9 +1,11 @@
-import axios, { isAxiosError } from '@nextcloud/axios'
+import type { DatabaseStorage, StoredFile } from '@/core/session'
+
 import { getCurrentUser } from '@nextcloud/auth'
+import axios, { isAxiosError } from '@nextcloud/axios'
 import { encodePath } from '@nextcloud/paths'
 import { generateRemoteUrl } from '@nextcloud/router'
-import { ConflictError, type DatabaseStorage, type StoredFile } from '@/core/session'
-import { getFileInfo } from './api'
+import { getFileInfo } from './api.ts'
+import { ConflictError } from '@/core/session'
 
 export class StorageError extends Error {
 	constructor(readonly reason: 'locked' | 'forbidden' | 'not-found' | 'exists' | 'unknown', message: string, options?: { cause?: unknown }) {
@@ -26,7 +28,7 @@ export function quoteEtag(etag: string): string {
 }
 
 function etagFrom(headers: Record<string, unknown>): string | undefined {
-	const value = headers['etag'] ?? headers['oc-etag']
+	const value = headers.etag ?? headers['oc-etag']
 	return typeof value === 'string' && value !== '' ? quoteEtag(value) : undefined
 }
 
@@ -35,10 +37,10 @@ function storageError(error: unknown): unknown {
 		return error
 	}
 	switch (error.response.status) {
-	case 403: return new StorageError('forbidden', 'You are not allowed to change this file', { cause: error })
-	case 404: return new StorageError('not-found', 'The file no longer exists', { cause: error })
-	case 423: return new StorageError('locked', 'The file is locked by another application', { cause: error })
-	default: return error
+		case 403: return new StorageError('forbidden', 'You are not allowed to change this file', { cause: error })
+		case 404: return new StorageError('not-found', 'The file no longer exists', { cause: error })
+		case 423: return new StorageError('locked', 'The file is locked by another application', { cause: error })
+		default: return error
 	}
 }
 

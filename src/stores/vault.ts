@@ -1,15 +1,19 @@
-import { showError, showSuccess } from '@nextcloud/dialogs'
-import { t } from '@nextcloud/l10n'
 import type { Kdbx } from 'kdbxweb'
+import type { Raw } from 'vue'
+import type { CredentialsInput } from '@/core/database'
+import type { RecentFile } from '@/services/api'
+
+import { showError, showSuccess } from '@nextcloud/dialogs'
 import { defineStore } from 'pinia'
-import { computed, markRaw, type Raw, ref } from 'vue'
-import { createCredentials, createDatabase, DatabaseOpenError, saveDatabase, type CredentialsInput } from '@/core/database'
+import { computed, markRaw, ref } from 'vue'
+import { useSettingsStore } from './settings.ts'
+import { createCredentials, createDatabase, DatabaseOpenError, saveDatabase } from '@/core/database'
 import { DatabaseSession } from '@/core/session'
-import { getFileInfo, getRecent, touchRecent, type RecentFile } from '@/services/api'
+import { t } from '@/l10n'
+import { getFileInfo, getRecent, touchRecent } from '@/services/api'
 import { clearPendingSecret } from '@/services/clipboard'
 import { releaseIcons } from '@/services/icons'
 import { createFile, NextcloudFileStorage, StorageError } from '@/services/webdav'
-import { useSettingsStore } from './settings'
 
 export interface OpenDatabase {
 	/** String form of fileId; used as key and in the URL. */
@@ -41,17 +45,17 @@ const AUTOSAVE_DELAY = 1500
 function describeError(error: unknown): string {
 	if (error instanceof DatabaseOpenError) {
 		switch (error.reason) {
-		case 'invalid-key': return t('keepassweb', 'Wrong password or key file')
-		case 'corrupt': return t('keepassweb', 'The file is not a valid KeePass database')
-		case 'unsupported': return t('keepassweb', 'This database format is not supported')
+			case 'invalid-key': return t('keepassweb', 'Wrong password or key file')
+			case 'corrupt': return t('keepassweb', 'The file is not a valid KeePass database')
+			case 'unsupported': return t('keepassweb', 'This database format is not supported')
 		}
 	}
 	if (error instanceof StorageError) {
 		switch (error.reason) {
-		case 'forbidden': return t('keepassweb', 'You are not allowed to change this file')
-		case 'not-found': return t('keepassweb', 'The file no longer exists')
-		case 'locked': return t('keepassweb', 'The file is locked by another application')
-		case 'exists': return t('keepassweb', 'A file with this name already exists')
+			case 'forbidden': return t('keepassweb', 'You are not allowed to change this file')
+			case 'not-found': return t('keepassweb', 'The file no longer exists')
+			case 'locked': return t('keepassweb', 'The file is locked by another application')
+			case 'exists': return t('keepassweb', 'A file with this name already exists')
 		}
 	}
 	return error instanceof Error ? error.message : String(error)
@@ -177,6 +181,22 @@ export const useVaultStore = defineStore('vault', () => {
 		return true
 	}
 
+	/** Selecting a group leaves search mode, like clicking a group in KeePassXC. */
+	function select(id: string, selection: { group?: string | null, entry?: string | null }): void {
+		const database = find(id)
+		if (selection.group !== undefined) {
+			database.selectedGroup = selection.group
+			database.query = ''
+		}
+		if (selection.entry !== undefined) {
+			database.selectedEntry = selection.entry
+		}
+	}
+
+	function search(id: string, query: string): void {
+		find(id).query = query
+	}
+
 	/**
 	 * The only way views modify a database: runs `mutation`, records the change
 	 * and schedules autosave.
@@ -289,6 +309,8 @@ export const useVaultStore = defineStore('vault', () => {
 		lock,
 		lockAll,
 		close,
+		select,
+		search,
 		change,
 		save,
 		sync,

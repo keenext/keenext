@@ -8,7 +8,7 @@
 				:name="database.name"
 				:title="database.path"
 				:active="database.id === vault.activeId && !database.session"
-				:allow-collapse="database.session !== null"
+				:allowCollapse="database.session !== null"
 				:open="database.id === vault.activeId"
 				@click="vault.activeId = database.id">
 				<template #icon>
@@ -20,26 +20,26 @@
 				</template>
 				<template #actions>
 					<template v-if="database.session">
-						<NcActionButton :disabled="!database.writable" close-after-click @click="vault.save(database.id)">
+						<NcActionButton :disabled="!database.writable" closeAfterClick @click="vault.save(database.id)">
 							<template #icon>
 								<NcIconSvgWrapper :path="mdiContentSave" />
 							</template>
 							{{ t('keepassweb', 'Save') }}
 						</NcActionButton>
-						<NcActionButton close-after-click @click="databaseSettings = database.id">
+						<NcActionButton closeAfterClick @click="databaseSettings = database.id">
 							<template #icon>
 								<NcIconSvgWrapper :path="mdiCog" />
 							</template>
 							{{ t('keepassweb', 'Database settings') }}
 						</NcActionButton>
-						<NcActionButton close-after-click @click="vault.lock(database.id)">
+						<NcActionButton closeAfterClick @click="vault.lock(database.id)">
 							<template #icon>
 								<NcIconSvgWrapper :path="mdiLock" />
 							</template>
 							{{ t('keepassweb', 'Lock') }}
 						</NcActionButton>
 					</template>
-					<NcActionButton close-after-click @click="vault.close(database.id)">
+					<NcActionButton closeAfterClick @click="vault.close(database.id)">
 						<template #icon>
 							<NcIconSvgWrapper :path="mdiClose" />
 						</template>
@@ -57,17 +57,17 @@
 
 		<template #footer>
 			<ul class="app-navigation-footer">
-				<NcAppNavigationItem :name="t('keepassweb', 'Open database')" @click="emit('open-database')">
+				<NcAppNavigationItem :name="t('keepassweb', 'Open database')" @click="emit('openDatabase')">
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiFolderOpenOutline" />
 					</template>
 				</NcAppNavigationItem>
-				<NcAppNavigationItem :name="t('keepassweb', 'New database')" @click="emit('new-database')">
+				<NcAppNavigationItem :name="t('keepassweb', 'New database')" @click="emit('newDatabase')">
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiPlus" />
 					</template>
 				</NcAppNavigationItem>
-				<NcAppNavigationItem :name="t('keepassweb', 'Settings')" @click="emit('open-settings')">
+				<NcAppNavigationItem :name="t('keepassweb', 'Settings')" @click="emit('openSettings')">
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiCog" />
 					</template>
@@ -83,24 +83,26 @@
 </template>
 
 <script setup lang="ts">
+import type { KdbxGroup } from 'kdbxweb'
+import type { OpenDatabase } from '@/stores/vault'
+
 import { mdiClose, mdiCog, mdiContentSave, mdiFolderOpenOutline, mdiLock, mdiPlus, mdiShieldKeyOutline } from '@mdi/js'
-import { t } from '@nextcloud/l10n'
+import { ref } from 'vue'
 import NcActionButton from '@nextcloud/vue/components/NcActionButton'
 import NcAppNavigation from '@nextcloud/vue/components/NcAppNavigation'
 import NcAppNavigationCaption from '@nextcloud/vue/components/NcAppNavigationCaption'
 import NcAppNavigationItem from '@nextcloud/vue/components/NcAppNavigationItem'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
-import type { KdbxGroup } from 'kdbxweb'
-import { ref } from 'vue'
-import { type OpenDatabase, useVaultStore } from '@/stores/vault'
 import DatabaseSettingsDialog from './DatabaseSettingsDialog.vue'
 import GroupTreeItem from './GroupTreeItem.vue'
+import { t } from '@/l10n'
+import { useVaultStore } from '@/stores/vault'
 
 const emit = defineEmits<{
-	'open-database': []
-	'new-database': []
-	'open-settings': []
+	openDatabase: []
+	newDatabase: []
+	openSettings: []
 }>()
 
 const vault = useVaultStore()

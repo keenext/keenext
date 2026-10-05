@@ -1,5 +1,7 @@
-import { type Argon2Compute, computeArgon2 } from '@/core/argon2'
+import type { Argon2Compute } from '@/core/argon2'
 import type { Argon2WorkerRequest, Argon2WorkerResponse } from '@/workers/argon2.worker'
+
+import { computeArgon2 } from '@/core/argon2'
 
 /**
  * Argon2 in a dedicated worker so unlocking does not freeze the page. Falls

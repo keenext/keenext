@@ -8,13 +8,13 @@
 			</template>
 			<template #action>
 				<div class="start__actions">
-					<NcButton variant="primary" @click="emit('open-database')">
+					<NcButton variant="primary" @click="emit('openDatabase')">
 						<template #icon>
 							<NcIconSvgWrapper :path="mdiFolderOpenOutline" />
 						</template>
 						{{ t('keepassweb', 'Open database') }}
 					</NcButton>
-					<NcButton @click="emit('new-database')">
+					<NcButton @click="emit('newDatabase')">
 						<template #icon>
 							<NcIconSvgWrapper :path="mdiPlus" />
 						</template>
@@ -42,7 +42,7 @@
 						</template>
 					</template>
 					<template #actions>
-						<NcActionButton close-after-click @click="remove(file.fileId)">
+						<NcActionButton closeAfterClick @click="remove(file.fileId)">
 							<template #icon>
 								<NcIconSvgWrapper :path="mdiClose" />
 							</template>
@@ -58,18 +58,19 @@
 <script setup lang="ts">
 import { mdiClose, mdiFolderOpenOutline, mdiPlus, mdiShieldKeyOutline } from '@mdi/js'
 import { showError } from '@nextcloud/dialogs'
-import { formatRelativeTime, t } from '@nextcloud/l10n'
+import { formatRelativeTime } from '@nextcloud/l10n'
 import NcActionButton from '@nextcloud/vue/components/NcActionButton'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcListItem from '@nextcloud/vue/components/NcListItem'
+import { t } from '@/l10n'
 import { removeRecent } from '@/services/api'
 import { useVaultStore } from '@/stores/vault'
 
 const emit = defineEmits<{
-	'open-database': []
-	'new-database': []
+	openDatabase: []
+	newDatabase: []
 }>()
 
 const vault = useVaultStore()

@@ -2,7 +2,7 @@
 	<NcDialog
 		:name="t('keepassweb', 'New KeePass database')"
 		:buttons="buttons"
-		is-form
+		isForm
 		@submit="submit"
 		@update:open="(open) => open || emit('close')">
 		<div class="new-database">
@@ -17,16 +17,16 @@
 				v-model="password"
 				:label="t('keepassweb', 'Master password')"
 				autocomplete="new-password"
-				:check-password-strength="false" />
+				:checkPasswordStrength="false" />
 			<StrengthMeter v-if="password" :password="password" />
 			<NcPasswordField
 				v-model="repeat"
 				:label="t('keepassweb', 'Repeat master password')"
 				autocomplete="new-password"
-				:check-password-strength="false"
+				:checkPasswordStrength="false"
 				:error="repeat !== '' && repeat !== password"
-				:helper-text="repeat !== '' && repeat !== password ? t('keepassweb', 'Passwords do not match') : ''" />
-			<KeyFileChooser v-model="keyFile" :start-at="folder" />
+				:helperText="repeat !== '' && repeat !== password ? t('keepassweb', 'Passwords do not match') : ''" />
+			<KeyFileChooser v-model="keyFile" :startAt="folder" />
 			<NcNoteCard v-if="error" type="error">
 				{{ error }}
 			</NcNoteCard>
@@ -38,18 +38,20 @@
 </template>
 
 <script setup lang="ts">
-import { t } from '@nextcloud/l10n'
+import type { KeyFileChoice } from '@/services/keyFile'
+
+import { computed, ref } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
 import NcPasswordField from '@nextcloud/vue/components/NcPasswordField'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
-import { computed, ref } from 'vue'
-import { pickFolder } from '@/services/filePicker'
-import { type KeyFileChoice, resolveKeyFile } from '@/services/keyFile'
-import { useVaultStore } from '@/stores/vault'
 import KeyFileChooser from './KeyFileChooser.vue'
 import StrengthMeter from './StrengthMeter.vue'
+import { t } from '@/l10n'
+import { pickFolder } from '@/services/filePicker'
+import { resolveKeyFile } from '@/services/keyFile'
+import { useVaultStore } from '@/stores/vault'
 
 const props = defineProps<{
 	directory: string

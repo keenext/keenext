@@ -1,4 +1,6 @@
-import { type Kdbx, type KdbxBinary, type KdbxBinaryWithHash, type KdbxEntry, type KdbxEntryField, type KdbxGroup, ProtectedValue } from 'kdbxweb'
+import type { Kdbx, KdbxBinary, KdbxBinaryWithHash, KdbxEntry, KdbxEntryField, KdbxGroup } from 'kdbxweb'
+
+import { ProtectedValue } from 'kdbxweb'
 
 export const StandardField = {
 	Title: 'Title',
@@ -115,12 +117,12 @@ function sameBinary(a: Attachment['value'], b: Attachment['value']): boolean {
 function protectionFor(db: Kdbx, key: string): boolean {
 	const protection = db.meta.memoryProtection
 	switch (key) {
-	case StandardField.Title: return protection.title ?? false
-	case StandardField.UserName: return protection.userName ?? false
-	case StandardField.Password: return protection.password ?? true
-	case StandardField.URL: return protection.url ?? false
-	case StandardField.Notes: return protection.notes ?? false
-	default: return false
+		case StandardField.Title: return protection.title ?? false
+		case StandardField.UserName: return protection.userName ?? false
+		case StandardField.Password: return protection.password ?? true
+		case StandardField.URL: return protection.url ?? false
+		case StandardField.Notes: return protection.notes ?? false
+		default: return false
 	}
 }
 

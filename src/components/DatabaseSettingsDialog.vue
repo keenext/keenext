@@ -24,8 +24,8 @@
 			<NcSelect
 				v-model="form.cipher"
 				:options="['aes', 'chacha20']"
-				:get-option-label="(option: string) => option === 'aes' ? 'AES-256' : 'ChaCha20'"
-				:input-label="t('keepassweb', 'Encryption algorithm')"
+				:getOptionLabel="(option: string) => option === 'aes' ? 'AES-256' : 'ChaCha20'"
+				:inputLabel="t('keepassweb', 'Encryption algorithm')"
 				:clearable="false" />
 			<template v-if="form.kdf.type === 'aes'">
 				<p>{{ t('keepassweb', 'Key derivation: AES-KDF with {rounds} rounds', { rounds: form.kdf.rounds.toLocaleString() }) }}</p>
@@ -37,8 +37,8 @@
 				<NcSelect
 					v-model="form.kdf.type"
 					:options="['argon2id', 'argon2d']"
-					:get-option-label="(option: string) => option === 'argon2id' ? 'Argon2id' : 'Argon2d'"
-					:input-label="t('keepassweb', 'Key derivation function')"
+					:getOptionLabel="(option: string) => option === 'argon2id' ? 'Argon2id' : 'Argon2d'"
+					:inputLabel="t('keepassweb', 'Key derivation function')"
 					:clearable="false" />
 				<div class="database-settings__row">
 					<NcTextField v-model="kdfIterations" type="number" :label="t('keepassweb', 'Iterations')" />
@@ -55,15 +55,19 @@
 				{{ t('keepassweb', 'Change password or key file') }}
 			</NcCheckboxRadioSwitch>
 			<template v-if="changeKey">
-				<NcPasswordField v-model="newPassword" :label="t('keepassweb', 'New master password')" autocomplete="new-password" :check-password-strength="false" />
+				<NcPasswordField
+					v-model="newPassword"
+					:label="t('keepassweb', 'New master password')"
+					autocomplete="new-password"
+					:checkPasswordStrength="false" />
 				<StrengthMeter v-if="newPassword" :password="newPassword" />
 				<NcPasswordField
 					v-model="repeatPassword"
 					:label="t('keepassweb', 'Repeat new master password')"
 					autocomplete="new-password"
-					:check-password-strength="false"
+					:checkPasswordStrength="false"
 					:error="repeatPassword !== '' && repeatPassword !== newPassword" />
-				<KeyFileChooser v-model="newKeyFile" :start-at="database.path.slice(0, database.path.lastIndexOf('/')) || '/'" />
+				<KeyFileChooser v-model="newKeyFile" :startAt="database.path.slice(0, database.path.lastIndexOf('/')) || '/'" />
 			</template>
 
 			<NcNoteCard v-if="error" type="error">
@@ -74,7 +78,11 @@
 </template>
 
 <script setup lang="ts">
-import { t } from '@nextcloud/l10n'
+import type { DatabaseSettings } from '@/core/database'
+import type { KeyFileChoice } from '@/services/keyFile'
+import type { OpenDatabase } from '@/stores/vault'
+
+import { computed, ref } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
@@ -83,12 +91,12 @@ import NcPasswordField from '@nextcloud/vue/components/NcPasswordField'
 import NcSelect from '@nextcloud/vue/components/NcSelect'
 import NcTextArea from '@nextcloud/vue/components/NcTextArea'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
-import { computed, ref } from 'vue'
-import { applyDatabaseSettings, type DatabaseSettings, DEFAULT_KDF, getDatabaseSettings, prepareCredentials, setCredentials } from '@/core/database'
-import { type KeyFileChoice, resolveKeyFile } from '@/services/keyFile'
-import { type OpenDatabase, useVaultStore } from '@/stores/vault'
 import KeyFileChooser from './KeyFileChooser.vue'
 import StrengthMeter from './StrengthMeter.vue'
+import { applyDatabaseSettings, DEFAULT_KDF, getDatabaseSettings, prepareCredentials, setCredentials } from '@/core/database'
+import { t } from '@/l10n'
+import { resolveKeyFile } from '@/services/keyFile'
+import { useVaultStore } from '@/stores/vault'
 
 const props = defineProps<{
 	database: OpenDatabase
@@ -121,12 +129,22 @@ function numberField(get: () => number, set: (value: number) => void, scale = 1)
 	})
 }
 
-const historyItems = numberField(() => form.value!.historyMaxItems, (value) => { form.value!.historyMaxItems = value })
-const historySizeMiB = numberField(() => form.value!.historyMaxSize, (value) => { form.value!.historyMaxSize = value }, MiB)
+const historyItems = numberField(() => form.value!.historyMaxItems, (value) => {
+	form.value!.historyMaxItems = value
+})
+const historySizeMiB = numberField(() => form.value!.historyMaxSize, (value) => {
+	form.value!.historyMaxSize = value
+}, MiB)
 const argon = () => form.value!.kdf as Exclude<DatabaseSettings['kdf'], { type: 'aes' }>
-const kdfIterations = numberField(() => argon().iterations, (value) => { argon().iterations = Math.max(1, value) })
-const kdfMemoryMiB = numberField(() => argon().memory, (value) => { argon().memory = Math.max(1, value) * MiB }, MiB)
-const kdfParallelism = numberField(() => argon().parallelism, (value) => { argon().parallelism = Math.max(1, value) })
+const kdfIterations = numberField(() => argon().iterations, (value) => {
+	argon().iterations = Math.max(1, value)
+})
+const kdfMemoryMiB = numberField(() => argon().memory, (value) => {
+	argon().memory = Math.max(1, value) * MiB
+}, MiB)
+const kdfParallelism = numberField(() => argon().parallelism, (value) => {
+	argon().parallelism = Math.max(1, value)
+})
 
 function switchToArgon2(): void {
 	form.value!.kdf = { ...DEFAULT_KDF }

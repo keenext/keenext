@@ -7,8 +7,13 @@
 			<span v-if="$slots.default" class="field-row__text">
 				<slot />
 			</span>
-			<a v-else-if="link && value" :href="value" target="_blank" rel="noopener noreferrer" class="field-row__text">{{ value }}</a>
-			<span v-else :class="['field-row__text', { 'field-row__text--secret': secret && !revealed, 'field-row__text--multiline': multiline }]">{{ displayed }}</span>
+			<a
+				v-else-if="link && href"
+				:href="href"
+				target="_blank"
+				rel="noopener noreferrer"
+				class="field-row__text">{{ value }}</a>
+			<span v-else class="field-row__text" :class="[{ 'field-row__text--secret': secret && !revealed, 'field-row__text--multiline': multiline }]">{{ displayed }}</span>
 			<span class="field-row__actions">
 				<NcButton
 					v-if="secret && value"
@@ -37,10 +42,11 @@
 
 <script setup lang="ts">
 import { mdiContentCopy, mdiEye, mdiEyeOff } from '@mdi/js'
-import { t } from '@nextcloud/l10n'
+import { computed, ref } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
-import { computed, ref } from 'vue'
+import { openableUrl } from '@/core/urls'
+import { t } from '@/l10n'
 
 const props = defineProps<{
 	label: string
@@ -55,6 +61,8 @@ const emit = defineEmits<{
 }>()
 
 const revealed = ref(false)
+/** Only safe schemes become links; anything else is shown as text. */
+const href = computed(() => props.link ? openableUrl(props.value) : undefined)
 const displayed = computed(() => props.secret && !revealed.value && props.value ? '••••••••••••' : props.value)
 </script>
 

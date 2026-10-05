@@ -1,5 +1,6 @@
 import type { Kdbx, KdbxEntry } from 'kdbxweb'
-import { getField, StandardField } from './entries'
+
+import { getField, StandardField } from './entries.ts'
 
 const MAX_DEPTH = 10
 

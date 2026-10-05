@@ -1,10 +1,10 @@
 import { beforeAll, describe, expect, it } from 'vitest'
+import { entryByTitle } from '../helpers/databases.ts'
+import { exportXml, fixture, fixturesDir, hasKeepassxc, keepassxc, writeTemp } from '../helpers/keepassxc.ts'
 import { installArgon2 } from '@/core/crypto'
 import { createCredentials, openDatabase, saveDatabase } from '@/core/database'
 import { applyDraft, attachFile, createEntry, deleteEntry, draftFromEntry, emptyDraft } from '@/core/entries'
 import { createGroup } from '@/core/groups'
-import { entryByTitle } from '../helpers/databases'
-import { exportXml, fixture, fixturesDir, hasKeepassxc, keepassxc, writeTemp } from '../helpers/keepassxc'
 
 const password = 'test'
 const keyFilePath = `${fixturesDir}keepassxc-keyfile.keyx`

@@ -2,13 +2,14 @@
 	<div class="entry-list">
 		<div class="entry-list__header">
 			<NcTextField
-				v-model="database.query"
+				:modelValue="database.query"
 				class="entry-list__search"
 				:label="t('keepassweb', 'Search')"
 				:placeholder="t('keepassweb', 'Search (e.g. github -user:old tag:work)')"
-				trailing-button-icon="close"
-				:show-trailing-button="database.query !== ''"
-				@trailing-button-click="database.query = ''">
+				trailingButtonIcon="close"
+				:showTrailingButton="database.query !== ''"
+				@update:modelValue="(value: string | number) => vault.search(database.id, String(value))"
+				@trailingButtonClick="vault.search(database.id, '')">
 				<template #icon>
 					<NcIconSvgWrapper :path="mdiMagnify" :size="20" />
 				</template>
@@ -18,7 +19,7 @@
 				:title="t('keepassweb', 'New entry (Ctrl+N)')"
 				:disabled="!canCreate"
 				variant="primary"
-				@click="emit('create-entry')">
+				@click="emit('createEntry')">
 				<template #icon>
 					<NcIconSvgWrapper :path="mdiPlus" />
 				</template>
@@ -38,28 +39,36 @@
 				:class="{ 'entry-list__item--expired': row.expired }"
 				:details="row.groupName"
 				compact
-				@click="database.selectedEntry = row.id">
+				@click="vault.select(database.id, { entry: row.id })">
 				<template #icon>
-					<img v-if="row.customIcon" :src="row.customIcon" alt="" class="entry-list__custom-icon">
+					<img
+						v-if="row.customIcon"
+						:src="row.customIcon"
+						alt=""
+						class="entry-list__custom-icon">
 					<NcIconSvgWrapper v-else :path="row.icon" :size="24" />
 				</template>
 				<template #subname>
 					{{ row.username }}
 				</template>
 				<template #actions>
-					<NcActionButton v-if="row.username" close-after-click @click="copy(row.id, 'UserName')">
+					<NcActionButton v-if="row.username" closeAfterClick @click="copy(row.id, 'UserName')">
 						<template #icon>
 							<NcIconSvgWrapper :path="mdiAccount" />
 						</template>
 						{{ t('keepassweb', 'Copy username') }}
 					</NcActionButton>
-					<NcActionButton close-after-click @click="copy(row.id, 'Password')">
+					<NcActionButton closeAfterClick @click="copy(row.id, 'Password')">
 						<template #icon>
 							<NcIconSvgWrapper :path="mdiKey" />
 						</template>
 						{{ t('keepassweb', 'Copy password') }}
 					</NcActionButton>
-					<NcActionLink v-if="row.url" :href="row.url" target="_blank" close-after-click>
+					<NcActionLink
+						v-if="row.href"
+						:href="row.href"
+						target="_blank"
+						closeAfterClick>
 						<template #icon>
 							<NcIconSvgWrapper :path="mdiOpenInNew" />
 						</template>
@@ -79,9 +88,12 @@
 </template>
 
 <script setup lang="ts">
+import type { KdbxEntry } from 'kdbxweb'
+import type { OpenDatabase } from '@/stores/vault'
+
 import { mdiAccount, mdiKey, mdiKeyOutline, mdiMagnify, mdiOpenInNew, mdiPlus } from '@mdi/js'
 import { showSuccess } from '@nextcloud/dialogs'
-import { t } from '@nextcloud/l10n'
+import { computed } from 'vue'
 import NcActionButton from '@nextcloud/vue/components/NcActionButton'
 import NcActionLink from '@nextcloud/vue/components/NcActionLink'
 import NcButton from '@nextcloud/vue/components/NcButton'
@@ -89,26 +101,27 @@ import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcListItem from '@nextcloud/vue/components/NcListItem'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
-import type { KdbxEntry } from 'kdbxweb'
-import { computed } from 'vue'
 import { findEntry, findGroup, useDatabaseView } from '@/composables/useDatabase'
 import { getField, isExpired, isInRecycleBin, StandardField } from '@/core/entries'
 import { resolvedField } from '@/core/placeholders'
 import { searchEntries } from '@/core/search'
+import { openableUrl } from '@/core/urls'
+import { t } from '@/l10n'
 import { copySecret } from '@/services/clipboard'
 import { customIconUrl, standardIconPath } from '@/services/icons'
 import { useSettingsStore } from '@/stores/settings'
-import type { OpenDatabase } from '@/stores/vault'
+import { useVaultStore } from '@/stores/vault'
 
 const props = defineProps<{
 	database: OpenDatabase
 }>()
 
 const emit = defineEmits<{
-	'create-entry': []
+	createEntry: []
 }>()
 
 const settingsStore = useSettingsStore()
+const vault = useVaultStore()
 const view = useDatabaseView(() => props.database)
 
 const group = computed(() => view.value ? findGroup(view.value.db, props.database.selectedGroup) ?? view.value.db.getDefaultGroup() : undefined)
@@ -136,7 +149,7 @@ const rows = computed(() => {
 			id: entry.uuid.id,
 			title: getField(entry, StandardField.Title) || t('keepassweb', '(no title)'),
 			username: resolvedField(db, entry, StandardField.UserName),
-			url: resolvedField(db, entry, StandardField.URL),
+			href: openableUrl(resolvedField(db, entry, StandardField.URL)),
 			expired: isExpired(entry),
 			groupName: searching ? entry.parentGroup?.name ?? '' : '',
 			icon: standardIconPath(entry.icon),

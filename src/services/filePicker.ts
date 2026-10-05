@@ -1,6 +1,8 @@
+import type { INode } from '@nextcloud/files'
+
 import { FilePickerClosed, getFilePickerBuilder } from '@nextcloud/dialogs'
-import { FileType, type INode } from '@nextcloud/files'
-import { t } from '@nextcloud/l10n'
+import { FileType } from '@nextcloud/files'
+import { t } from '@/l10n'
 
 export interface PickedFile {
 	fileId: number

@@ -15,7 +15,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "vue-tsc --noEmit",
-    "lint": "eslint src tests"
+    "lint": "eslint src tests",
+    "lint:fix": "eslint src tests --fix",
+    "test:e2e": "playwright test -c tests/e2e/playwright.config.ts"
   },
   "browserslist": [
     "extends @nextcloud/browserslist-config"

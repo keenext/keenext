@@ -1,18 +1,18 @@
 <template>
-	<NcContent app-name="keepassweb">
+	<NcContent appName="keepassweb">
 		<AppNavigation
-			@open-database="openFromPicker"
-			@new-database="newDatabaseDirectory = '/'"
-			@open-settings="settingsOpen = true" />
+			@openDatabase="openFromPicker"
+			@newDatabase="newDatabaseDirectory = '/'"
+			@openSettings="settingsOpen = true" />
 
 		<NcAppContent
 			v-if="vault.active?.session"
-			:show-details="vault.active.selectedEntry !== null || creatingEntry"
+			:showDetails="vault.active.selectedEntry !== null || creatingEntry"
 			layout="vertical-split"
-			:page-heading="vault.active.name"
-			@update:show-details="(show: unknown) => onShowDetails(Boolean(show))">
+			:pageHeading="vault.active.name"
+			@update:showDetails="(show: unknown) => onShowDetails(Boolean(show))">
 			<template #list>
-				<EntryList :database="vault.active" @create-entry="creatingEntry = true" />
+				<EntryList :database="vault.active" @createEntry="creatingEntry = true" />
 			</template>
 			<EntryDetails
 				v-if="vault.active.selectedEntry !== null || creatingEntry"
@@ -22,12 +22,12 @@
 				@done="creatingEntry = false" />
 		</NcAppContent>
 
-		<NcAppContent v-else-if="vault.active" :page-heading="vault.active.name">
+		<NcAppContent v-else-if="vault.active" :pageHeading="vault.active.name">
 			<UnlockView :key="vault.active.id" :database="vault.active" />
 		</NcAppContent>
 
-		<NcAppContent v-else :page-heading="t('keepassweb', 'KeePass')">
-			<StartView @open-database="openFromPicker" @new-database="newDatabaseDirectory = '/'" />
+		<NcAppContent v-else :pageHeading="t('keepassweb', 'KeePass')">
+			<StartView @openDatabase="openFromPicker" @newDatabase="newDatabaseDirectory = '/'" />
 		</NcAppContent>
 
 		<NewDatabaseDialog
@@ -40,10 +40,9 @@
 
 <script setup lang="ts">
 import { showError } from '@nextcloud/dialogs'
-import { t } from '@nextcloud/l10n'
+import { onMounted, ref, watch } from 'vue'
 import NcAppContent from '@nextcloud/vue/components/NcAppContent'
 import NcContent from '@nextcloud/vue/components/NcContent'
-import { onMounted, ref, watch } from 'vue'
 import AppNavigation from './components/AppNavigation.vue'
 import EntryDetails from './components/EntryDetails.vue'
 import EntryList from './components/EntryList.vue'
@@ -51,10 +50,11 @@ import NewDatabaseDialog from './components/NewDatabaseDialog.vue'
 import SettingsDialog from './components/SettingsDialog.vue'
 import StartView from './components/StartView.vue'
 import UnlockView from './components/UnlockView.vue'
-import { useKeyboardShortcuts } from './composables/useKeyboardShortcuts'
-import { useLifecycle } from './composables/useLifecycle'
-import { pickDatabase } from './services/filePicker'
-import { useVaultStore } from './stores/vault'
+import { useKeyboardShortcuts } from './composables/useKeyboardShortcuts.ts'
+import { useLifecycle } from './composables/useLifecycle.ts'
+import { pickDatabase } from './services/filePicker.ts'
+import { useVaultStore } from './stores/vault.ts'
+import { t } from '@/l10n'
 
 const vault = useVaultStore()
 const settingsOpen = ref(false)
@@ -62,7 +62,11 @@ const newDatabaseDirectory = ref<string | null>(null)
 const creatingEntry = ref(false)
 
 useLifecycle()
-useKeyboardShortcuts({ newEntry: () => { creatingEntry.value = true } })
+useKeyboardShortcuts({
+	newEntry: () => {
+		creatingEntry.value = true
+	},
+})
 
 async function open(fileId: number): Promise<void> {
 	try {

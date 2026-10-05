@@ -23,19 +23,24 @@
 				</template>
 				{{ t('keepassweb', 'Key file from this device') }}
 			</NcButton>
-			<input ref="input" type="file" hidden @change="chooseLocal">
+			<input
+				ref="input"
+				type="file"
+				hidden
+				@change="chooseLocal">
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
+import type { KeyFileChoice } from '@/services/keyFile'
+
 import { mdiClose, mdiCloudOutline, mdiFileKey, mdiUpload } from '@mdi/js'
-import { t } from '@nextcloud/l10n'
+import { ref } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
-import { ref } from 'vue'
+import { t } from '@/l10n'
 import { pickKeyFile } from '@/services/filePicker'
-import type { KeyFileChoice } from '@/services/keyFile'
 
 const props = defineProps<{
 	modelValue: KeyFileChoice | null

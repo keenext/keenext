@@ -1,7 +1,8 @@
 import type { Kdbx, KdbxEntry, KdbxGroup } from 'kdbxweb'
-import { getField, isExpired, isStandardField, StandardField } from './entries'
-import { isSearchable } from './groups'
-import { uuidToHex } from './placeholders'
+
+import { getField, isExpired, isStandardField, StandardField } from './entries.ts'
+import { isSearchable } from './groups.ts'
+import { uuidToHex } from './placeholders.ts'
 
 /**
  * KeePassXC search syntax:
@@ -85,25 +86,25 @@ function escapeRegExp(value: string): string {
 
 function candidates(entry: KdbxEntry, field: SearchField): string[] {
 	switch (field) {
-	case 'default':
-		return [
-			getField(entry, StandardField.Title),
-			getField(entry, StandardField.UserName),
-			getField(entry, StandardField.URL),
-			getField(entry, StandardField.Notes),
-			...entry.tags,
-		]
-	case 'title': return [getField(entry, StandardField.Title)]
-	case 'username': return [getField(entry, StandardField.UserName)]
-	case 'password': return [getField(entry, StandardField.Password)]
-	case 'url': return [getField(entry, StandardField.URL)]
-	case 'notes': return [getField(entry, StandardField.Notes)]
-	case 'attr': return [...entry.fields.keys()].filter((key) => !isStandardField(key)).flatMap((key) => [key, getField(entry, key)])
-	case 'attach': return [...entry.binaries.keys()]
-	case 'group': return [entry.parentGroup?.name ?? '']
-	case 'tag': return entry.tags
-	case 'uuid': return [entry.uuid.id, uuidToHex(entry)]
-	case 'is': return []
+		case 'default':
+			return [
+				getField(entry, StandardField.Title),
+				getField(entry, StandardField.UserName),
+				getField(entry, StandardField.URL),
+				getField(entry, StandardField.Notes),
+				...entry.tags,
+			]
+		case 'title': return [getField(entry, StandardField.Title)]
+		case 'username': return [getField(entry, StandardField.UserName)]
+		case 'password': return [getField(entry, StandardField.Password)]
+		case 'url': return [getField(entry, StandardField.URL)]
+		case 'notes': return [getField(entry, StandardField.Notes)]
+		case 'attr': return [...entry.fields.keys()].filter((key) => !isStandardField(key)).flatMap((key) => [key, getField(entry, key)])
+		case 'attach': return [...entry.binaries.keys()]
+		case 'group': return [entry.parentGroup?.name ?? '']
+		case 'tag': return entry.tags
+		case 'uuid': return [entry.uuid.id, uuidToHex(entry)]
+		case 'is': return []
 	}
 }
 

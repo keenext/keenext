@@ -128,10 +128,10 @@ export function loadWordlist(): Promise<string[]> {
 
 function applyCase(word: string, wordCase: WordCase): string {
 	switch (wordCase) {
-	case 'upper': return word.toUpperCase()
-	case 'title': return word.charAt(0).toUpperCase() + word.slice(1)
-	case 'mixed': return randomInt(2) === 0 ? word : word.toUpperCase()
-	default: return word
+		case 'upper': return word.toUpperCase()
+		case 'title': return word.charAt(0).toUpperCase() + word.slice(1)
+		case 'mixed': return randomInt(2) === 0 ? word : word.toUpperCase()
+		default: return word
 	}
 }
 
@@ -157,11 +157,8 @@ export function estimateStrength(password: string): { bits: number, level: Stren
 	if (password.length === 0) {
 		return { bits: 0, level: 'poor' }
 	}
-	let pool = 0
-	if (/[a-z]/.test(password)) pool += 26
-	if (/[A-Z]/.test(password)) pool += 26
-	if (/[0-9]/.test(password)) pool += 10
-	if (/[^a-zA-Z0-9]/.test(password)) pool += 33
+	const classes: [RegExp, number][] = [[/[a-z]/, 26], [/[A-Z]/, 26], [/[0-9]/, 10], [/[^a-zA-Z0-9]/, 33]]
+	const pool = classes.reduce((size, [pattern, count]) => pattern.test(password) ? size + count : size, 0)
 
 	let effectiveLength = 0
 	const chars = [...password]

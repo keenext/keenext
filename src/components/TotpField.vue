@@ -12,11 +12,13 @@
 </template>
 
 <script setup lang="ts">
-import { t } from '@nextcloud/l10n'
-import NcProgressBar from '@nextcloud/vue/components/NcProgressBar'
+import type { TotpConfig } from '@/core/totp'
+
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import { totpCode, type TotpConfig, totpRemaining } from '@/core/totp'
+import NcProgressBar from '@nextcloud/vue/components/NcProgressBar'
 import FieldRow from './FieldRow.vue'
+import { totpCode, totpRemaining } from '@/core/totp'
+import { t } from '@/l10n'
 
 const props = defineProps<{
 	config: TotpConfig

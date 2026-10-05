@@ -2,36 +2,36 @@
 	<NcAppSettingsDialog
 		:open="open"
 		:name="t('keepassweb', 'KeePass Web settings')"
-		show-navigation
+		showNavigation
 		@update:open="(value) => emit('update:open', value)">
 		<NcAppSettingsSection id="security" :name="t('keepassweb', 'Security')">
 			<NcTextField
-				:model-value="String(settings.lockAfterMinutes)"
+				:modelValue="String(settings.lockAfterMinutes)"
 				type="number"
 				:label="t('keepassweb', 'Lock databases after inactivity (minutes, 0 = never)')"
-				@update:model-value="(value) => updateLater({ lockAfterMinutes: toInt(value) })" />
-			<NcCheckboxRadioSwitch :model-value="settings.lockOnHide" @update:model-value="(value: boolean) => update({ lockOnHide: value })">
+				@update:modelValue="(value) => updateLater({ lockAfterMinutes: toInt(value) })" />
+			<NcCheckboxRadioSwitch :modelValue="settings.lockOnHide" @update:modelValue="(value: boolean) => update({ lockOnHide: value })">
 				{{ t('keepassweb', 'Lock databases when the tab is hidden') }}
 			</NcCheckboxRadioSwitch>
 			<NcTextField
-				:model-value="String(settings.clipboardClearSeconds)"
+				:modelValue="String(settings.clipboardClearSeconds)"
 				type="number"
 				:label="t('keepassweb', 'Clear clipboard after (seconds, 0 = never)')"
-				@update:model-value="(value) => updateLater({ clipboardClearSeconds: toInt(value) })" />
-			<NcCheckboxRadioSwitch :model-value="settings.rememberKeyFile" @update:model-value="(value: boolean) => update({ rememberKeyFile: value })">
+				@update:modelValue="(value) => updateLater({ clipboardClearSeconds: toInt(value) })" />
+			<NcCheckboxRadioSwitch :modelValue="settings.rememberKeyFile" @update:modelValue="(value: boolean) => update({ rememberKeyFile: value })">
 				{{ t('keepassweb', 'Remember which key file belongs to a database') }}
 			</NcCheckboxRadioSwitch>
 		</NcAppSettingsSection>
 
 		<NcAppSettingsSection id="saving" :name="t('keepassweb', 'Saving')">
-			<NcCheckboxRadioSwitch :model-value="settings.autosave" @update:model-value="(value: boolean) => update({ autosave: value })">
+			<NcCheckboxRadioSwitch :modelValue="settings.autosave" @update:modelValue="(value: boolean) => update({ autosave: value })">
 				{{ t('keepassweb', 'Save automatically after every change') }}
 			</NcCheckboxRadioSwitch>
 			<NcTextField
-				:model-value="String(settings.syncIntervalSeconds)"
+				:modelValue="String(settings.syncIntervalSeconds)"
 				type="number"
 				:label="t('keepassweb', 'Check for changes made elsewhere every (seconds, 0 = never)')"
-				@update:model-value="(value) => updateLater({ syncIntervalSeconds: toInt(value) })" />
+				@update:modelValue="(value) => updateLater({ syncIntervalSeconds: toInt(value) })" />
 		</NcAppSettingsSection>
 
 		<NcAppSettingsSection id="shortcuts" :name="t('keepassweb', 'Keyboard shortcuts')">
@@ -50,14 +50,15 @@
 </template>
 
 <script setup lang="ts">
+import type { Settings } from '@/services/api'
+
 import { showError } from '@nextcloud/dialogs'
-import { t } from '@nextcloud/l10n'
+import { storeToRefs } from 'pinia'
 import NcAppSettingsDialog from '@nextcloud/vue/components/NcAppSettingsDialog'
 import NcAppSettingsSection from '@nextcloud/vue/components/NcAppSettingsSection'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
-import { storeToRefs } from 'pinia'
-import type { Settings } from '@/services/api'
+import { t } from '@/l10n'
 import { useSettingsStore } from '@/stores/settings'
 
 defineProps<{

@@ -49,14 +49,14 @@ export async function openDatabase(data: ArrayBuffer | Uint8Array, credentials: 
 function classifyOpenError(error: unknown): DatabaseOpenError {
 	if (error instanceof KdbxError) {
 		switch (error.code) {
-		case Consts.ErrorCodes.InvalidKey:
-			return new DatabaseOpenError('invalid-key', 'Wrong password or key file', { cause: error })
-		case Consts.ErrorCodes.BadSignature:
-		case Consts.ErrorCodes.FileCorrupt:
-			return new DatabaseOpenError('corrupt', `Not a valid KeePass database: ${error.message}`, { cause: error })
-		case Consts.ErrorCodes.InvalidVersion:
-		case Consts.ErrorCodes.Unsupported:
-			return new DatabaseOpenError('unsupported', `Unsupported database format: ${error.message}`, { cause: error })
+			case Consts.ErrorCodes.InvalidKey:
+				return new DatabaseOpenError('invalid-key', 'Wrong password or key file', { cause: error })
+			case Consts.ErrorCodes.BadSignature:
+			case Consts.ErrorCodes.FileCorrupt:
+				return new DatabaseOpenError('corrupt', `Not a valid KeePass database: ${error.message}`, { cause: error })
+			case Consts.ErrorCodes.InvalidVersion:
+			case Consts.ErrorCodes.Unsupported:
+				return new DatabaseOpenError('unsupported', `Unsupported database format: ${error.message}`, { cause: error })
 		}
 	}
 	const message = error instanceof Error ? error.message : String(error)
@@ -169,12 +169,25 @@ export function getDatabaseSettings(db: Kdbx): DatabaseSettings {
  */
 export function applyDatabaseSettings(db: Kdbx, settings: DatabaseSettings): void {
 	const current = getDatabaseSettings(db)
-	if (settings.name !== current.name) db.meta.name = settings.name
-	if (settings.description !== current.description) db.meta.desc = settings.description
-	if (settings.defaultUser !== current.defaultUser) db.meta.defaultUser = settings.defaultUser
-	if (settings.recycleBinEnabled !== current.recycleBinEnabled) db.meta.recycleBinEnabled = settings.recycleBinEnabled
-	if (settings.historyMaxItems !== current.historyMaxItems) db.meta.historyMaxItems = settings.historyMaxItems
-	if (settings.historyMaxSize !== current.historyMaxSize) db.meta.historyMaxSize = settings.historyMaxSize
+	// Only touch changed values: kdbxweb stamps every assignment with a change date used when merging.
+	if (settings.name !== current.name) {
+		db.meta.name = settings.name
+	}
+	if (settings.description !== current.description) {
+		db.meta.desc = settings.description
+	}
+	if (settings.defaultUser !== current.defaultUser) {
+		db.meta.defaultUser = settings.defaultUser
+	}
+	if (settings.recycleBinEnabled !== current.recycleBinEnabled) {
+		db.meta.recycleBinEnabled = settings.recycleBinEnabled
+	}
+	if (settings.historyMaxItems !== current.historyMaxItems) {
+		db.meta.historyMaxItems = settings.historyMaxItems
+	}
+	if (settings.historyMaxSize !== current.historyMaxSize) {
+		db.meta.historyMaxSize = settings.historyMaxSize
+	}
 	if (settings.cipher !== current.cipher) {
 		db.header.dataCipherUuid = new KdbxUuid(settings.cipher === 'chacha20' ? Consts.CipherId.ChaCha20 : Consts.CipherId.Aes)
 	}

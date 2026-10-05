@@ -1,11 +1,13 @@
+import type { INode } from '@nextcloud/files'
+
 /**
  * Loaded into the Files app (see LoadFilesIntegration.php). Keep it small: it
  * runs on every Files page load.
  */
 import { mdiShieldKeyOutline } from '@mdi/js'
-import { addNewFileMenuEntry, DefaultType, type INode, NewMenuEntryCategory, Permission, registerFileAction } from '@nextcloud/files'
-import { t } from '@nextcloud/l10n'
+import { addNewFileMenuEntry, DefaultType, NewMenuEntryCategory, Permission, registerFileAction } from '@nextcloud/files'
 import { generateUrl } from '@nextcloud/router'
+import { t } from '@/l10n'
 
 const KDBX_MIME = 'application/x-kdbx'
 const icon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="${mdiShieldKeyOutline}"/></svg>`
