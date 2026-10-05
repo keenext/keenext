@@ -1,0 +1,54 @@
+{
+  "name": "keepassweb",
+  "version": "0.1.0",
+  "private": true,
+  "description": "KeePass (KDBX) password databases in Nextcloud",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "engines": {
+    "node": "^24.0.0"
+  },
+  "scripts": {
+    "build": "vite build --mode production",
+    "dev": "vite build --mode development",
+    "watch": "vite build --mode development --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "vue-tsc --noEmit",
+    "lint": "eslint src tests"
+  },
+  "browserslist": [
+    "extends @nextcloud/browserslist-config"
+  ],
+  "dependencies": {
+    "@nextcloud/auth": "^2.6.0",
+    "@nextcloud/axios": "^2.6.0",
+    "@nextcloud/dialogs": "^7.5.0",
+    "@nextcloud/event-bus": "^3.3.3",
+    "@nextcloud/files": "^4.1.0",
+    "@nextcloud/initial-state": "^3.0.0",
+    "@nextcloud/l10n": "^3.4.1",
+    "@nextcloud/paths": "^3.1.0",
+    "@nextcloud/router": "^3.2.0",
+    "@nextcloud/vue": "^9.13.1",
+    "hash-wasm": "^4.12.0",
+    "kdbxweb": "^2.1.1",
+    "pinia": "^3.0.4",
+    "vue": "^3.5.43"
+  },
+  "devDependencies": {
+    "@nextcloud/browserslist-config": "^3.1.2",
+    "@nextcloud/eslint-config": "^9.0.1",
+    "@nextcloud/vite-config": "^2.5.4",
+    "@types/node": "^24.19.1",
+    "@vue/test-utils": "^2.5.1",
+    "browserslist": "^4.29.3",
+    "eslint": "^10.12.0",
+    "happy-dom": "^20.14.5",
+    "sass": "^1.105.1",
+    "typescript": "~5.9.3",
+    "vite": "^7.3.6",
+    "vitest": "^4.1.11",
+    "vue-tsc": "^3.3.12"
+  }
+}

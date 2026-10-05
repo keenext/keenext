@@ -1,0 +1,12 @@
+/node_modules/
+/js/
+/css/
+/vendor/
+/build/
+/.php-cs-fixer.cache
+/.phpunit.cache/
+/tests/.tmp/
+/docker/data/
+/test-results/
+/playwright-report/
+.DS_Store
