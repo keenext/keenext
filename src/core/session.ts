@@ -68,17 +68,13 @@ export class DatabaseSession {
 		return this.revision !== this.savedRevision
 	}
 
-	get version(): string {
-		return this.etag
-	}
-
 	markChanged(): void {
 		this.revision++
 	}
 
-	/** Writes local changes; on conflict pulls, merges and retries. */
+	/** Writes local changes, if any; on conflict pulls, merges and retries. */
 	save(): Promise<SyncResult> {
-		return this.serialize(() => this.push())
+		return this.serialize(async () => this.dirty ? this.push() : { pulled: false, pushed: false })
 	}
 
 	/**
@@ -110,9 +106,9 @@ export class DatabaseSession {
 		let pulled = false
 		for (let attempt = 0; attempt <= MAX_CONFLICT_RETRIES; attempt++) {
 			const revision = this.revision
+			const credentials = this.db.credentials
 			const data = await saveDatabase(this.db)
 			try {
-				const credentials = this.db.credentials
 				const { etag } = await this.storage.write(data, this.etag)
 				this.etag = etag
 				this.storedCredentials = credentials

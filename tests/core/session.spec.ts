@@ -115,13 +115,13 @@ describe('DatabaseSession', () => {
 		expect(storage.writes).toBe(0)
 	})
 
-	it('serialises concurrent saves', async () => {
+	it('serialises concurrent saves and skips those with nothing left to write', async () => {
 		const { storage, session } = await setup()
 		createEntry(session.db, session.db.getDefaultGroup(), emptyDraft())
 		session.markChanged()
 		const results = await Promise.all([session.save(), session.save(), session.save()])
-		expect(results.every((result) => result.pushed)).toBe(true)
-		expect(storage.writes).toBe(3)
+		expect(results.map((result) => result.pushed)).toEqual([true, false, false])
+		expect(storage.writes).toBe(1)
 		expect(session.dirty).toBe(false)
 	})
 

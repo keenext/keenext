@@ -169,6 +169,6 @@ export function estimateStrength(password: string): { bits: number, level: Stren
 		effectiveLength += isRepeat || isSequence ? 0.25 : 1
 	})
 	const bits = Math.round(effectiveLength * Math.log2(pool))
-	const level: StrengthLevel = bits < 40 ? 'poor' : bits < 65 ? 'weak' : bits < 100 ? 'good' : 'excellent'
+	const level: StrengthLevel = bits < 40 ? 'poor' : bits < 75 ? 'weak' : bits < 100 ? 'good' : 'excellent'
 	return { bits, level }
 }

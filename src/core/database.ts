@@ -75,7 +75,7 @@ export interface KdfSettings {
 	parallelism: number
 }
 
-/** 64 MiB, matching KeePassXC's default; iterations sized for ~1 s with WebAssembly. */
+/** 64 MiB as in KeePassXC; unlocking or saving takes about half a second in the browser (WebAssembly). */
 export const DEFAULT_KDF: KdfSettings = {
 	type: 'argon2id',
 	memory: 64 * 1024 * 1024,
