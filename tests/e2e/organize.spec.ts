@@ -50,3 +50,18 @@ test('lists weak and expired entries in the health check', async ({ page }) => {
 	await report.getByText('Hausbank').click()
 	await expect(page.locator('.entry-details h2')).toHaveText('Hausbank')
 })
+
+test('moves an entry by dragging it onto a group', async ({ page }) => {
+	const name = seedDatabase('keepassxc-password.kdbx', `e2e-drag-${Date.now()}.kdbx`)
+	await openInFiles(page, name)
+	await unlock(page)
+	const navigation = page.locator('.app-navigation')
+	await navigation.getByRole('link', { name: 'Banking', exact: true }).click()
+
+	await page.locator('.entry-list').getByText('Hausbank', { exact: true })
+		.dragTo(navigation.getByRole('link', { name: 'Internet', exact: true }))
+
+	await expect(page.locator('.entry-list').getByText('Hausbank', { exact: true })).toBeHidden()
+	await expect.poll(() => attempt(() => keepassxcList(fetchFromStorage(name), '/Internet')), { timeout: 20_000 })
+		.toContain('Hausbank')
+})

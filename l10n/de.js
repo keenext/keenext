@@ -168,6 +168,7 @@ OC.L10N.register(
 		"Set up TOTP": "TOTP einrichten",
 		"Settings": "Einstellungen",
 		"Show": "Anzeigen",
+		"Show all {count} entries": "Alle {count} Einträge anzeigen",
 		"Standard icons": "Standard-Icons",
 		"Steam Guard codes": "Steam-Guard-Codes",
 		"Switch to Argon2id (upgrades to KDBX 4)": "Auf Argon2id umstellen (aktualisiert auf KDBX 4)",

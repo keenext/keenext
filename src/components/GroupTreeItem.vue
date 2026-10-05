@@ -4,8 +4,14 @@
 		:active="database.selectedGroup === group.uuid.id && !database.query"
 		:allowCollapse="state.children.length > 0"
 		:open="expanded"
+		:draggable="database.writable && !state.isRoot && !state.isBin"
+		:class="{ 'group-item--drop-target': dropTarget }"
 		@update:open="toggle"
-		@click="select">
+		@click="select"
+		@dragstart="onDragStart"
+		@dragover="onDragOver"
+		@dragleave="dropTarget = false"
+		@drop="onDrop">
 		<template #icon>
 			<NcIconSvgWrapper v-if="state.isBin" :path="mdiTrashCanOutline" />
 			<EntryIcon
@@ -90,8 +96,10 @@ import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import EntryIcon from './EntryIcon.vue'
 import GroupDialog from './GroupDialog.vue'
 import MoveDialog from './MoveDialog.vue'
-import { recycleBin } from '@/core/entries'
-import { createGroup, deleteGroup, draftFromGroup, emptyRecycleBin, moveGroup, setExpanded, updateGroup } from '@/core/groups'
+import { findEntry, findGroup } from '@/composables/useDatabase'
+import { draggedType, ENTRY_TYPE, GROUP_TYPE, readDrop, startDrag } from '@/composables/useDragAndDrop'
+import { moveEntry, recycleBin } from '@/core/entries'
+import { createGroup, deleteGroup, draftFromGroup, emptyRecycleBin, isDescendant, moveGroup, setExpanded, updateGroup } from '@/core/groups'
 import { t } from '@/l10n'
 import { useVaultStore } from '@/stores/vault'
 
@@ -105,6 +113,7 @@ const props = defineProps<{
 const vault = useVaultStore()
 const dialog = ref<'create' | 'edit' | null>(null)
 const moving = ref(false)
+const dropTarget = ref(false)
 
 /** Snapshot of the group's state; recomputed on every database revision. */
 const state = computed(() => {
@@ -146,6 +155,53 @@ function submitDialog(values: GroupDraft): void {
 	dialog.value = null
 }
 
+// The navigation item's root element also wraps the child groups, so drag events
+// bubble to every ancestor; the innermost group handles them and stops propagation.
+function onDragStart(event: DragEvent): void {
+	event.stopPropagation()
+	startDrag(event, GROUP_TYPE, { database: props.database.id, uuid: props.group.uuid.id })
+}
+
+function canDrop(event: DragEvent): boolean {
+	return props.database.writable && draggedType(event) !== undefined
+}
+
+function onDragOver(event: DragEvent): void {
+	if (!canDrop(event)) {
+		return
+	}
+	event.preventDefault()
+	event.stopPropagation()
+	event.dataTransfer!.dropEffect = 'move'
+	dropTarget.value = true
+}
+
+function onDrop(event: DragEvent): void {
+	dropTarget.value = false
+	const type = draggedType(event)
+	if (!type || !canDrop(event)) {
+		return
+	}
+	event.preventDefault()
+	event.stopPropagation()
+	const payload = readDrop(event, type)
+	if (!payload || payload.database !== props.database.id) {
+		return
+	}
+	const db = props.database.session!.db
+	if (type === ENTRY_TYPE) {
+		const entry = findEntry(db, payload.uuid)
+		if (entry && entry.parentGroup !== props.group) {
+			vault.change(props.database.id, () => moveEntry(db, entry, props.group))
+		}
+		return
+	}
+	const group = findGroup(db, payload.uuid)
+	if (group && group !== props.group && group.parentGroup !== props.group && !isDescendant(props.group, group)) {
+		vault.change(props.database.id, () => moveGroup(db, group, props.group))
+	}
+}
+
 function move(target: KdbxGroup): void {
 	vault.change(props.database.id, (db) => moveGroup(db, props.group, target))
 	moving.value = false
@@ -181,3 +237,10 @@ async function emptyBin(): Promise<void> {
 	}
 }
 </script>
+
+<style scoped>
+.group-item--drop-target > :deep(.app-navigation-entry) {
+	outline: 2px dashed var(--color-primary-element);
+	outline-offset: -2px;
+}
+</style>

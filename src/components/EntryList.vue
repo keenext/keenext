@@ -32,13 +32,15 @@
 
 		<ul v-if="rows.length > 0" class="entry-list__items" :aria-label="heading">
 			<NcListItem
-				v-for="row in rows"
+				v-for="row in visibleRows"
 				:key="row.id"
 				:name="row.title"
 				:active="database.selectedEntry === row.id"
 				:class="{ 'entry-list__item--expired': row.expired }"
 				:details="row.groupName"
+				:draggable="database.writable"
 				compact
+				@dragstart="startDrag($event, ENTRY_TYPE, { database: database.id, uuid: row.id })"
 				@click="vault.select(database.id, { entry: row.id })">
 				<template #icon>
 					<EntryIcon
@@ -83,6 +85,13 @@
 				<NcIconSvgWrapper :path="database.query ? mdiMagnify : mdiKeyOutline" />
 			</template>
 		</NcEmptyContent>
+		<NcButton
+			v-if="rows.length > visibleRows.length"
+			class="entry-list__more"
+			wide
+			@click="limit = Infinity">
+			{{ t('keepassweb', 'Show all {count} entries', { count: rows.length }) }}
+		</NcButton>
 	</div>
 </template>
 
@@ -92,7 +101,7 @@ import type { OpenDatabase } from '@/stores/vault'
 
 import { mdiAccount, mdiKey, mdiKeyOutline, mdiMagnify, mdiOpenInNew, mdiPlus } from '@mdi/js'
 import { showSuccess } from '@nextcloud/dialogs'
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import NcActionButton from '@nextcloud/vue/components/NcActionButton'
 import NcActionLink from '@nextcloud/vue/components/NcActionLink'
 import NcButton from '@nextcloud/vue/components/NcButton'
@@ -102,6 +111,7 @@ import NcListItem from '@nextcloud/vue/components/NcListItem'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
 import EntryIcon from './EntryIcon.vue'
 import { findEntry, findGroup, useDatabaseView } from '@/composables/useDatabase'
+import { ENTRY_TYPE, startDrag } from '@/composables/useDragAndDrop'
 import { getField, isExpired, isInRecycleBin, StandardField } from '@/core/entries'
 import { resolvedField } from '@/core/placeholders'
 import { searchEntries } from '@/core/search'
@@ -157,6 +167,14 @@ const rows = computed(() => {
 		.sort((a, b) => a.title.localeCompare(b.title))
 })
 
+// Rendering thousands of list items is what gets slow, not searching them.
+const INITIAL_LIMIT = 200
+const limit = ref(INITIAL_LIMIT)
+watch(() => [props.database.id, props.database.selectedGroup, props.database.query], () => {
+	limit.value = INITIAL_LIMIT
+})
+const visibleRows = computed(() => rows.value.slice(0, limit.value))
+
 const heading = computed(() => {
 	if (props.database.query.trim()) {
 		return n('keepassweb', '{count} result', '{count} results', rows.value.length, { count: rows.value.length })
@@ -197,6 +215,11 @@ async function copy(id: string, field: string): Promise<void> {
 	padding: 8px 16px 4px;
 	color: var(--color-text-maxcontrast);
 	font-weight: bold;
+}
+
+.entry-list__more {
+	margin: 8px;
+	width: auto;
 }
 
 .entry-list__items {

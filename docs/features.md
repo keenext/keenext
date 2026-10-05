@@ -40,7 +40,7 @@
 | TOTP | ◐ | KeePassXC `otp`, legacy `TOTP Seed`/`TOTP Settings`, KeePass `TimeOtp-*`; SHA-1/256/512, Steam. Setup dialog. QR code display and scanning missing. |
 | Placeholders | ◐ | `{REF:…}`, `{S:…}`, `{TITLE}` etc. Date, environment and other placeholders are not resolved. |
 | Clone, move, delete to recycle bin | ✅ | Clone has no "reference username/password" options. |
-| Drag and drop between groups | ❌ | |
+| Drag and drop between groups | ✅ | Entries and groups onto groups in the tree. |
 | Auto-Type | 🚫 | Settings are kept in the file. |
 | Browser integration (KeePassXC-Browser) | 🚫 | |
 | SSH agent | 🚫 | |
