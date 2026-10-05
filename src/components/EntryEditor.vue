@@ -46,7 +46,12 @@
 
 		<section class="entry-editor__section">
 			<h3>{{ t('keepassweb', 'Additional attributes') }}</h3>
-			<div v-for="(field, index) in draft.customFields" :key="index" class="entry-editor__custom-field">
+			<!-- The otp field is edited through the TOTP dialog. -->
+			<div
+				v-for="(field, index) in draft.customFields"
+				v-show="field.key !== OTP_FIELD"
+				:key="index"
+				class="entry-editor__custom-field">
 				<NcTextField
 					v-model="field.key"
 					:label="t('keepassweb', 'Name')"

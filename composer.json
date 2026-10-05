@@ -7,6 +7,7 @@
 		"php": "^8.2"
 	},
 	"require-dev": {
+		"nextcloud/coding-standard": "^1.5",
 		"nextcloud/ocp": "dev-stable33",
 		"phpunit/phpunit": "^11.5",
 		"vimeo/psalm": "^6.0"
@@ -25,7 +26,9 @@
 	},
 	"scripts": {
 		"test": "phpunit -c tests/php/phpunit.xml",
-		"psalm": "psalm --no-cache --threads=1"
+		"psalm": "psalm --no-cache --threads=1",
+		"cs:check": "php-cs-fixer fix --dry-run --diff",
+		"cs:fix": "php-cs-fixer fix"
 	},
 	"config": {
 		"optimize-autoloader": true,

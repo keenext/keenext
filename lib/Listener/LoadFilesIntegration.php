@@ -24,5 +24,6 @@ final class LoadFilesIntegration implements IEventListener {
 			return;
 		}
 		Util::addInitScript(Application::APP_ID, Application::APP_ID . '-init');
+		Util::addTranslations(Application::APP_ID);
 	}
 }

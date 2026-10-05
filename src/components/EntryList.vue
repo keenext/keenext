@@ -106,7 +106,7 @@ import { getField, isExpired, isInRecycleBin, StandardField } from '@/core/entri
 import { resolvedField } from '@/core/placeholders'
 import { searchEntries } from '@/core/search'
 import { openableUrl } from '@/core/urls'
-import { t } from '@/l10n'
+import { n, t } from '@/l10n'
 import { copySecret } from '@/services/clipboard'
 import { customIconUrl, standardIconPath } from '@/services/icons'
 import { useSettingsStore } from '@/stores/settings'
@@ -160,7 +160,7 @@ const rows = computed(() => {
 
 const heading = computed(() => {
 	if (props.database.query.trim()) {
-		return t('keepassweb', '{count} results', { count: rows.value.length })
+		return n('keepassweb', '{count} result', '{count} results', rows.value.length, { count: rows.value.length })
 	}
 	return group.value?.name ?? ''
 })

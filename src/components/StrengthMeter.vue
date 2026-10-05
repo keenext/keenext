@@ -1,6 +1,10 @@
 <template>
 	<div class="strength" :class="`strength--${strength.level}`">
-		<NcProgressBar :value="Math.min(100, strength.bits)" :color="color" :aria-label="label" />
+		<NcProgressBar
+			class="strength__bar"
+			:value="Math.min(100, strength.bits)"
+			:color="color"
+			:aria-label="label" />
 		<span class="strength__label">{{ label }}</span>
 	</div>
 </template>
@@ -40,6 +44,11 @@ const label = computed(() => {
 	display: flex;
 	align-items: center;
 	gap: 8px;
+}
+
+.strength__bar {
+	flex: 1;
+	min-width: 80px;
 }
 
 .strength__label {

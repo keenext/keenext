@@ -70,7 +70,8 @@ const formatted = computed(() => props.config.encoder === 'steam' || code.value.
 }
 
 .totp__progress {
-	max-width: 80px;
+	width: 80px;
+	flex-shrink: 0;
 }
 
 .totp__remaining {
