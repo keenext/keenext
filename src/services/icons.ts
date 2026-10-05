@@ -1,4 +1,4 @@
-import type { Kdbx, KdbxEntry, KdbxGroup } from 'kdbxweb'
+import type { Kdbx } from 'kdbxweb'
 
 import * as mdi from '@mdi/js'
 
@@ -83,13 +83,10 @@ export function standardIconPath(index: number | undefined, fallback = mdi.mdiKe
 
 const customIconUrls = new WeakMap<Kdbx, Map<string, string>>()
 
-/** Object URL for a custom (PNG) icon; cached per database, revoked with `releaseIcons`. */
-export function customIconUrl(db: Kdbx, item: KdbxEntry | KdbxGroup): string | undefined {
-	if (!item.customIcon) {
-		return undefined
-	}
-	const icon = db.meta.customIcons.get(item.customIcon.id)
-	if (!icon) {
+/** Object URL for a custom (PNG) icon by UUID; cached per database, revoked with `releaseIcons`. */
+export function customIconUrl(db: Kdbx, uuid: string | undefined): string | undefined {
+	const icon = uuid ? db.meta.customIcons.get(uuid) : undefined
+	if (!uuid || !icon) {
 		return undefined
 	}
 	let urls = customIconUrls.get(db)
@@ -97,10 +94,10 @@ export function customIconUrl(db: Kdbx, item: KdbxEntry | KdbxGroup): string | u
 		urls = new Map()
 		customIconUrls.set(db, urls)
 	}
-	let url = urls.get(item.customIcon.id)
+	let url = urls.get(uuid)
 	if (!url) {
 		url = URL.createObjectURL(new Blob([icon.data]))
-		urls.set(item.customIcon.id, url)
+		urls.set(uuid, url)
 	}
 	return url
 }

@@ -137,3 +137,19 @@ describe('deleting', () => {
 		expect(() => moveGroup(db, parent, child)).toThrow()
 	})
 })
+
+describe('icons', () => {
+	it('round-trips standard and custom icons through drafts', async () => {
+		const db = await openRichFixture()
+		const github = entryByTitle(db, 'GitHub')
+		const custom = draftFromEntry(github).customIcon
+		expect(custom).not.toBeNull()
+
+		const bank = entryByTitle(db, 'Hausbank')
+		applyDraft(db, bank, { ...draftFromEntry(bank), icon: 61, customIcon: null })
+		expect(bank.icon).toBe(61)
+		applyDraft(db, bank, { ...draftFromEntry(bank), customIcon: custom })
+		expect(bank.customIcon?.id).toBe(custom)
+		expect(bank.history.at(-1)!.icon).toBe(61)
+	})
+})

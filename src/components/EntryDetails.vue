@@ -9,16 +9,12 @@
 
 		<template v-else-if="entry && view">
 			<header class="entry-details__header">
-				<img
-					v-if="details.customIcon"
-					:src="details.customIcon"
-					alt=""
-					class="entry-details__icon">
-				<NcIconSvgWrapper
-					v-else
-					:path="details.icon"
-					:size="40"
-					class="entry-details__icon" />
+				<EntryIcon
+					class="entry-details__icon"
+					:db="view.db"
+					:icon="entry.icon"
+					:customIcon="entry.customIcon?.id ?? null"
+					:size="40" />
 				<div class="entry-details__heading">
 					<h2>{{ details.title || t('keepassweb', '(no title)') }}</h2>
 					<p class="entry-details__path">
@@ -127,7 +123,9 @@
 				</h3>
 				<ul v-if="showHistory">
 					<li v-for="state in details.history" :key="state.index" class="entry-details__history">
-						<span>{{ formatDate(state.modified) }}</span>
+						<NcButton variant="tertiary" @click="historyIndex = state.index">
+							{{ formatDate(state.modified) }}
+						</NcButton>
 						<span class="entry-details__muted">{{ state.summary }}</span>
 						<NcActions v-if="database.writable" :aria-label="t('keepassweb', 'History actions')">
 							<NcActionButton closeAfterClick @click="restore(state.index)">
@@ -154,6 +152,13 @@
 
 		<NcEmptyContent v-else :name="t('keepassweb', 'Entry not found')" />
 
+		<HistoryVersionDialog
+			v-if="historyIndex !== null && entry"
+			:entry="entry"
+			:index="historyIndex"
+			:canRestore="database.writable"
+			@restore="restore(historyIndex!)"
+			@close="historyIndex = null" />
 		<MoveDialog
 			v-if="moving && entry"
 			:database="database"
@@ -179,7 +184,9 @@ import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
 import EntryEditor from './EntryEditor.vue'
+import EntryIcon from './EntryIcon.vue'
 import FieldRow from './FieldRow.vue'
+import HistoryVersionDialog from './HistoryVersionDialog.vue'
 import MoveDialog from './MoveDialog.vue'
 import TotpField from './TotpField.vue'
 import { findEntry, useDatabaseView } from '@/composables/useDatabase'
@@ -201,7 +208,6 @@ import { resolvedField, resolvePlaceholders } from '@/core/placeholders'
 import { readTotp } from '@/core/totp'
 import { t } from '@/l10n'
 import { copySecret } from '@/services/clipboard'
-import { customIconUrl, standardIconPath } from '@/services/icons'
 import { useSettingsStore } from '@/stores/settings'
 import { useVaultStore } from '@/stores/vault'
 
@@ -220,6 +226,7 @@ const view = useDatabaseView(() => props.database)
 const editing = ref(false)
 const moving = ref(false)
 const showHistory = ref(false)
+const historyIndex = ref<number | null>(null)
 
 const entry = computed(() => view.value ? findEntry(view.value.db, props.database.selectedEntry) : undefined)
 
@@ -252,8 +259,6 @@ const details = computed(() => {
 		created: current.times.creationTime,
 		modified: current.times.lastModTime,
 		inRecycleBin: isInRecycleBin(db, current),
-		icon: standardIconPath(current.icon),
-		customIcon: customIconUrl(db, current),
 	}
 })
 
@@ -299,10 +304,7 @@ function clone(): void {
 	const created = vault.change(props.database.id, (db) => {
 		const draft = draftFromEntry(source)
 		draft.title = t('keepassweb', '{title} - Clone', { title: draft.title })
-		const copy = createEntry(db, source.parentGroup ?? db.getDefaultGroup(), draft)
-		copy.icon = source.icon
-		copy.customIcon = source.customIcon
-		return copy
+		return createEntry(db, source.parentGroup ?? db.getDefaultGroup(), draft)
 	})
 	vault.select(props.database.id, { entry: created.uuid.id })
 }
@@ -334,6 +336,7 @@ async function remove(): Promise<void> {
 
 function restore(index: number): void {
 	vault.change(props.database.id, (db) => restoreHistory(db, entry.value!, index))
+	historyIndex.value = null
 }
 
 function removeHistoryState(index: number): void {

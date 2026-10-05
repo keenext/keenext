@@ -1,6 +1,6 @@
 import type { Kdbx, KdbxBinary, KdbxBinaryWithHash, KdbxEntry, KdbxEntryField, KdbxGroup } from 'kdbxweb'
 
-import { ProtectedValue } from 'kdbxweb'
+import { KdbxUuid, ProtectedValue } from 'kdbxweb'
 
 export const StandardField = {
 	Title: 'Title',
@@ -54,6 +54,10 @@ export interface EntryDraft {
 	expires: Date | null
 	customFields: CustomField[]
 	attachments: Attachment[]
+	/** KeePass standard icon index */
+	icon: number
+	/** UUID of a custom icon in the database; takes precedence over `icon` */
+	customIcon: string | null
 }
 
 export function draftFromEntry(entry: KdbxEntry): EntryDraft {
@@ -73,6 +77,8 @@ export function draftFromEntry(entry: KdbxEntry): EntryDraft {
 		expires: entry.times.expires ? (entry.times.expiryTime ?? null) : null,
 		customFields,
 		attachments: [...entry.binaries].map(([name, value]) => ({ name, value })),
+		icon: entry.icon ?? 0,
+		customIcon: entry.customIcon?.id ?? null,
 	}
 }
 
@@ -87,6 +93,8 @@ export function emptyDraft(defaultUser = ''): EntryDraft {
 		expires: null,
 		customFields: [],
 		attachments: [],
+		icon: 0,
+		customIcon: null,
 	}
 }
 
@@ -96,6 +104,8 @@ export function draftsEqual(a: EntryDraft, b: EntryDraft): boolean {
 		&& a.password === b.password
 		&& a.url === b.url
 		&& a.notes === b.notes
+		&& a.icon === b.icon
+		&& a.customIcon === b.customIcon
 		&& a.tags.length === b.tags.length && a.tags.every((tag, i) => tag === b.tags[i])
 		&& (a.expires?.getTime() ?? null) === (b.expires?.getTime() ?? null)
 		&& a.customFields.length === b.customFields.length
@@ -158,6 +168,8 @@ function writeDraft(db: Kdbx, entry: KdbxEntry, draft: EntryDraft): void {
 	}
 
 	entry.binaries = new Map(draft.attachments.map((attachment) => [attachment.name, attachment.value]))
+	entry.icon = draft.icon
+	entry.customIcon = draft.customIcon ? new KdbxUuid(draft.customIcon) : undefined
 
 	entry.tags = [...new Set(draft.tags.map((tag) => tag.trim()).filter(Boolean))]
 	entry.times.expires = draft.expires !== null
@@ -231,8 +243,6 @@ export function restoreHistory(db: Kdbx, entry: KdbxEntry, index: number): void 
 	}
 	entry.pushHistory()
 	writeDraft(db, entry, draftFromEntry(state))
-	entry.icon = state.icon
-	entry.customIcon = state.customIcon
 	entry.fgColor = state.fgColor
 	entry.bgColor = state.bgColor
 	entry.times.update()

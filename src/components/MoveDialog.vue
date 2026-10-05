@@ -27,6 +27,8 @@ import { t } from '@/l10n'
 const props = defineProps<{
 	database: OpenDatabase
 	currentGroup: string | null
+	/** Group whose subtree is not offered as a target (when moving that group). */
+	exclude?: string
 }>()
 
 const emit = defineEmits<{
@@ -50,7 +52,7 @@ const options = computed<GroupOption[]>(() => {
 	const bin = recycleBin(db)
 	const result: GroupOption[] = []
 	const walk = (group: KdbxGroup, path: string[]) => {
-		if (group === bin || isInRecycleBin(db, group)) {
+		if (group === bin || isInRecycleBin(db, group) || group.uuid.id === props.exclude) {
 			return
 		}
 		const groupPath = [...path, group.name ?? '']

@@ -7,12 +7,14 @@
 		@update:open="toggle"
 		@click="select">
 		<template #icon>
-			<img
-				v-if="state.customIcon"
-				:src="state.customIcon"
-				alt=""
-				class="group-item__custom-icon">
-			<NcIconSvgWrapper v-else :path="state.isBin ? mdiTrashCanOutline : standardIconPath(group.icon)" />
+			<NcIconSvgWrapper v-if="state.isBin" :path="mdiTrashCanOutline" />
+			<EntryIcon
+				v-else
+				:db="database.session!.db"
+				:icon="group.icon"
+				:customIcon="group.customIcon?.id ?? null"
+				:size="20"
+				:fallback="mdiFolder" />
 		</template>
 		<template v-if="state.entryCount > 0" #counter>
 			<NcCounterBubble :count="state.entryCount" />
@@ -29,6 +31,12 @@
 					<NcIconSvgWrapper :path="mdiPencil" />
 				</template>
 				{{ t('keepassweb', 'Edit group') }}
+			</NcActionButton>
+			<NcActionButton v-if="!state.isRoot && !state.isBin" closeAfterClick @click="moving = true">
+				<template #icon>
+					<NcIconSvgWrapper :path="mdiFolderMove" />
+				</template>
+				{{ t('keepassweb', 'Move group') }}
 			</NcActionButton>
 			<NcActionButton v-if="state.isBin" closeAfterClick @click="emptyBin">
 				<template #icon>
@@ -52,30 +60,39 @@
 
 		<GroupDialog
 			v-if="dialog"
-			:name="dialog === 'edit' ? group.name ?? '' : ''"
-			:notes="dialog === 'edit' ? group.notes ?? '' : ''"
+			:database="database"
+			:initial="dialog === 'edit' ? draftFromGroup(group) : { name: '', notes: '', icon: 48, customIcon: null }"
 			:title="dialog === 'edit' ? t('keepassweb', 'Edit group') : t('keepassweb', 'New subgroup')"
 			@submit="submitDialog"
 			@close="dialog = null" />
+		<MoveDialog
+			v-if="moving"
+			:database="database"
+			:currentGroup="group.parentGroup?.uuid.id ?? null"
+			:exclude="group.uuid.id"
+			@move="move"
+			@close="moving = false" />
 	</NcAppNavigationItem>
 </template>
 
 <script setup lang="ts">
 import type { KdbxGroup } from 'kdbxweb'
+import type { GroupDraft } from '@/core/groups'
 import type { OpenDatabase } from '@/stores/vault'
 
-import { mdiDelete, mdiDeleteEmpty, mdiFolderPlus, mdiPencil, mdiTrashCanOutline } from '@mdi/js'
+import { mdiDelete, mdiDeleteEmpty, mdiFolder, mdiFolderMove, mdiFolderPlus, mdiPencil, mdiTrashCanOutline } from '@mdi/js'
 import { showConfirmation } from '@nextcloud/dialogs'
 import { computed, ref } from 'vue'
 import NcActionButton from '@nextcloud/vue/components/NcActionButton'
 import NcAppNavigationItem from '@nextcloud/vue/components/NcAppNavigationItem'
 import NcCounterBubble from '@nextcloud/vue/components/NcCounterBubble'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
+import EntryIcon from './EntryIcon.vue'
 import GroupDialog from './GroupDialog.vue'
+import MoveDialog from './MoveDialog.vue'
 import { recycleBin } from '@/core/entries'
-import { createGroup, deleteGroup, emptyRecycleBin, renameGroup, setExpanded } from '@/core/groups'
+import { createGroup, deleteGroup, draftFromGroup, emptyRecycleBin, moveGroup, setExpanded, updateGroup } from '@/core/groups'
 import { t } from '@/l10n'
-import { customIconUrl, standardIconPath } from '@/services/icons'
 import { useVaultStore } from '@/stores/vault'
 
 defineOptions({ name: 'GroupTreeItem' })
@@ -87,6 +104,7 @@ const props = defineProps<{
 
 const vault = useVaultStore()
 const dialog = ref<'create' | 'edit' | null>(null)
+const moving = ref(false)
 
 /** Snapshot of the group's state; recomputed on every database revision. */
 const state = computed(() => {
@@ -98,7 +116,6 @@ const state = computed(() => {
 		entryCount: props.group.entries.length,
 		isRoot: props.group === db.getDefaultGroup(),
 		isBin: props.group === bin,
-		customIcon: customIconUrl(db, props.group),
 	}
 })
 
@@ -114,19 +131,24 @@ function toggle(open: boolean): void {
 	setExpanded(props.group, open)
 }
 
-function submitDialog(values: { name: string, notes: string }): void {
+function submitDialog(values: GroupDraft): void {
 	if (dialog.value === 'create') {
 		const created = vault.change(props.database.id, (db) => {
 			const group = createGroup(db, props.group, values.name)
-			group.notes = values.notes || undefined
+			updateGroup(group, values)
 			return group
 		})
 		toggle(true)
 		vault.select(props.database.id, { group: created.uuid.id, entry: null })
 	} else {
-		vault.change(props.database.id, () => renameGroup(props.group, values.name, values.notes))
+		vault.change(props.database.id, () => updateGroup(props.group, values))
 	}
 	dialog.value = null
+}
+
+function move(target: KdbxGroup): void {
+	vault.change(props.database.id, (db) => moveGroup(db, props.group, target))
+	moving.value = false
 }
 
 async function remove(): Promise<void> {
@@ -159,10 +181,3 @@ async function emptyBin(): Promise<void> {
 	}
 }
 </script>
-
-<style scoped>
-.group-item__custom-icon {
-	width: 16px;
-	height: 16px;
-}
-</style>

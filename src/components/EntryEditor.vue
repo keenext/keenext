@@ -2,7 +2,21 @@
 	<form class="entry-editor" @submit.prevent="save">
 		<h2>{{ entry ? t('keepassweb', 'Edit entry') : t('keepassweb', 'New entry') }}</h2>
 
-		<NcTextField v-model="draft.title" :label="t('keepassweb', 'Title')" autofocus />
+		<div class="entry-editor__title">
+			<NcButton
+				:aria-label="t('keepassweb', 'Choose icon')"
+				:title="t('keepassweb', 'Choose icon')"
+				@click="iconOpen = true">
+				<template #icon>
+					<EntryIcon
+						v-if="view"
+						:db="view.db"
+						:icon="draft.icon"
+						:customIcon="draft.customIcon" />
+				</template>
+			</NcButton>
+			<NcTextField v-model="draft.title" :label="t('keepassweb', 'Title')" autofocus />
+		</div>
 		<NcTextField v-model="draft.username" :label="t('keepassweb', 'Username')" autocomplete="off" />
 		<div class="entry-editor__password">
 			<NcPasswordField
@@ -139,6 +153,13 @@
 			</NcButton>
 		</div>
 
+		<IconPickerDialog
+			v-if="iconOpen"
+			:database="database"
+			:icon="draft.icon"
+			:customIcon="draft.customIcon"
+			@select="selectIcon"
+			@close="iconOpen = false" />
 		<PasswordGeneratorDialog
 			v-if="generatorOpen"
 			@apply="(password) => { draft.password = password; generatorOpen = false }"
@@ -168,6 +189,8 @@ import NcPasswordField from '@nextcloud/vue/components/NcPasswordField'
 import NcSelect from '@nextcloud/vue/components/NcSelect'
 import NcTextArea from '@nextcloud/vue/components/NcTextArea'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
+import EntryIcon from './EntryIcon.vue'
+import IconPickerDialog from './IconPickerDialog.vue'
 import PasswordGeneratorDialog from './PasswordGeneratorDialog.vue'
 import StrengthMeter from './StrengthMeter.vue'
 import TotpSetupDialog from './TotpSetupDialog.vue'
@@ -191,6 +214,7 @@ const emit = defineEmits<{
 const vault = useVaultStore()
 const view = useDatabaseView(() => props.database)
 const generatorOpen = ref(false)
+const iconOpen = ref(false)
 const totpOpen = ref(false)
 const fileInput = ref<HTMLInputElement>()
 
@@ -231,6 +255,12 @@ const fieldErrors = computed(() => {
 })
 
 const valid = computed(() => Object.keys(fieldErrors.value).length === 0)
+
+function selectIcon(value: { icon: number, customIcon: string | null }): void {
+	draft.icon = value.icon
+	draft.customIcon = value.customIcon
+	iconOpen.value = false
+}
 
 function toggleExpiry(enabled: boolean): void {
 	const nextMonth = new Date()
@@ -293,6 +323,16 @@ function save(): void {
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
+}
+
+.entry-editor__title {
+	display: flex;
+	align-items: flex-end;
+	gap: 8px;
+}
+
+.entry-editor__title > :last-child {
+	flex: 1;
 }
 
 .entry-editor__password,

@@ -41,12 +41,11 @@
 				compact
 				@click="vault.select(database.id, { entry: row.id })">
 				<template #icon>
-					<img
-						v-if="row.customIcon"
-						:src="row.customIcon"
-						alt=""
-						class="entry-list__custom-icon">
-					<NcIconSvgWrapper v-else :path="row.icon" :size="24" />
+					<EntryIcon
+						v-if="view"
+						:db="view.db"
+						:icon="row.icon"
+						:customIcon="row.customIcon" />
 				</template>
 				<template #subname>
 					{{ row.username }}
@@ -101,6 +100,7 @@ import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcListItem from '@nextcloud/vue/components/NcListItem'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
+import EntryIcon from './EntryIcon.vue'
 import { findEntry, findGroup, useDatabaseView } from '@/composables/useDatabase'
 import { getField, isExpired, isInRecycleBin, StandardField } from '@/core/entries'
 import { resolvedField } from '@/core/placeholders'
@@ -108,7 +108,6 @@ import { searchEntries } from '@/core/search'
 import { openableUrl } from '@/core/urls'
 import { n, t } from '@/l10n'
 import { copySecret } from '@/services/clipboard'
-import { customIconUrl, standardIconPath } from '@/services/icons'
 import { useSettingsStore } from '@/stores/settings'
 import { useVaultStore } from '@/stores/vault'
 
@@ -152,8 +151,8 @@ const rows = computed(() => {
 			href: openableUrl(resolvedField(db, entry, StandardField.URL)),
 			expired: isExpired(entry),
 			groupName: searching ? entry.parentGroup?.name ?? '' : '',
-			icon: standardIconPath(entry.icon),
-			customIcon: customIconUrl(db, entry),
+			icon: entry.icon,
+			customIcon: entry.customIcon?.id ?? null,
 		}))
 		.sort((a, b) => a.title.localeCompare(b.title))
 })
@@ -209,8 +208,4 @@ async function copy(id: string, field: string): Promise<void> {
 	text-decoration: line-through;
 }
 
-.entry-list__custom-icon {
-	width: 24px;
-	height: 24px;
-}
 </style>

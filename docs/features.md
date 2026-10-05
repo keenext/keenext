@@ -22,7 +22,8 @@
 | Backup before saving | ◐ | Not done by the app; Nextcloud's file versions keep previous states. |
 | Merge another database | ❌ | The merge itself exists (used for conflicts); no UI to pick a second file. |
 | Import (CSV, 1Password, Bitwarden, KeePass 1) / Export (CSV, XML, HTML) | ❌ | |
-| Database reports (weak, reused, expired passwords; HIBP) | ❌ | `is:expired` search exists. |
+| Health check (weak, reused, expired, expiring passwords) | ✅ | Per database, from its menu. Entries with "QualityCheck" off are skipped. |
+| Have I Been Pwned check | ❌ | |
 
 ## Entries
 
@@ -33,8 +34,8 @@
 | Attachments | ◐ | Add, remove, download. No preview. |
 | Tags | ✅ | |
 | Expiry | ✅ | Expired entries are struck through. |
-| History | ◐ | List, restore, delete. Viewing or comparing an old version is missing. |
-| Standard and custom icons | ◐ | Shown; cannot be changed. Favicon download missing. |
+| History | ✅ | List, view an old version with changed fields marked, restore, delete. |
+| Standard and custom icons | ◐ | Shown and selectable. Uploading new custom icons and favicon download missing. |
 | Foreground/background colour | ◐ | Kept in the file; not shown or editable. |
 | TOTP | ◐ | KeePassXC `otp`, legacy `TOTP Seed`/`TOTP Settings`, KeePass `TimeOtp-*`; SHA-1/256/512, Steam. Setup dialog. QR code display and scanning missing. |
 | Placeholders | ◐ | `{REF:…}`, `{S:…}`, `{TITLE}` etc. Date, environment and other placeholders are not resolved. |
@@ -50,8 +51,8 @@
 |---|---|---|
 | Tree, create, edit name/notes, delete to recycle bin | ✅ | |
 | Empty recycle bin, restore (by moving) | ✅ | |
-| Move groups | ❌ | `moveGroup` exists in core; no UI. |
-| Group icons | ◐ | Shown; cannot be changed. |
+| Move groups | ✅ | Not into their own subtree. |
+| Group icons | ✅ | Standard and existing custom icons. |
 | Searching/Auto-Type flags | ◐ | `EnableSearching` is honoured by search; not editable. |
 
 ## Search and generator

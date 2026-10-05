@@ -111,3 +111,14 @@ export function attempt(read: () => string): string {
 		return `(failed: ${error instanceof Error ? error.message.split('\n')[0] : String(error)})`
 	}
 }
+
+export function keepassxcExport(path: string): string {
+	return execFileSync('keepassxc-cli', ['export', '-q', '-f', 'xml', path], { input: 'test\n', encoding: 'utf8' })
+}
+
+/** Opens the action menu of a navigation item (database or group) by its name. */
+export async function navigationActions(page: Page, name: string): Promise<void> {
+	const item = page.locator('.app-navigation-entry').filter({ has: page.getByRole('link', { name, exact: true }) })
+	await item.hover()
+	await item.getByRole('button', { name: 'Actions' }).click()
+}

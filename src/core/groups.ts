@@ -1,16 +1,34 @@
 import type { Kdbx, KdbxGroup } from 'kdbxweb'
 
+import { KdbxUuid } from 'kdbxweb'
 import { recycleBin } from './entries.ts'
 
 export function createGroup(db: Kdbx, parent: KdbxGroup, name: string): KdbxGroup {
 	return db.createGroup(parent, name)
 }
 
-export function renameGroup(group: KdbxGroup, name: string, notes?: string): void {
-	group.name = name
-	if (notes !== undefined) {
-		group.notes = notes
+export interface GroupDraft {
+	name: string
+	notes: string
+	icon: number
+	/** UUID of a custom icon; takes precedence over `icon` */
+	customIcon: string | null
+}
+
+export function draftFromGroup(group: KdbxGroup): GroupDraft {
+	return {
+		name: group.name ?? '',
+		notes: group.notes ?? '',
+		icon: group.icon ?? 48,
+		customIcon: group.customIcon?.id ?? null,
 	}
+}
+
+export function updateGroup(group: KdbxGroup, draft: GroupDraft): void {
+	group.name = draft.name
+	group.notes = draft.notes || undefined
+	group.icon = draft.icon
+	group.customIcon = draft.customIcon ? new KdbxUuid(draft.customIcon) : undefined
 	group.times.update()
 }
 
