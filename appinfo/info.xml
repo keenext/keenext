@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+	<id>keepassweb</id>
+	<name>KeePass Web</name>
+	<summary>Open and edit KeePass (KDBX) password databases stored in your Nextcloud</summary>
+	<description><![CDATA[Open and edit KeePass databases (.kdbx) directly in Nextcloud, compatible with KeePassXC, KeePass and KeePassDX.
+
+- Databases are decrypted only in your browser; the server never sees your master password or the contents.
+- Open `.kdbx` files from the Files app with a click, or from the app with the file picker and a list of recently opened databases.
+- Changes made elsewhere (KeePassXC through the desktop client, another browser) are merged instead of overwritten.
+- KDBX 3.1 and 4.x, Argon2d/Argon2id, AES-KDF, AES and ChaCha20, key files.
+- Groups, search with KeePassXC syntax, entry history, attachments, TOTP, password generator.]]></description>
+	<version>0.1.0</version>
+	<licence>agpl</licence>
+	<author>Jan-Hendrik Meyer</author>
+	<namespace>KeePassWeb</namespace>
+	<category>security</category>
+	<category>tools</category>
+	<dependencies>
+		<nextcloud min-version="33" max-version="35"/>
+	</dependencies>
+	<navigations>
+		<navigation>
+			<name>KeePass</name>
+			<route>keepassweb.page.index</route>
+			<icon>app.svg</icon>
+		</navigation>
+	</navigations>
+</info>
