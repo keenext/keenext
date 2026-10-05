@@ -26,7 +26,7 @@
 				:check-password-strength="false"
 				:error="repeat !== '' && repeat !== password"
 				:helper-text="repeat !== '' && repeat !== password ? t('keepassweb', 'Passwords do not match') : ''" />
-			<KeyFileChooser v-model="keyFile" />
+			<KeyFileChooser v-model="keyFile" :start-at="folder" />
 			<NcNoteCard v-if="error" type="error">
 				{{ error }}
 			</NcNoteCard>
@@ -74,7 +74,7 @@ const valid = computed(() => name.value.trim() !== ''
 	&& password.value === repeat.value)
 
 async function chooseFolder(): Promise<void> {
-	const chosen = await pickFolder()
+	const chosen = await pickFolder(folder.value)
 	if (chosen) {
 		folder.value = chosen
 	}

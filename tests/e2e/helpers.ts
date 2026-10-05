@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect, type Page } from '@playwright/test'
@@ -7,6 +7,9 @@ import { expect, type Page } from '@playwright/test'
 export const CONTAINER = process.env.NEXTCLOUD_CONTAINER ?? 'keepass-extension-nextcloud-1'
 export const USER = 'admin'
 export const PASSWORD = 'admin'
+/** Folder the tests work in; emptied before each run by global-setup.ts. */
+export const DIR = 'E2E'
+const storageDir = `/var/www/html/data/${USER}/files/${DIR}`
 
 export async function login(page: Page): Promise<void> {
 	await page.goto('/login')
@@ -16,15 +19,19 @@ export async function login(page: Page): Promise<void> {
 	await page.waitForURL(/\/apps\//)
 }
 
-function occ(...args: string[]): string {
+export function occ(...args: string[]): string {
 	return execFileSync('docker', ['exec', '-u', 'www-data', CONTAINER, 'php', 'occ', ...args], { encoding: 'utf8' })
 }
 
-/** Puts a fixture into the admin's "KeePass" folder under a unique name; returns that name. */
+export function resetStorage(): void {
+	execFileSync('docker', ['exec', '-u', 'www-data', CONTAINER, 'sh', '-c', `rm -rf "${storageDir}" && mkdir -p "${storageDir}"`])
+	occ('files:scan', '--path', `/${USER}/files/${DIR}`)
+}
+
+/** Puts a fixture into the test folder under the given name; returns that name. */
 export function seedDatabase(fixture: string, name: string): string {
-	execFileSync('docker', ['exec', '-u', 'www-data', CONTAINER, 'sh', '-c',
-		`mkdir -p /var/www/html/data/${USER}/files/KeePass && cp /fixtures/${fixture} "/var/www/html/data/${USER}/files/KeePass/${name}"`])
-	occ('files:scan', '--path', `/${USER}/files/KeePass`)
+	execFileSync('docker', ['exec', '-u', 'www-data', CONTAINER, 'cp', `/fixtures/${fixture}`, `${storageDir}/${name}`])
+	occ('files:scan', '--path', `/${USER}/files/${DIR}`)
 	return name
 }
 
@@ -32,7 +39,7 @@ export function seedDatabase(fixture: string, name: string): string {
 export function fetchFromStorage(name: string): string {
 	const dir = mkdtempSync(join(tmpdir(), 'keepassweb-e2e-'))
 	const path = join(dir, name)
-	const data = execFileSync('docker', ['exec', '-u', 'www-data', CONTAINER, 'cat', `/var/www/html/data/${USER}/files/KeePass/${name}`])
+	const data = execFileSync('docker', ['exec', '-u', 'www-data', CONTAINER, 'cat', `${storageDir}/${name}`])
 	writeFileSync(path, data)
 	return path
 }
@@ -45,7 +52,7 @@ export function keepassxcShow(path: string, entry: string, attributes: string[])
 }
 
 export async function openInFiles(page: Page, name: string): Promise<void> {
-	await page.goto('/apps/files/files?dir=/KeePass')
+	await page.goto(`/apps/files/files?dir=/${DIR}`)
 	const row = page.locator(`[data-cy-files-list-row-name="${name}"]`)
 	await expect(row).toBeVisible()
 	await row.locator('[data-cy-files-list-row-name-link]').click()
@@ -55,4 +62,50 @@ export async function openInFiles(page: Page, name: string): Promise<void> {
 export async function unlock(page: Page, password = 'test'): Promise<void> {
 	await page.getByLabel('Password', { exact: true }).fill(password)
 	await page.getByRole('button', { name: 'Unlock', exact: true }).click()
+}
+
+/**
+ * Edits a database in the admin's storage with keepassxc-cli, the way a
+ * desktop client syncing the file would; the file gets a new ETag.
+ */
+export function editElsewhere(name: string, edit: (localPath: string) => void): void {
+	const local = fetchFromStorage(name)
+	edit(local)
+	execFileSync('docker', ['exec', '-i', '-u', 'www-data', CONTAINER, 'sh', '-c', `cat > "${storageDir}/${name}"`], {
+		input: readFileSync(local),
+	})
+	occ('files:scan', '--path', `/${USER}/files/${DIR}`)
+}
+
+export function keepassxcAdd(path: string, entry: string, username: string): void {
+	execFileSync('keepassxc-cli', ['add', '-q', '-u', username, path, entry], { input: 'test\n' })
+}
+
+export function keepassxcList(path: string, group: string, auth: { keyFile?: string, password?: string } = { password: 'test' }): string {
+	const args = ['ls', '-q']
+	if (auth.keyFile) {
+		args.push('-k', auth.keyFile)
+	}
+	if (auth.password === undefined) {
+		args.push('--no-password')
+	}
+	return execFileSync('keepassxc-cli', [...args, path, group], { input: auth.password !== undefined ? `${auth.password}\n` : '', encoding: 'utf8' })
+}
+
+export function storageHas(name: string): boolean {
+	try {
+		execFileSync('docker', ['exec', '-u', 'www-data', CONTAINER, 'test', '-f', `${storageDir}/${name}`])
+		return true
+	} catch {
+		return false
+	}
+}
+
+/** For expect.poll, which stops at the first exception: failures become a value that does not match. */
+export function attempt(read: () => string): string {
+	try {
+		return read()
+	} catch (error) {
+		return `(failed: ${error instanceof Error ? error.message.split('\n')[0] : String(error)})`
+	}
 }

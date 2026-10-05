@@ -16,7 +16,7 @@
 				autocomplete="current-password"
 				autofocus />
 
-			<KeyFileChooser v-model="keyFile" />
+			<KeyFileChooser v-model="keyFile" :start-at="database.path.slice(0, database.path.lastIndexOf('/')) || '/'" />
 
 			<NcNoteCard v-if="error" type="error">
 				{{ error }}

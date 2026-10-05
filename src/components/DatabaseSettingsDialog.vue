@@ -63,7 +63,7 @@
 					autocomplete="new-password"
 					:check-password-strength="false"
 					:error="repeatPassword !== '' && repeatPassword !== newPassword" />
-				<KeyFileChooser v-model="newKeyFile" />
+				<KeyFileChooser v-model="newKeyFile" :start-at="database.path.slice(0, database.path.lastIndexOf('/')) || '/'" />
 			</template>
 
 			<NcNoteCard v-if="error" type="error">

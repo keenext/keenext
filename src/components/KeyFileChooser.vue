@@ -37,8 +37,10 @@ import { ref } from 'vue'
 import { pickKeyFile } from '@/services/filePicker'
 import type { KeyFileChoice } from '@/services/keyFile'
 
-defineProps<{
+const props = defineProps<{
 	modelValue: KeyFileChoice | null
+	/** Folder the Nextcloud picker opens in. */
+	startAt?: string
 }>()
 
 const emit = defineEmits<{
@@ -48,7 +50,7 @@ const emit = defineEmits<{
 const input = ref<HTMLInputElement>()
 
 async function chooseFromCloud(): Promise<void> {
-	const file = await pickKeyFile()
+	const file = await pickKeyFile(props.startAt)
 	if (file) {
 		emit('update:modelValue', { name: file.name, fileId: file.fileId, path: file.path })
 	}

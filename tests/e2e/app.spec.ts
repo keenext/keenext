@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { fetchFromStorage, keepassxcShow, login, openInFiles, seedDatabase, unlock } from './helpers'
+import { attempt, fetchFromStorage, keepassxcShow, login, openInFiles, seedDatabase, unlock } from './helpers'
 
 test.beforeEach(async ({ page }) => {
 	await login(page)
@@ -23,7 +23,7 @@ test('opens a database from the Files app, edits an entry and saves it for KeePa
 	await page.getByRole('button', { name: 'Save', exact: true }).click()
 	await expect(page.getByRole('button', { name: 'Edit', exact: true })).toBeVisible()
 
-	await expect.poll(() => keepassxcShow(fetchFromStorage(name), '/Internet/GitHub', ['Password']), { timeout: 20_000 })
+	await expect.poll(() => attempt(() => keepassxcShow(fetchFromStorage(name), '/Internet/GitHub', ['Password'])), { timeout: 20_000 })
 		.toBe('changed-in-browser\n')
 })
 

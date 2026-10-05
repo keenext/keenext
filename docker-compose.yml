@@ -13,13 +13,9 @@ services:
       NEXTCLOUD_TRUSTED_DOMAINS: localhost
     volumes:
       - nextcloud:/var/www/html
-      - ./appinfo:/var/www/html/custom_apps/keepassweb/appinfo:ro
-      - ./lib:/var/www/html/custom_apps/keepassweb/lib:ro
-      - ./templates:/var/www/html/custom_apps/keepassweb/templates:ro
-      - ./img:/var/www/html/custom_apps/keepassweb/img:ro
-      - ./js:/var/www/html/custom_apps/keepassweb/js:ro
-      - ./css:/var/www/html/custom_apps/keepassweb/css:ro
-      - ./l10n:/var/www/html/custom_apps/keepassweb/l10n:ro
+      # The whole checkout, not single folders: builds replace js/ and css/, which would leave a
+      # folder bind mount pointing at the deleted directory.
+      - .:/var/www/html/custom_apps/keepassweb:ro
       - ./tests/fixtures:/fixtures:ro
       - ./docker/hooks:/docker-entrypoint-hooks.d:ro
 

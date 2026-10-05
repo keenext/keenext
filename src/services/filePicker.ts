@@ -34,18 +34,21 @@ export async function pickDatabase(): Promise<PickedFile | null> {
 	return node ? toPicked(node) : null
 }
 
-export async function pickKeyFile(): Promise<PickedFile | null> {
+/** Starts in `startAt` (usually the database's folder), where key files tend to live. */
+export async function pickKeyFile(startAt = '/'): Promise<PickedFile | null> {
 	const node = await pick(() => getFilePickerBuilder(t('keepassweb', 'Choose key file'))
 		.setMultiSelect(false)
+		.startAt(startAt)
 		.addButton({ label: t('keepassweb', 'Use as key file'), callback: () => undefined, variant: 'primary' })
 		.build()
 		.pickNodes())
 	return node ? toPicked(node) : null
 }
 
-export async function pickFolder(): Promise<string | null> {
+export async function pickFolder(startAt = '/'): Promise<string | null> {
 	const node = await pick(() => getFilePickerBuilder(t('keepassweb', 'Choose folder'))
 		.setMultiSelect(false)
+		.startAt(startAt)
 		.allowDirectories(true)
 		.setFilter((candidate) => candidate.type === FileType.Folder)
 		.addButton({ label: t('keepassweb', 'Choose'), callback: () => undefined, variant: 'primary' })
