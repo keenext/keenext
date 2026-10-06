@@ -8,7 +8,7 @@ test('opens a database shared read-only without offering edits', async ({ page }
 	await login(page, 'reader', 'reader-password-123')
 	await page.goto('/apps/files/files?dir=/')
 	await page.locator(`[data-cy-files-list-row-name="${name}"] [data-cy-files-list-row-name-link]`).click()
-	await page.waitForURL(/\/apps\/nextkeeweb\//)
+	await page.waitForURL(/\/apps\/keenext\//)
 
 	await expect(page.getByText('You can only read this database')).toBeVisible()
 	await unlock(page)

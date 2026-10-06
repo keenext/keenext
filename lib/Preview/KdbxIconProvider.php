@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\NextKeeWeb\Preview;
+namespace OCA\KeeNext\Preview;
 
 use OCP\Files\File;
 use OCP\Files\FileInfo;

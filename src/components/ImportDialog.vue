@@ -1,25 +1,25 @@
 <template>
 	<NcDialog
-		:name="t('nextkeeweb', 'Import into {name}', { name: database.name })"
+		:name="t('keenext', 'Import into {name}', { name: database.name })"
 		:buttons="buttons"
 		size="normal"
 		@update:open="(open) => open || emit('close')">
 		<div class="import">
 			<p class="import__hint">
-				{{ t('nextkeeweb', 'Supported: KeePass databases (.kdbx, merged if it is another copy of this database), KeePass XML, CSV (KeePassXC, Bitwarden, browsers and others) and unencrypted Bitwarden JSON.') }}
+				{{ t('keenext', 'Supported: KeePass databases (.kdbx, merged if it is another copy of this database), KeePass XML, CSV (KeePassXC, Bitwarden, browsers and others) and unencrypted Bitwarden JSON.') }}
 			</p>
 			<div v-if="!source" class="import__buttons">
 				<NcButton @click="chooseFromCloud">
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiCloudOutline" />
 					</template>
-					{{ t('nextkeeweb', 'File from Nextcloud') }}
+					{{ t('keenext', 'File from Nextcloud') }}
 				</NcButton>
 				<NcButton @click="input?.click()">
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiUpload" />
 					</template>
-					{{ t('nextkeeweb', 'File from this device') }}
+					{{ t('keenext', 'File from this device') }}
 				</NcButton>
 				<input
 					ref="input"
@@ -32,7 +32,7 @@
 				<NcIconSvgWrapper :path="mdiFileImportOutline" :size="20" />
 				<strong>{{ source.name }}</strong>
 				<span class="import__muted">{{ formatLabel }}</span>
-				<NcButton variant="tertiary" :aria-label="t('nextkeeweb', 'Choose another file')" @click="source = null">
+				<NcButton variant="tertiary" :aria-label="t('keenext', 'Choose another file')" @click="source = null">
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiClose" />
 					</template>
@@ -42,17 +42,17 @@
 			<template v-if="format === 'kdbx'">
 				<NcPasswordField
 					v-model="password"
-					:label="t('nextkeeweb', 'Password of the database to import')"
+					:label="t('keenext', 'Password of the database to import')"
 					:checkPasswordStrength="false"
 					autocomplete="off" />
 				<KeyFileChooser v-model="keyFile" />
 			</template>
 
 			<p v-if="source && format !== 'kdbx'" class="import__muted">
-				{{ t('nextkeeweb', 'Entries are added to a new group "{group}" in "{target}".', { group: groupName, target: targetName }) }}
+				{{ t('keenext', 'Entries are added to a new group "{group}" in "{target}".', { group: groupName, target: targetName }) }}
 			</p>
 			<NcNoteCard v-if="source && !format" type="error">
-				{{ t('nextkeeweb', 'Unknown file type. Use .kdbx, .xml, .csv or .json.') }}
+				{{ t('keenext', 'Unknown file type. Use .kdbx, .xml, .csv or .json.') }}
 			</NcNoteCard>
 			<NcNoteCard v-if="error" type="error">
 				{{ error }}
@@ -114,13 +114,13 @@ const format = computed(() => {
 })
 
 const formatLabel = computed(() => ({
-	kdbx: t('nextkeeweb', 'KeePass database'),
-	xml: t('nextkeeweb', 'KeePass XML'),
-	csv: t('nextkeeweb', 'CSV'),
-	json: t('nextkeeweb', 'Bitwarden JSON'),
+	kdbx: t('keenext', 'KeePass database'),
+	xml: t('keenext', 'KeePass XML'),
+	csv: t('keenext', 'CSV'),
+	json: t('keenext', 'Bitwarden JSON'),
 })[format.value ?? 'csv'])
 
-const groupName = computed(() => t('nextkeeweb', 'Import {name}', { name: source.value?.name.replace(/\.\w+$/, '') ?? '' }))
+const groupName = computed(() => t('keenext', 'Import {name}', { name: source.value?.name.replace(/\.\w+$/, '') ?? '' }))
 
 /** Imports go below the selected group, never into the recycle bin. */
 function targetGroup(db: Kdbx) {
@@ -177,8 +177,8 @@ async function run(): Promise<boolean> {
 		})
 		vault.select(props.database.id, { group: result.group.uuid.id, entry: null })
 		showSuccess(result.merged
-			? t('nextkeeweb', 'Merged {name} into this database', { name: source.value.name })
-			: n('nextkeeweb', 'Imported {count} entry', 'Imported {count} entries', result.entries, { count: result.entries }))
+			? t('keenext', 'Merged {name} into this database', { name: source.value.name })
+			: n('keenext', 'Imported {count} entry', 'Imported {count} entries', result.entries, { count: result.entries }))
 		emit('close')
 		return true
 	} catch (cause) {
@@ -190,9 +190,9 @@ async function run(): Promise<boolean> {
 }
 
 const buttons = computed(() => [
-	{ label: t('nextkeeweb', 'Cancel'), callback: () => emit('close') },
+	{ label: t('keenext', 'Cancel'), callback: () => emit('close') },
 	{
-		label: busy.value ? t('nextkeeweb', 'Importing…') : t('nextkeeweb', 'Import'),
+		label: busy.value ? t('keenext', 'Importing…') : t('keenext', 'Import'),
 		variant: 'primary' as const,
 		disabled: !source.value || !format.value || busy.value || !props.database.writable,
 		callback: async () => (await run()) || false,

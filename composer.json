@@ -1,5 +1,5 @@
 {
-	"name": "nextkeeweb/nextkeeweb",
+	"name": "keenext/keenext",
 	"description": "KeePass (KDBX) password databases in Nextcloud",
 	"type": "project",
 	"license": "AGPL-3.0-or-later",
@@ -14,12 +14,12 @@
 	},
 	"autoload": {
 		"psr-4": {
-			"OCA\\NextKeeWeb\\": "lib/"
+			"OCA\\KeeNext\\": "lib/"
 		}
 	},
 	"autoload-dev": {
 		"psr-4": {
-			"OCA\\NextKeeWeb\\Tests\\": "tests/php/",
+			"OCA\\KeeNext\\Tests\\": "tests/php/",
 			"OCP\\": "vendor/nextcloud/ocp/OCP/",
 			"NCU\\": "vendor/nextcloud/ocp/NCU/"
 		}

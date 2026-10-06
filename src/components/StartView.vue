@@ -1,8 +1,8 @@
 <template>
 	<div class="start">
 		<NcEmptyContent
-			:name="t('nextkeeweb', 'KeePass databases')"
-			:description="t('nextkeeweb', 'Open a .kdbx database from your Nextcloud or create a new one. Works with KeePassXC, KeePass and KeePassDX.')">
+			:name="t('keenext', 'KeePass databases')"
+			:description="t('keenext', 'Open a .kdbx database from your Nextcloud or create a new one. Works with KeePassXC, KeePass and KeePassDX.')">
 			<template #icon>
 				<NcIconSvgWrapper :path="mdiShieldKeyOutline" />
 			</template>
@@ -12,20 +12,20 @@
 						<template #icon>
 							<NcIconSvgWrapper :path="mdiFolderOpenOutline" />
 						</template>
-						{{ t('nextkeeweb', 'Open database') }}
+						{{ t('keenext', 'Open database') }}
 					</NcButton>
 					<NcButton @click="emit('newDatabase')">
 						<template #icon>
 							<NcIconSvgWrapper :path="mdiPlus" />
 						</template>
-						{{ t('nextkeeweb', 'New database') }}
+						{{ t('keenext', 'New database') }}
 					</NcButton>
 				</div>
 			</template>
 		</NcEmptyContent>
 
 		<section v-if="vault.recent.length > 0" class="start__recent">
-			<h3>{{ t('nextkeeweb', 'Recently opened') }}</h3>
+			<h3>{{ t('keenext', 'Recently opened') }}</h3>
 			<ul>
 				<NcListItem
 					v-for="file in vault.recent"
@@ -38,7 +38,7 @@
 					</template>
 					<template #subname>
 						{{ file.path }}<template v-if="file.keyFile">
-							· {{ t('nextkeeweb', 'key file: {name}', { name: file.keyFile.name }) }}
+							· {{ t('keenext', 'key file: {name}', { name: file.keyFile.name }) }}
 						</template>
 					</template>
 					<template #actions>
@@ -46,7 +46,7 @@
 							<template #icon>
 								<NcIconSvgWrapper :path="mdiClose" />
 							</template>
-							{{ t('nextkeeweb', 'Remove from list') }}
+							{{ t('keenext', 'Remove from list') }}
 						</NcActionButton>
 					</template>
 				</NcListItem>
@@ -83,7 +83,7 @@ async function open(fileId: number): Promise<void> {
 	try {
 		await vault.openFile(fileId)
 	} catch (error) {
-		showError(t('nextkeeweb', 'Could not open the database: {error}', { error: vault.describeError(error) }))
+		showError(t('keenext', 'Could not open the database: {error}', { error: vault.describeError(error) }))
 	}
 }
 

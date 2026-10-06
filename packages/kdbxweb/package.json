@@ -1,8 +1,8 @@
 {
   "name": "kdbxweb",
-  "version": "2.2.0-nextkeeweb.1",
+  "version": "2.2.0-keenext.1",
   "private": true,
-  "description": "Fork of keeweb/kdbxweb maintained for NextKeeWeb, see FORK.md",
+  "description": "Fork of keeweb/kdbxweb maintained for KeeNext, see FORK.md",
   "license": "MIT",
   "type": "module",
   "main": "dist/index.js",

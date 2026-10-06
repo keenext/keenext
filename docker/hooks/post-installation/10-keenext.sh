@@ -1,7 +1,7 @@
 #!/bin/sh
 # Runs once after the first installation inside the container (as www-data).
 set -e
-php /var/www/html/occ app:enable nextkeeweb
+php /var/www/html/occ app:enable keenext
 php /var/www/html/occ config:system:set debug --type=boolean --value=true
 php /var/www/html/occ app:disable firstrunwizard || true
 php /var/www/html/occ user:setting admin core lang en

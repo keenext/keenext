@@ -1,11 +1,11 @@
 // Translatable strings in src/, in the key format of l10n/*.json:
-// t('nextkeeweb', 'Text') → "Text", n('nextkeeweb', 'One', 'Many', …) → "_One_::_Many_".
+// t('keenext', 'Text') → "Text", n('keenext', 'One', 'Many', …) → "_One_::_Many_".
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const quoted = String.raw`'((?:[^'\\]|\\.)*)'`
-const singular = new RegExp(String.raw`\bt\(\s*'nextkeeweb',\s*${quoted}`, 'g')
-const plural = new RegExp(String.raw`\bn\(\s*'nextkeeweb',\s*${quoted},\s*${quoted}`, 'g')
+const singular = new RegExp(String.raw`\bt\(\s*'keenext',\s*${quoted}`, 'g')
+const plural = new RegExp(String.raw`\bn\(\s*'keenext',\s*${quoted},\s*${quoted}`, 'g')
 const unescape = (text) => text.replace(/\\'/g, "'")
 
 function* files(dir) {

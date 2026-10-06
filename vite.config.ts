@@ -5,7 +5,7 @@ export default createAppConfig({
 	main: 'src/main.ts',
 	init: 'src/init.ts',
 }, {
-	appName: 'nextkeeweb',
+	appName: 'keenext',
 	nodePolyfills: false,
 	extractLicenseInformation: false,
 	config: {

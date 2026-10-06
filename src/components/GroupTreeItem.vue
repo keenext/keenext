@@ -1,6 +1,6 @@
 <template>
 	<NcAppNavigationItem
-		:name="group.name || t('nextkeeweb', 'Unnamed group')"
+		:name="group.name || t('keenext', 'Unnamed group')"
 		:active="database.selectedGroup === group.uuid.id && !database.query"
 		:allowCollapse="state.children.length > 0"
 		:open="expanded"
@@ -30,31 +30,31 @@
 				<template #icon>
 					<NcIconSvgWrapper :path="mdiFolderPlus" />
 				</template>
-				{{ t('nextkeeweb', 'New subgroup') }}
+				{{ t('keenext', 'New subgroup') }}
 			</NcActionButton>
 			<NcActionButton v-if="!state.isBin" closeAfterClick @click="dialog = 'edit'">
 				<template #icon>
 					<NcIconSvgWrapper :path="mdiPencil" />
 				</template>
-				{{ t('nextkeeweb', 'Edit group') }}
+				{{ t('keenext', 'Edit group') }}
 			</NcActionButton>
 			<NcActionButton v-if="!state.isRoot && !state.isBin" closeAfterClick @click="moving = true">
 				<template #icon>
 					<NcIconSvgWrapper :path="mdiFolderMove" />
 				</template>
-				{{ t('nextkeeweb', 'Move group') }}
+				{{ t('keenext', 'Move group') }}
 			</NcActionButton>
 			<NcActionButton v-if="state.isBin" closeAfterClick @click="emptyBin">
 				<template #icon>
 					<NcIconSvgWrapper :path="mdiDeleteEmpty" />
 				</template>
-				{{ t('nextkeeweb', 'Empty recycle bin') }}
+				{{ t('keenext', 'Empty recycle bin') }}
 			</NcActionButton>
 			<NcActionButton v-if="!state.isRoot && !state.isBin" closeAfterClick @click="remove">
 				<template #icon>
 					<NcIconSvgWrapper :path="mdiDelete" />
 				</template>
-				{{ t('nextkeeweb', 'Delete group') }}
+				{{ t('keenext', 'Delete group') }}
 			</NcActionButton>
 		</template>
 
@@ -68,7 +68,7 @@
 			v-if="dialog"
 			:database="database"
 			:initial="dialog === 'edit' ? draftFromGroup(group) : { name: '', notes: '', icon: 48, customIcon: null }"
-			:title="dialog === 'edit' ? t('nextkeeweb', 'Edit group') : t('nextkeeweb', 'New subgroup')"
+			:title="dialog === 'edit' ? t('keenext', 'Edit group') : t('keenext', 'New subgroup')"
 			@submit="submitDialog"
 			@close="dialog = null" />
 		<MoveDialog
@@ -228,10 +228,10 @@ function move(targetId: string): void {
 
 async function remove(): Promise<void> {
 	const confirmed = await showConfirmation({
-		name: t('nextkeeweb', 'Delete group'),
-		text: t('nextkeeweb', 'Delete the group "{name}" with all its entries and subgroups?', { name: props.group.name ?? '' }),
-		labelConfirm: t('nextkeeweb', 'Delete'),
-		labelReject: t('nextkeeweb', 'Cancel'),
+		name: t('keenext', 'Delete group'),
+		text: t('keenext', 'Delete the group "{name}" with all its entries and subgroups?', { name: props.group.name ?? '' }),
+		labelConfirm: t('keenext', 'Delete'),
+		labelReject: t('keenext', 'Cancel'),
 		severity: 'warning',
 	})
 	if (!confirmed) {
@@ -251,10 +251,10 @@ async function remove(): Promise<void> {
 
 async function emptyBin(): Promise<void> {
 	const confirmed = await showConfirmation({
-		name: t('nextkeeweb', 'Empty recycle bin'),
-		text: t('nextkeeweb', 'Permanently delete everything in the recycle bin?'),
-		labelConfirm: t('nextkeeweb', 'Delete permanently'),
-		labelReject: t('nextkeeweb', 'Cancel'),
+		name: t('keenext', 'Empty recycle bin'),
+		text: t('keenext', 'Permanently delete everything in the recycle bin?'),
+		labelConfirm: t('keenext', 'Delete permanently'),
+		labelReject: t('keenext', 'Cancel'),
 		severity: 'warning',
 	})
 	if (confirmed) {

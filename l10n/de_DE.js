@@ -1,5 +1,5 @@
 OC.L10N.register(
-	"nextkeeweb",
+	"keenext",
 	{
 		"(no title)": "(ohne Titel)",
 		"A file with this name already exists": "Eine Datei mit diesem Namen existiert bereits",
@@ -146,8 +146,8 @@ OC.L10N.register(
 		"New KeePass database": "Neue KeePass-Datenbank",
 		"New master password": "Neues Master-Passwort",
 		"New subgroup": "Neue Untergruppe",
-		"NextKeeWeb": "NextKeeWeb",
-		"NextKeeWeb settings": "Einstellungen für NextKeeWeb",
+		"KeeNext": "KeeNext",
+		"KeeNext settings": "Einstellungen für KeeNext",
 		"No entries in this group": "Keine Einträge in dieser Gruppe",
 		"No matching entries": "Keine passenden Einträge",
 		"No problems found": "Keine Probleme gefunden",
@@ -159,7 +159,7 @@ OC.L10N.register(
 		"Open a .kdbx database from your Nextcloud or create a new one. Works with KeePassXC, KeePass and KeePassDX.": "Öffnen Sie eine .kdbx-Datenbank aus Ihrer Nextcloud oder erstellen Sie eine neue. Funktioniert mit KeePassXC, KeePass und KeePassDX.",
 		"Open database": "Datenbank öffnen",
 		"Open databases": "Geöffnete Datenbanken",
-		"Open in NextKeeWeb": "In NextKeeWeb öffnen",
+		"Open in KeeNext": "In KeeNext öffnen",
 		"Open KeePass database": "KeePass-Datenbank öffnen",
 		"Open URL": "URL öffnen",
 		"Or paste a screenshot of the QR code here (Ctrl+V).": "Oder fügen Sie hier einen Screenshot des QR-Codes ein (Strg+V).",

@@ -23,7 +23,7 @@ test('exports CSV as a download and imports it into another database', async ({ 
 	seedDatabase('keepassxc-keyfile.keyx', 'keepassxc-keyfile.keyx')
 	await page.goto(`/apps/files/files?dir=/${DIR}`)
 	await page.locator(`[data-cy-files-list-row-name="${target}"] [data-cy-files-list-row-name-link]`).click()
-	await page.waitForURL(/\/apps\/nextkeeweb\//)
+	await page.waitForURL(/\/apps\/keenext\//)
 	await page.getByRole('button', { name: 'Key file from Nextcloud' }).click()
 	const picker = page.getByRole('dialog', { name: 'Choose key file' })
 	await picker.getByText('keepassxc-keyfile.keyx').click()
@@ -44,7 +44,7 @@ test('exports CSV as a download and imports it into another database', async ({ 
 
 test('keeps the new-database dialog open with an error when the file exists', async ({ page }) => {
 	const existing = seedDatabase('keepassxc-password.kdbx', `e2e-exists-${Date.now()}.kdbx`)
-	await page.goto(`/apps/nextkeeweb/?new=1&dir=/${DIR}`)
+	await page.goto(`/apps/keenext/?new=1&dir=/${DIR}`)
 	const dialog = page.getByRole('dialog', { name: 'New KeePass database' })
 	await dialog.getByLabel('File name').fill(existing)
 	await dialog.getByLabel('Master password', { exact: true }).fill('test')

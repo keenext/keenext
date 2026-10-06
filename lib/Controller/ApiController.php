@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\NextKeeWeb\Controller;
+namespace OCA\KeeNext\Controller;
 
-use OCA\NextKeeWeb\AppInfo\Application;
-use OCA\NextKeeWeb\Service\FileResolver;
-use OCA\NextKeeWeb\Service\RecentFilesService;
-use OCA\NextKeeWeb\Service\SettingsService;
+use OCA\KeeNext\AppInfo\Application;
+use OCA\KeeNext\Service\FileResolver;
+use OCA\KeeNext\Service\RecentFilesService;
+use OCA\KeeNext\Service\SettingsService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;

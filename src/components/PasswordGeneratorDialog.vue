@@ -1,6 +1,6 @@
 <template>
 	<NcDialog
-		:name="t('nextkeeweb', 'Generate password')"
+		:name="t('keenext', 'Generate password')"
 		:buttons="buttons"
 		size="normal"
 		@update:open="(open) => open || emit('close')">
@@ -13,7 +13,7 @@
 					name="generator-mode"
 					buttonVariant
 					buttonVariantGrouped="horizontal">
-					{{ t('nextkeeweb', 'Password') }}
+					{{ t('keenext', 'Password') }}
 				</NcCheckboxRadioSwitch>
 				<NcCheckboxRadioSwitch
 					v-model="mode"
@@ -22,7 +22,7 @@
 					name="generator-mode"
 					buttonVariant
 					buttonVariantGrouped="horizontal">
-					{{ t('nextkeeweb', 'Passphrase') }}
+					{{ t('keenext', 'Passphrase') }}
 				</NcCheckboxRadioSwitch>
 			</div>
 
@@ -30,8 +30,8 @@
 				<code class="generator__value">{{ value }}</code>
 				<NcButton
 					variant="tertiary"
-					:aria-label="t('nextkeeweb', 'Regenerate')"
-					:title="t('nextkeeweb', 'Regenerate')"
+					:aria-label="t('keenext', 'Regenerate')"
+					:title="t('keenext', 'Regenerate')"
 					@click="regenerate">
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiRefresh" />
@@ -45,7 +45,7 @@
 
 			<template v-if="mode === 'password'">
 				<label class="generator__range">
-					{{ t('nextkeeweb', 'Length: {length}', { length: passwordOptions.length }) }}
+					{{ t('keenext', 'Length: {length}', { length: passwordOptions.length }) }}
 					<input
 						v-model.number="passwordOptions.length"
 						type="range"
@@ -62,30 +62,30 @@
 					</NcCheckboxRadioSwitch>
 				</div>
 				<NcCheckboxRadioSwitch v-model="passwordOptions.excludeLookAlike">
-					{{ t('nextkeeweb', 'Exclude look-alike characters') }}
+					{{ t('keenext', 'Exclude look-alike characters') }}
 				</NcCheckboxRadioSwitch>
 				<NcCheckboxRadioSwitch v-model="passwordOptions.everyGroup">
-					{{ t('nextkeeweb', 'Pick characters from every group') }}
+					{{ t('keenext', 'Pick characters from every group') }}
 				</NcCheckboxRadioSwitch>
-				<NcTextField v-model="passwordOptions.include" :label="t('nextkeeweb', 'Also use these characters')" />
-				<NcTextField v-model="passwordOptions.exclude" :label="t('nextkeeweb', 'Do not use these characters')" />
+				<NcTextField v-model="passwordOptions.include" :label="t('keenext', 'Also use these characters')" />
+				<NcTextField v-model="passwordOptions.exclude" :label="t('keenext', 'Do not use these characters')" />
 			</template>
 
 			<template v-else>
 				<label class="generator__range">
-					{{ t('nextkeeweb', 'Words: {count}', { count: passphraseOptions.words }) }}
+					{{ t('keenext', 'Words: {count}', { count: passphraseOptions.words }) }}
 					<input
 						v-model.number="passphraseOptions.words"
 						type="range"
 						min="3"
 						max="20">
 				</label>
-				<NcTextField v-model="passphraseOptions.separator" :label="t('nextkeeweb', 'Word separator')" />
+				<NcTextField v-model="passphraseOptions.separator" :label="t('keenext', 'Word separator')" />
 				<NcSelect
 					v-model="passphraseOptions.wordCase"
 					:options="['lower', 'upper', 'title', 'mixed']"
 					:getOptionLabel="(option: string) => caseLabels[option as WordCase]"
-					:inputLabel="t('nextkeeweb', 'Word case')"
+					:inputLabel="t('keenext', 'Word case')"
 					:clearable="false" />
 			</template>
 		</div>
@@ -117,7 +117,7 @@ const emit = defineEmits<{
 	close: []
 }>()
 
-const STORAGE_KEY = 'nextkeeweb:generator'
+const STORAGE_KEY = 'keenext:generator'
 
 function loadOptions() {
 	try {
@@ -144,14 +144,14 @@ const groupLabels: { id: CharacterGroup, label: string }[] = [
 	{ id: 'dashes', label: '- / \\ _ |' },
 	{ id: 'math', label: '! * + < = > ?' },
 	{ id: 'logograms', label: '# $ % & @ ^ ` ~' },
-	{ id: 'extended', label: t('nextkeeweb', 'Extended ASCII') },
+	{ id: 'extended', label: t('keenext', 'Extended ASCII') },
 ]
 
 const caseLabels: Record<WordCase, string> = {
-	lower: t('nextkeeweb', 'lower case'),
-	upper: t('nextkeeweb', 'UPPER CASE'),
-	title: t('nextkeeweb', 'Title Case'),
-	mixed: t('nextkeeweb', 'MiXeD (random per word)'),
+	lower: t('keenext', 'lower case'),
+	upper: t('keenext', 'UPPER CASE'),
+	title: t('keenext', 'Title Case'),
+	mixed: t('keenext', 'MiXeD (random per word)'),
 }
 
 function toggleGroup(group: CharacterGroup, checked: boolean): void {
@@ -180,8 +180,8 @@ async function regenerate(): Promise<void> {
 watch([mode, passwordOptions, passphraseOptions], () => void regenerate(), { deep: true, immediate: true })
 
 const buttons = computed(() => [
-	{ label: t('nextkeeweb', 'Cancel'), callback: () => emit('close') },
-	{ label: t('nextkeeweb', 'Use password'), variant: 'primary' as const, disabled: value.value === '', callback: () => emit('apply', value.value) },
+	{ label: t('keenext', 'Cancel'), callback: () => emit('close') },
+	{ label: t('keenext', 'Use password'), variant: 'primary' as const, disabled: value.value === '', callback: () => emit('apply', value.value) },
 ])
 </script>
 

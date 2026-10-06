@@ -3,8 +3,8 @@
 		<div v-if="modelValue" class="key-file__selected">
 			<NcIconSvgWrapper :path="mdiFileKey" :size="20" />
 			<span class="key-file__name" :title="modelValue.path ?? modelValue.name">{{ modelValue.name }}</span>
-			<span class="key-file__source">{{ modelValue.fileId !== undefined ? t('nextkeeweb', 'from Nextcloud') : t('nextkeeweb', 'from this device') }}</span>
-			<NcButton variant="tertiary" :aria-label="t('nextkeeweb', 'Remove key file')" @click="emit('update:modelValue', null)">
+			<span class="key-file__source">{{ modelValue.fileId !== undefined ? t('keenext', 'from Nextcloud') : t('keenext', 'from this device') }}</span>
+			<NcButton variant="tertiary" :aria-label="t('keenext', 'Remove key file')" @click="emit('update:modelValue', null)">
 				<template #icon>
 					<NcIconSvgWrapper :path="mdiClose" />
 				</template>
@@ -15,13 +15,13 @@
 				<template #icon>
 					<NcIconSvgWrapper :path="mdiCloudOutline" />
 				</template>
-				{{ t('nextkeeweb', 'Key file from Nextcloud') }}
+				{{ t('keenext', 'Key file from Nextcloud') }}
 			</NcButton>
 			<NcButton @click="input?.click()">
 				<template #icon>
 					<NcIconSvgWrapper :path="mdiUpload" />
 				</template>
-				{{ t('nextkeeweb', 'Key file from this device') }}
+				{{ t('keenext', 'Key file from this device') }}
 			</NcButton>
 			<input
 				ref="input"

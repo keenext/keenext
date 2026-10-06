@@ -38,7 +38,7 @@ export const DEFAULT_SETTINGS: Settings = {
 const ocsHeaders = { 'OCS-APIRequest': 'true', Accept: 'application/json' }
 
 function url(path: string): string {
-	return generateOcsUrl(`apps/nextkeeweb/api/v1/${path}`)
+	return generateOcsUrl(`apps/keenext/api/v1/${path}`)
 }
 
 async function ocs<T>(request: Promise<{ data: { ocs: { data: T } } }>): Promise<T> {

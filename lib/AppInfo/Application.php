@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace OCA\NextKeeWeb\AppInfo;
+namespace OCA\KeeNext\AppInfo;
 
 use OCA\Files\Event\LoadAdditionalScriptsEvent;
-use OCA\NextKeeWeb\Listener\LoadFilesIntegration;
-use OCA\NextKeeWeb\Preview\KdbxIconProvider;
+use OCA\KeeNext\Listener\LoadFilesIntegration;
+use OCA\KeeNext\Preview\KdbxIconProvider;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 final class Application extends App implements IBootstrap {
-	public const APP_ID = 'nextkeeweb';
+	public const APP_ID = 'keenext';
 
 	public function __construct() {
 		parent::__construct(self::APP_ID);

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\NextKeeWeb\Tests\Service;
+namespace OCA\KeeNext\Tests\Service;
 
-use OCA\NextKeeWeb\Service\SettingsService;
+use OCA\KeeNext\Service\SettingsService;
 use OCP\Config\IUserConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;

@@ -1,4 +1,4 @@
-app_name := nextkeeweb
+app_name := keenext
 build_dir := build
 package := $(build_dir)/$(app_name)
 

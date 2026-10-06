@@ -19,8 +19,8 @@
 				<NcButton
 					v-if="secret && value"
 					variant="tertiary"
-					:aria-label="revealed ? t('nextkeeweb', 'Hide') : t('nextkeeweb', 'Show')"
-					:title="revealed ? t('nextkeeweb', 'Hide') : t('nextkeeweb', 'Show')"
+					:aria-label="revealed ? t('keenext', 'Hide') : t('keenext', 'Show')"
+					:title="revealed ? t('keenext', 'Hide') : t('keenext', 'Show')"
 					@click="revealed = !revealed">
 					<template #icon>
 						<NcIconSvgWrapper :path="revealed ? mdiEyeOff : mdiEye" />
@@ -29,8 +29,8 @@
 				<NcButton
 					v-if="value"
 					variant="tertiary"
-					:aria-label="t('nextkeeweb', 'Copy {field}', { field: label })"
-					:title="t('nextkeeweb', 'Copy')"
+					:aria-label="t('keenext', 'Copy {field}', { field: label })"
+					:title="t('keenext', 'Copy')"
 					@click="emit('copy')">
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiContentCopy" />

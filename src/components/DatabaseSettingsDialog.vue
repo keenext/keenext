@@ -1,36 +1,36 @@
 <template>
 	<NcDialog
-		:name="t('nextkeeweb', 'Database settings')"
+		:name="t('keenext', 'Database settings')"
 		:buttons="buttons"
 		size="normal"
 		@update:open="(open) => open || emit('close')">
 		<div v-if="form" class="database-settings">
-			<h3>{{ t('nextkeeweb', 'General') }}</h3>
-			<NcTextField v-model="form.name" :label="t('nextkeeweb', 'Database name')" />
-			<NcTextArea v-model="form.description" :label="t('nextkeeweb', 'Description')" resize="vertical" />
-			<NcTextField v-model="form.defaultUser" :label="t('nextkeeweb', 'Default username for new entries')" />
+			<h3>{{ t('keenext', 'General') }}</h3>
+			<NcTextField v-model="form.name" :label="t('keenext', 'Database name')" />
+			<NcTextArea v-model="form.description" :label="t('keenext', 'Description')" resize="vertical" />
+			<NcTextField v-model="form.defaultUser" :label="t('keenext', 'Default username for new entries')" />
 			<NcCheckboxRadioSwitch v-model="form.recycleBinEnabled">
-				{{ t('nextkeeweb', 'Use recycle bin') }}
+				{{ t('keenext', 'Use recycle bin') }}
 			</NcCheckboxRadioSwitch>
 			<div class="database-settings__row">
-				<NcTextField v-model="historyItems" type="number" :label="t('nextkeeweb', 'History entries per entry (-1 = unlimited)')" />
-				<NcTextField v-model="historySizeMiB" type="number" :label="t('nextkeeweb', 'History size per entry in MiB (-1 = unlimited)')" />
+				<NcTextField v-model="historyItems" type="number" :label="t('keenext', 'History entries per entry (-1 = unlimited)')" />
+				<NcTextField v-model="historySizeMiB" type="number" :label="t('keenext', 'History size per entry in MiB (-1 = unlimited)')" />
 			</div>
 
-			<h3>{{ t('nextkeeweb', 'Encryption') }}</h3>
+			<h3>{{ t('keenext', 'Encryption') }}</h3>
 			<p class="database-settings__muted">
-				{{ t('nextkeeweb', 'Format: KDBX {version}', { version: form.version }) }}
+				{{ t('keenext', 'Format: KDBX {version}', { version: form.version }) }}
 			</p>
 			<NcSelect
 				v-model="form.cipher"
 				:options="['aes', 'chacha20', 'twofish']"
 				:getOptionLabel="(option: string) => ({ aes: 'AES-256', chacha20: 'ChaCha20', twofish: 'Twofish' } as Record<string, string>)[option]"
-				:inputLabel="t('nextkeeweb', 'Encryption algorithm')"
+				:inputLabel="t('keenext', 'Encryption algorithm')"
 				:clearable="false" />
 			<template v-if="form.kdf.type === 'aes'">
-				<p>{{ t('nextkeeweb', 'Key derivation: AES-KDF with {rounds} rounds', { rounds: form.kdf.rounds.toLocaleString() }) }}</p>
+				<p>{{ t('keenext', 'Key derivation: AES-KDF with {rounds} rounds', { rounds: form.kdf.rounds.toLocaleString() }) }}</p>
 				<NcButton @click="switchToArgon2">
-					{{ t('nextkeeweb', 'Switch to Argon2id (upgrades to KDBX 4)') }}
+					{{ t('keenext', 'Switch to Argon2id (upgrades to KDBX 4)') }}
 				</NcButton>
 			</template>
 			<template v-else>
@@ -38,32 +38,32 @@
 					v-model="form.kdf.type"
 					:options="['argon2id', 'argon2d']"
 					:getOptionLabel="(option: string) => option === 'argon2id' ? 'Argon2id' : 'Argon2d'"
-					:inputLabel="t('nextkeeweb', 'Key derivation function')"
+					:inputLabel="t('keenext', 'Key derivation function')"
 					:clearable="false" />
 				<div class="database-settings__row">
-					<NcTextField v-model="kdfIterations" type="number" :label="t('nextkeeweb', 'Iterations')" />
-					<NcTextField v-model="kdfMemoryMiB" type="number" :label="t('nextkeeweb', 'Memory (MiB)')" />
-					<NcTextField v-model="kdfParallelism" type="number" :label="t('nextkeeweb', 'Parallelism')" />
+					<NcTextField v-model="kdfIterations" type="number" :label="t('keenext', 'Iterations')" />
+					<NcTextField v-model="kdfMemoryMiB" type="number" :label="t('keenext', 'Memory (MiB)')" />
+					<NcTextField v-model="kdfParallelism" type="number" :label="t('keenext', 'Parallelism')" />
 				</div>
 				<p class="database-settings__muted">
-					{{ t('nextkeeweb', 'Higher values make guessing the password slower, but also unlocking on every device.') }}
+					{{ t('keenext', 'Higher values make guessing the password slower, but also unlocking on every device.') }}
 				</p>
 			</template>
 
-			<h3>{{ t('nextkeeweb', 'Master key') }}</h3>
+			<h3>{{ t('keenext', 'Master key') }}</h3>
 			<NcCheckboxRadioSwitch v-model="changeKey">
-				{{ t('nextkeeweb', 'Change password or key file') }}
+				{{ t('keenext', 'Change password or key file') }}
 			</NcCheckboxRadioSwitch>
 			<template v-if="changeKey">
 				<NcPasswordField
 					v-model="newPassword"
-					:label="t('nextkeeweb', 'New master password')"
+					:label="t('keenext', 'New master password')"
 					autocomplete="new-password"
 					:checkPasswordStrength="false" />
 				<StrengthMeter v-if="newPassword" :password="newPassword" />
 				<NcPasswordField
 					v-model="repeatPassword"
-					:label="t('nextkeeweb', 'Repeat new master password')"
+					:label="t('keenext', 'Repeat new master password')"
 					autocomplete="new-password"
 					:checkPasswordStrength="false"
 					:error="repeatPassword !== '' && repeatPassword !== newPassword" />
@@ -185,8 +185,8 @@ async function save(): Promise<boolean> {
 }
 
 const buttons = computed(() => [
-	{ label: t('nextkeeweb', 'Cancel'), callback: (): void => emit('close') },
-	{ label: busy.value ? t('nextkeeweb', 'Saving…') : t('nextkeeweb', 'Save'), variant: 'primary' as const, disabled: busy.value || !keyValid.value || !props.database.writable, callback: async () => (await save()) || false },
+	{ label: t('keenext', 'Cancel'), callback: (): void => emit('close') },
+	{ label: busy.value ? t('keenext', 'Saving…') : t('keenext', 'Save'), variant: 'primary' as const, disabled: busy.value || !keyValid.value || !props.database.writable, callback: async () => (await save()) || false },
 ])
 </script>
 

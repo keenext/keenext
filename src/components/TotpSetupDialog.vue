@@ -1,6 +1,6 @@
 <template>
 	<NcDialog
-		:name="t('nextkeeweb', 'Set up TOTP')"
+		:name="t('keenext', 'Set up TOTP')"
 		:buttons="buttons"
 		@update:open="(open) => open || emit('close')">
 		<div class="totp-setup" @paste="onPaste">
@@ -9,7 +9,7 @@
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiQrcodeScan" />
 					</template>
-					{{ t('nextkeeweb', 'Read QR code from image') }}
+					{{ t('keenext', 'Read QR code from image') }}
 				</NcButton>
 				<input
 					ref="imageInput"
@@ -19,32 +19,32 @@
 					@change="onImage">
 			</div>
 			<p class="totp-setup__hint">
-				{{ t('nextkeeweb', 'Or paste a screenshot of the QR code here (Ctrl+V).') }}
+				{{ t('keenext', 'Or paste a screenshot of the QR code here (Ctrl+V).') }}
 			</p>
 			<NcNoteCard v-if="qrError" type="warning">
 				{{ qrError }}
 			</NcNoteCard>
 			<NcTextField
 				v-model="secretOrUri"
-				:label="t('nextkeeweb', 'Secret key or otpauth:// link')"
+				:label="t('keenext', 'Secret key or otpauth:// link')"
 				:error="secretOrUri !== '' && !config"
-				:helperText="secretOrUri !== '' && !config ? t('nextkeeweb', 'Not a valid base32 secret or otpauth link') : ''" />
+				:helperText="secretOrUri !== '' && !config ? t('keenext', 'Not a valid base32 secret or otpauth link') : ''" />
 			<template v-if="!isUri">
 				<NcCheckboxRadioSwitch v-model="steam">
-					{{ t('nextkeeweb', 'Steam Guard codes') }}
+					{{ t('keenext', 'Steam Guard codes') }}
 				</NcCheckboxRadioSwitch>
 				<div class="totp-setup__row">
-					<NcTextField v-model="period" :label="t('nextkeeweb', 'Period (seconds)')" type="number" />
+					<NcTextField v-model="period" :label="t('keenext', 'Period (seconds)')" type="number" />
 					<NcTextField
 						v-if="!steam"
 						v-model="digits"
-						:label="t('nextkeeweb', 'Digits')"
+						:label="t('keenext', 'Digits')"
 						type="number" />
 					<NcSelect
 						v-if="!steam"
 						v-model="algorithm"
 						:options="['SHA-1', 'SHA-256', 'SHA-512']"
-						:inputLabel="t('nextkeeweb', 'Algorithm')"
+						:inputLabel="t('keenext', 'Algorithm')"
 						:clearable="false" />
 				</div>
 			</template>
@@ -91,11 +91,11 @@ async function readQr(image: Blob): Promise<void> {
 	qrError.value = ''
 	const text = await decodeQrImage(image).catch(() => undefined)
 	if (!text) {
-		qrError.value = t('nextkeeweb', 'No QR code found in the image.')
+		qrError.value = t('keenext', 'No QR code found in the image.')
 	} else if (text.toLowerCase().startsWith('otpauth-migration://')) {
-		qrError.value = t('nextkeeweb', 'This is a Google Authenticator export, which is not supported. Use the QR code shown when setting up the account instead.')
+		qrError.value = t('keenext', 'This is a Google Authenticator export, which is not supported. Use the QR code shown when setting up the account instead.')
 	} else if (!parseOtpUri(text)) {
-		qrError.value = t('nextkeeweb', 'The QR code does not contain a TOTP setup.')
+		qrError.value = t('keenext', 'The QR code does not contain a TOTP setup.')
 	} else {
 		secretOrUri.value = text
 	}
@@ -150,10 +150,10 @@ const config = computed<TotpConfig | undefined>(() => {
 })
 
 const buttons = computed(() => [
-	...(props.current ? [{ label: t('nextkeeweb', 'Remove TOTP'), variant: 'error' as const, callback: () => emit('apply', '') }] : []),
-	{ label: t('nextkeeweb', 'Cancel'), callback: () => emit('close') },
+	...(props.current ? [{ label: t('keenext', 'Remove TOTP'), variant: 'error' as const, callback: () => emit('apply', '') }] : []),
+	{ label: t('keenext', 'Cancel'), callback: () => emit('close') },
 	{
-		label: t('nextkeeweb', 'Save'),
+		label: t('keenext', 'Save'),
 		variant: 'primary' as const,
 		disabled: !config.value,
 		callback: () => {

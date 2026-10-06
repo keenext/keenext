@@ -7,8 +7,8 @@
 		@update:open="(open) => open || emit('close')">
 		<div class="group-dialog__name">
 			<NcButton
-				:aria-label="t('nextkeeweb', 'Choose icon')"
-				:title="t('nextkeeweb', 'Choose icon')"
+				:aria-label="t('keenext', 'Choose icon')"
+				:title="t('keenext', 'Choose icon')"
 				@click="iconOpen = true">
 				<template #icon>
 					<EntryIcon
@@ -20,13 +20,13 @@
 			</NcButton>
 			<NcTextField
 				v-model="draft.name"
-				:label="t('nextkeeweb', 'Name')"
+				:label="t('keenext', 'Name')"
 				required
 				autofocus />
 		</div>
 		<NcTextArea
 			v-model="draft.notes"
-			:label="t('nextkeeweb', 'Notes')"
+			:label="t('keenext', 'Notes')"
 			resize="vertical" />
 
 		<IconPickerDialog
@@ -67,8 +67,8 @@ const draft = reactive({ ...props.initial })
 const iconOpen = ref(false)
 
 const buttons = computed(() => [
-	{ label: t('nextkeeweb', 'Cancel'), callback: () => emit('close') },
-	{ label: t('nextkeeweb', 'Save'), type: 'submit' as const, variant: 'primary' as const, disabled: draft.name.trim() === '' },
+	{ label: t('keenext', 'Cancel'), callback: () => emit('close') },
+	{ label: t('keenext', 'Save'), type: 'submit' as const, variant: 'primary' as const, disabled: draft.name.trim() === '' },
 ])
 
 function selectIcon(value: { icon: number, customIcon: string | null }): void {

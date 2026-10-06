@@ -39,7 +39,7 @@ export function seedDatabase(fixture: string, name: string): string {
 
 /** Copies a file out of the admin's storage to a temporary local path. */
 export function fetchFromStorage(name: string): string {
-	const dir = mkdtempSync(join(tmpdir(), 'nextkeeweb-e2e-'))
+	const dir = mkdtempSync(join(tmpdir(), 'keenext-e2e-'))
 	const path = join(dir, name)
 	const data = execFileSync('docker', ['exec', '-u', 'www-data', CONTAINER, 'cat', `${storageDir}/${name}`])
 	writeFileSync(path, data)
@@ -58,7 +58,7 @@ export async function openInFiles(page: Page, name: string): Promise<void> {
 	const row = page.locator(`[data-cy-files-list-row-name="${name}"]`)
 	await expect(row).toBeVisible()
 	await row.locator('[data-cy-files-list-row-name-link]').click()
-	await page.waitForURL(/\/apps\/nextkeeweb\//)
+	await page.waitForURL(/\/apps\/keenext\//)
 }
 
 export async function unlock(page: Page, password = 'test'): Promise<void> {

@@ -1,18 +1,18 @@
 <template>
-	<FieldRow :label="t('nextkeeweb', 'TOTP')" :value="code" @copy="emit('copy', code)">
+	<FieldRow :label="t('keenext', 'TOTP')" :value="code" @copy="emit('copy', code)">
 		<span class="totp">
 			<span class="totp__code">{{ formatted }}</span>
 			<NcProgressBar
 				class="totp__progress"
 				:value="progress"
-				:aria-label="t('nextkeeweb', '{seconds} seconds remaining', { seconds: remaining })" />
+				:aria-label="t('keenext', '{seconds} seconds remaining', { seconds: remaining })" />
 			<span class="totp__remaining">{{ remaining }}s</span>
 		</span>
 		<template v-if="uri" #actions>
 			<NcButton
 				variant="tertiary"
-				:aria-label="t('nextkeeweb', 'Show QR code')"
-				:title="t('nextkeeweb', 'Show QR code')"
+				:aria-label="t('keenext', 'Show QR code')"
+				:title="t('keenext', 'Show QR code')"
 				@click="qrOpen = true">
 				<template #icon>
 					<NcIconSvgWrapper :path="mdiQrcode" />
@@ -22,12 +22,12 @@
 	</FieldRow>
 	<NcDialog
 		v-if="qrOpen && uri"
-		:name="t('nextkeeweb', 'TOTP as QR code')"
-		:buttons="[{ label: t('nextkeeweb', 'Close'), callback: () => { qrOpen = false } }]"
+		:name="t('keenext', 'TOTP as QR code')"
+		:buttons="[{ label: t('keenext', 'Close'), callback: () => { qrOpen = false } }]"
 		@update:open="(open) => qrOpen = open">
 		<div class="totp__qr">
-			<QrCode :value="uri" :label="t('nextkeeweb', 'QR code for the authenticator app')" />
-			<p>{{ t('nextkeeweb', 'Scan with an authenticator app to add this account. Anyone who sees this code can generate your one-time codes.') }}</p>
+			<QrCode :value="uri" :label="t('keenext', 'QR code for the authenticator app')" />
+			<p>{{ t('keenext', 'Scan with an authenticator app to add this account. Anyone who sees this code can generate your one-time codes.') }}</p>
 		</div>
 	</NcDialog>
 </template>

@@ -2,8 +2,8 @@
  * Drag payloads between the entry list and the group tree. The database id is
  * part of the payload so drops into another open database are ignored.
  */
-export const ENTRY_TYPE = 'application/x-nextkeeweb-entry'
-export const GROUP_TYPE = 'application/x-nextkeeweb-group'
+export const ENTRY_TYPE = 'application/x-keenext-entry'
+export const GROUP_TYPE = 'application/x-keenext-group'
 
 export interface DragPayload {
 	database: string

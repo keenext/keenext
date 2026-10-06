@@ -1,6 +1,6 @@
 <template>
 	<NcDialog
-		:name="t('nextkeeweb', 'Export database')"
+		:name="t('keenext', 'Export database')"
 		:buttons="buttons"
 		@update:open="(open) => open || emit('close')">
 		<div class="export">
@@ -9,20 +9,20 @@
 				value="xml"
 				type="radio"
 				name="export-format">
-				{{ t('nextkeeweb', 'KeePass XML (KeePass, KeePassXC: everything including history and attachments)') }}
+				{{ t('keenext', 'KeePass XML (KeePass, KeePassXC: everything including history and attachments)') }}
 			</NcCheckboxRadioSwitch>
 			<NcCheckboxRadioSwitch
 				v-model="format"
 				value="csv"
 				type="radio"
 				name="export-format">
-				{{ t('nextkeeweb', 'CSV (KeePassXC columns: no attachments, history or custom attributes)') }}
+				{{ t('keenext', 'CSV (KeePassXC columns: no attachments, history or custom attributes)') }}
 			</NcCheckboxRadioSwitch>
 			<NcNoteCard type="warning">
-				{{ t('nextkeeweb', 'The export contains all passwords unencrypted. It is downloaded to this device only; delete it when you no longer need it.') }}
+				{{ t('keenext', 'The export contains all passwords unencrypted. It is downloaded to this device only; delete it when you no longer need it.') }}
 			</NcNoteCard>
 			<NcCheckboxRadioSwitch v-model="understood">
-				{{ t('nextkeeweb', 'I understand that the file is not encrypted') }}
+				{{ t('keenext', 'I understand that the file is not encrypted') }}
 			</NcCheckboxRadioSwitch>
 		</div>
 	</NcDialog>
@@ -72,9 +72,9 @@ async function download(): Promise<boolean> {
 }
 
 const buttons = computed(() => [
-	{ label: t('nextkeeweb', 'Cancel'), callback: () => emit('close') },
+	{ label: t('keenext', 'Cancel'), callback: () => emit('close') },
 	{
-		label: t('nextkeeweb', 'Download'),
+		label: t('keenext', 'Download'),
 		variant: 'primary' as const,
 		disabled: !understood.value || busy.value,
 		callback: async () => (await download()) || false,

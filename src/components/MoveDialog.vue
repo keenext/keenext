@@ -1,12 +1,12 @@
 <template>
 	<NcDialog
-		:name="t('nextkeeweb', 'Move to group')"
+		:name="t('keenext', 'Move to group')"
 		:buttons="buttons"
 		@update:open="(open) => open || emit('close')">
 		<NcSelect
 			v-model="selected"
 			:options="options"
-			:inputLabel="t('nextkeeweb', 'Group')"
+			:inputLabel="t('keenext', 'Group')"
 			:clearable="false"
 			label="label" />
 	</NcDialog>
@@ -64,9 +64,9 @@ const options = computed<GroupOption[]>(() => {
 const selected = shallowRef<GroupOption | null>(options.value.find((option) => option.id === props.currentGroup) ?? null)
 
 const buttons = computed(() => [
-	{ label: t('nextkeeweb', 'Cancel'), callback: () => emit('close') },
+	{ label: t('keenext', 'Cancel'), callback: () => emit('close') },
 	{
-		label: t('nextkeeweb', 'Move'),
+		label: t('keenext', 'Move'),
 		variant: 'primary' as const,
 		disabled: !selected.value || selected.value.id === props.currentGroup,
 		callback: () => {

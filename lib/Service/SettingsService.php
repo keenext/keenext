@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\NextKeeWeb\Service;
+namespace OCA\KeeNext\Service;
 
-use OCA\NextKeeWeb\AppInfo\Application;
+use OCA\KeeNext\AppInfo\Application;
 use OCP\Config\IUserConfig;
 
 /**

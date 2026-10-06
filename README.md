@@ -1,6 +1,6 @@
-# NextKeeWeb
+# KeeNext
 
-A Nextcloud app (id `nextkeeweb`) for opening and editing KeePass databases (`.kdbx`) stored in Nextcloud, compatible with KeePassXC, KeePass and KeePassDX.
+A Nextcloud app (id `keenext`) for opening and editing KeePass databases (`.kdbx`) stored in Nextcloud, compatible with KeePassXC, KeePass and KeePassDX.
 
 - Databases are decrypted in the browser. The server stores and serves the encrypted file; it never receives the master password, key files or decrypted contents.
 - Clicking a `.kdbx` file in the Files app opens it here; Files' "New" menu creates databases. Inside the app, databases are opened with the Nextcloud file picker or from the list of recently opened ones, which also remembers the key file used.
@@ -26,7 +26,7 @@ npm run build          # or: npm run watch
 docker compose up -d   # Nextcloud 34 on http://localhost:8091, admin / admin
 ```
 
-The compose file mounts the checkout as `custom_apps/nextkeeweb`, enables the app and copies the fixtures from `tests/fixtures` into the admin's `KeePass` folder (password `test`). `NEXTCLOUD_VERSION=35 docker compose up -d` runs another server version; `docker compose down -v` starts over.
+The compose file mounts the checkout as `custom_apps/keenext`, enables the app and copies the fixtures from `tests/fixtures` into the admin's `KeePass` folder (password `test`). `NEXTCLOUD_VERSION=35 docker compose up -d` runs another server version; `docker compose down -v` starts over.
 
 | Command | |
 |---|---|
@@ -35,12 +35,12 @@ The compose file mounts the checkout as `custom_apps/nextkeeweb`, enables the ap
 | `npm run typecheck` / `npm run lint` | `vue-tsc`, ESLint with the Nextcloud config |
 | `composer test` / `composer psalm` / `composer cs:check` | PHPUnit, Psalm, Nextcloud PHP coding standard |
 | `npm run l10n` | Regenerates `l10n/*.js` from `l10n/*.json` |
-| `make appstore` | Builds `build/nextkeeweb.tar.gz` |
+| `make appstore` | Builds `build/keenext.tar.gz` |
 | `tests/fixtures/generate.sh` | Regenerates the KeePassXC-written fixtures (needs `npm run build -w kdbxweb`) |
 
 ### Translations
 
-Strings are marked with `t('nextkeeweb', …)` / `n('nextkeeweb', …)` imported from `src/l10n.ts`. `l10n/<lang>.json` holds the translations (`de` informal, `de_DE` formal); `npm test` fails when a string is missing, stale or loses a placeholder. Run `npm run l10n` after editing the JSON files.
+Strings are marked with `t('keenext', …)` / `n('keenext', …)` imported from `src/l10n.ts`. `l10n/<lang>.json` holds the translations (`de` informal, `de_DE` formal); `npm test` fails when a string is missing, stale or loses a placeholder. Run `npm run l10n` after editing the JSON files.
 
 ## License
 

@@ -5,7 +5,7 @@ services:
   nextcloud:
     image: nextcloud:${NEXTCLOUD_VERSION:-34}
     ports:
-      - "${NEXTKEEWEB_PORT:-8091}:80"
+      - "${KEENEXT_PORT:-8091}:80"
     environment:
       SQLITE_DATABASE: nextcloud
       NEXTCLOUD_ADMIN_USER: admin
@@ -15,7 +15,7 @@ services:
       - nextcloud:/var/www/html
       # The whole checkout, not single folders: builds replace js/ and css/, which would leave a
       # folder bind mount pointing at the deleted directory.
-      - .:/var/www/html/custom_apps/nextkeeweb:ro
+      - .:/var/www/html/custom_apps/keenext:ro
       - ./tests/fixtures:/fixtures:ro
       - ./docker/hooks:/docker-entrypoint-hooks.d:ro
 

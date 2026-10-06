@@ -12,7 +12,7 @@ export function fixture(name: string): Uint8Array {
 }
 
 export function writeTemp(name: string, data: ArrayBuffer | Uint8Array): string {
-	const dir = mkdtempSync(join(tmpdir(), 'nextkeeweb-'))
+	const dir = mkdtempSync(join(tmpdir(), 'keenext-'))
 	const path = join(dir, name)
 	writeFileSync(path, data instanceof Uint8Array ? data : new Uint8Array(data))
 	return path

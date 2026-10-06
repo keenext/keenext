@@ -1,7 +1,7 @@
 <template>
-	<NcAppNavigation :aria-label="t('nextkeeweb', 'Databases')">
+	<NcAppNavigation :aria-label="t('keenext', 'Databases')">
 		<template #list>
-			<NcAppNavigationCaption v-if="vault.databases.length > 0" :name="t('nextkeeweb', 'Open databases')" />
+			<NcAppNavigationCaption v-if="vault.databases.length > 0" :name="t('keenext', 'Open databases')" />
 			<NcAppNavigationItem
 				v-for="database in vault.databases"
 				:key="database.id"
@@ -16,7 +16,7 @@
 					<NcIconSvgWrapper v-else :path="database.session ? mdiShieldKeyOutline : mdiLock" />
 				</template>
 				<template v-if="database.dirty" #counter>
-					<span class="unsaved-dot" :title="t('nextkeeweb', 'Unsaved changes')" />
+					<span class="unsaved-dot" :title="t('keenext', 'Unsaved changes')" />
 				</template>
 				<template #actions>
 					<template v-if="database.session">
@@ -24,44 +24,44 @@
 							<template #icon>
 								<NcIconSvgWrapper :path="mdiContentSave" />
 							</template>
-							{{ t('nextkeeweb', 'Save') }}
+							{{ t('keenext', 'Save') }}
 						</NcActionButton>
 						<NcActionButton closeAfterClick @click="databaseSettings = database.id">
 							<template #icon>
 								<NcIconSvgWrapper :path="mdiCog" />
 							</template>
-							{{ t('nextkeeweb', 'Database settings') }}
+							{{ t('keenext', 'Database settings') }}
 						</NcActionButton>
 						<NcActionButton closeAfterClick @click="report = database.id">
 							<template #icon>
 								<NcIconSvgWrapper :path="mdiShieldCheckOutline" />
 							</template>
-							{{ t('nextkeeweb', 'Health check') }}
+							{{ t('keenext', 'Health check') }}
 						</NcActionButton>
 						<NcActionButton v-if="database.writable" closeAfterClick @click="importInto = database.id">
 							<template #icon>
 								<NcIconSvgWrapper :path="mdiDatabaseImportOutline" />
 							</template>
-							{{ t('nextkeeweb', 'Import…') }}
+							{{ t('keenext', 'Import…') }}
 						</NcActionButton>
 						<NcActionButton closeAfterClick @click="exportFrom = database.id">
 							<template #icon>
 								<NcIconSvgWrapper :path="mdiDatabaseExportOutline" />
 							</template>
-							{{ t('nextkeeweb', 'Export…') }}
+							{{ t('keenext', 'Export…') }}
 						</NcActionButton>
 						<NcActionButton closeAfterClick @click="vault.lock(database.id)">
 							<template #icon>
 								<NcIconSvgWrapper :path="mdiLock" />
 							</template>
-							{{ t('nextkeeweb', 'Lock') }}
+							{{ t('keenext', 'Lock') }}
 						</NcActionButton>
 					</template>
 					<NcActionButton closeAfterClick @click="vault.close(database.id)">
 						<template #icon>
 							<NcIconSvgWrapper :path="mdiClose" />
 						</template>
-						{{ t('nextkeeweb', 'Close') }}
+						{{ t('keenext', 'Close') }}
 					</NcActionButton>
 				</template>
 
@@ -75,17 +75,17 @@
 
 		<template #footer>
 			<ul class="app-navigation-footer">
-				<NcAppNavigationItem :name="t('nextkeeweb', 'Open database')" @click="emit('openDatabase')">
+				<NcAppNavigationItem :name="t('keenext', 'Open database')" @click="emit('openDatabase')">
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiFolderOpenOutline" />
 					</template>
 				</NcAppNavigationItem>
-				<NcAppNavigationItem :name="t('nextkeeweb', 'New database')" @click="emit('newDatabase')">
+				<NcAppNavigationItem :name="t('keenext', 'New database')" @click="emit('newDatabase')">
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiPlus" />
 					</template>
 				</NcAppNavigationItem>
-				<NcAppNavigationItem :name="t('nextkeeweb', 'Settings')" @click="emit('openSettings')">
+				<NcAppNavigationItem :name="t('keenext', 'Settings')" @click="emit('openSettings')">
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiCog" />
 					</template>

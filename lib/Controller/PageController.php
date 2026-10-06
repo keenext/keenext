@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\NextKeeWeb\Controller;
+namespace OCA\KeeNext\Controller;
 
-use OCA\NextKeeWeb\AppInfo\Application;
-use OCA\NextKeeWeb\Service\SettingsService;
+use OCA\KeeNext\AppInfo\Application;
+use OCA\KeeNext\Service\SettingsService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\FrontpageRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;

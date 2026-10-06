@@ -1,6 +1,6 @@
 <template>
 	<NcDialog
-		:name="t('nextkeeweb', 'Database health check')"
+		:name="t('keenext', 'Database health check')"
 		:buttons="buttons"
 		size="normal"
 		@update:open="(open) => open || emit('close')">
@@ -10,20 +10,20 @@
 					<NcLoadingIcon v-if="checking" :size="20" />
 					<NcIconSvgWrapper v-else :path="mdiCloudSearchOutline" />
 				</template>
-				{{ breaches ? t('nextkeeweb', 'Check again with Have I Been Pwned') : t('nextkeeweb', 'Check with Have I Been Pwned') }}
+				{{ breaches ? t('keenext', 'Check again with Have I Been Pwned') : t('keenext', 'Check with Have I Been Pwned') }}
 			</NcButton>
 			<p class="report__muted">
-				{{ t('nextkeeweb', 'Looks up whether passwords appear in known data breaches. Only the first 5 characters of each password\'s SHA-1 hash are sent to api.pwnedpasswords.com; the passwords themselves never leave this browser.') }}
+				{{ t('keenext', 'Looks up whether passwords appear in known data breaches. Only the first 5 characters of each password\'s SHA-1 hash are sent to api.pwnedpasswords.com; the passwords themselves never leave this browser.') }}
 			</p>
 			<NcNoteCard v-if="breachError" type="error">
 				{{ breachError }}
 			</NcNoteCard>
 			<NcNoteCard v-else-if="breaches && breaches.length === 0" type="success">
-				{{ t('nextkeeweb', 'None of the passwords appears in a known data breach.') }}
+				{{ t('keenext', 'None of the passwords appears in a known data breach.') }}
 			</NcNoteCard>
 		</div>
 
-		<NcEmptyContent v-if="sections.every((section) => section.items.length === 0)" :name="t('nextkeeweb', 'No problems found')">
+		<NcEmptyContent v-if="sections.every((section) => section.items.length === 0)" :name="t('keenext', 'No problems found')">
 			<template #icon>
 				<NcIconSvgWrapper :path="mdiShieldCheckOutline" />
 			</template>
@@ -95,7 +95,7 @@ async function checkOnline(): Promise<void> {
 	try {
 		breaches.value = await checkPwned(db, fetchPwnedRange)
 	} catch (cause) {
-		breachError.value = t('nextkeeweb', 'The check failed: {error}', { error: cause instanceof Error ? cause.message : String(cause) })
+		breachError.value = t('keenext', 'The check failed: {error}', { error: cause instanceof Error ? cause.message : String(cause) })
 	} finally {
 		checking.value = false
 	}
@@ -104,11 +104,11 @@ async function checkOnline(): Promise<void> {
 function describe(issue: HealthIssue): string {
 	switch (issue.kind) {
 		case 'weak':
-			return issue.detail === 'poor' ? t('nextkeeweb', 'Poor') : t('nextkeeweb', 'Weak')
+			return issue.detail === 'poor' ? t('keenext', 'Poor') : t('keenext', 'Weak')
 		case 'reused':
-			return n('nextkeeweb', 'Used in {count} entry', 'Used in {count} entries', Number(issue.detail), { count: Number(issue.detail) })
+			return n('keenext', 'Used in {count} entry', 'Used in {count} entries', Number(issue.detail), { count: Number(issue.detail) })
 		case 'expiring':
-			return n('nextkeeweb', 'in {count} day', 'in {count} days', Number(issue.detail), { count: Number(issue.detail) })
+			return n('keenext', 'in {count} day', 'in {count} days', Number(issue.detail), { count: Number(issue.detail) })
 		default:
 			return issue.entry.times.expiryTime?.toLocaleDateString() ?? ''
 	}
@@ -117,7 +117,7 @@ function describe(issue: HealthIssue): string {
 function item(entry: KdbxEntry, detail: string) {
 	return {
 		id: entry.uuid.id,
-		title: getField(entry, StandardField.Title) || t('nextkeeweb', '(no title)'),
+		title: getField(entry, StandardField.Title) || t('keenext', '(no title)'),
 		path: entryPath(entry).join(' › '),
 		detail,
 	}
@@ -126,16 +126,16 @@ function item(entry: KdbxEntry, detail: string) {
 const sections = computed(() => {
 	const issues = view.value ? healthReport(view.value.db) : []
 	const titles: Record<HealthIssue['kind'], string> = {
-		expired: t('nextkeeweb', 'Expired'),
-		expiring: t('nextkeeweb', 'Expiring soon'),
-		weak: t('nextkeeweb', 'Weak passwords'),
-		reused: t('nextkeeweb', 'Reused passwords'),
+		expired: t('keenext', 'Expired'),
+		expiring: t('keenext', 'Expiring soon'),
+		weak: t('keenext', 'Weak passwords'),
+		reused: t('keenext', 'Reused passwords'),
 	}
 	return [
 		{
 			kind: 'pwned',
-			title: t('nextkeeweb', 'Found in data breaches'),
-			items: (breaches.value ?? []).map((result) => item(result.entry, n('nextkeeweb', 'Seen {count} time', 'Seen {count} times', result.count, { count: result.count.toLocaleString() }))),
+			title: t('keenext', 'Found in data breaches'),
+			items: (breaches.value ?? []).map((result) => item(result.entry, n('keenext', 'Seen {count} time', 'Seen {count} times', result.count, { count: result.count.toLocaleString() }))),
 		},
 		...(Object.keys(titles) as HealthIssue['kind'][]).map((kind) => ({
 			kind,
@@ -152,7 +152,7 @@ function open(id: string): void {
 }
 
 const buttons = computed(() => [
-	{ label: t('nextkeeweb', 'Close'), callback: () => emit('close') },
+	{ label: t('keenext', 'Close'), callback: () => emit('close') },
 ])
 </script>
 

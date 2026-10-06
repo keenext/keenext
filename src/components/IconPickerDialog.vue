@@ -1,13 +1,13 @@
 <template>
 	<NcDialog
-		:name="t('nextkeeweb', 'Choose icon')"
+		:name="t('keenext', 'Choose icon')"
 		:buttons="buttons"
 		size="normal"
 		@update:open="(open) => open || emit('close')">
 		<h3 class="icon-picker__heading">
-			{{ t('nextkeeweb', 'Standard icons') }}
+			{{ t('keenext', 'Standard icons') }}
 		</h3>
-		<div class="icon-picker__grid" role="listbox" :aria-label="t('nextkeeweb', 'Standard icons')">
+		<div class="icon-picker__grid" role="listbox" :aria-label="t('keenext', 'Standard icons')">
 			<button
 				v-for="index in STANDARD_ICON_COUNT"
 				:key="index - 1"
@@ -16,7 +16,7 @@
 				class="icon-picker__icon"
 				:class="{ 'icon-picker__icon--selected': customIcon === null && icon === index - 1 }"
 				:aria-selected="customIcon === null && icon === index - 1"
-				:aria-label="t('nextkeeweb', 'Icon {number}', { number: index - 1 })"
+				:aria-label="t('keenext', 'Icon {number}', { number: index - 1 })"
 				@click="emit('select', { icon: index - 1, customIcon: null })">
 				<NcIconSvgWrapper :path="standardIconPath(index - 1)" :size="24" />
 			</button>
@@ -24,9 +24,9 @@
 
 		<template v-if="customIcons.length > 0">
 			<h3 class="icon-picker__heading">
-				{{ t('nextkeeweb', 'Icons in this database') }}
+				{{ t('keenext', 'Icons in this database') }}
 			</h3>
-			<div class="icon-picker__grid" role="listbox" :aria-label="t('nextkeeweb', 'Icons in this database')">
+			<div class="icon-picker__grid" role="listbox" :aria-label="t('keenext', 'Icons in this database')">
 				<button
 					v-for="custom in customIcons"
 					:key="custom.id"
@@ -35,7 +35,7 @@
 					class="icon-picker__icon"
 					:class="{ 'icon-picker__icon--selected': customIcon === custom.id }"
 					:aria-selected="customIcon === custom.id"
-					:aria-label="custom.name || t('nextkeeweb', 'Custom icon')"
+					:aria-label="custom.name || t('keenext', 'Custom icon')"
 					:title="custom.name"
 					@click="emit('select', { icon, customIcon: custom.id })">
 					<img :src="custom.url" alt="" class="icon-picker__image">
@@ -74,7 +74,7 @@ const customIcons = computed(() => {
 })
 
 const buttons = computed(() => [
-	{ label: t('nextkeeweb', 'Close'), callback: () => emit('close') },
+	{ label: t('keenext', 'Close'), callback: () => emit('close') },
 ])
 </script>
 
