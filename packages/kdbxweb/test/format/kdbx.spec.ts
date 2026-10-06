@@ -4,7 +4,6 @@ import { argon2 } from '../test-support/argon2';
 import { TestResources } from '../test-support/test-resources';
 
 describe('Kdbx', () => {
-    const cryptoEngineArgon2 = kdbxweb.CryptoEngine.argon2;
     const challengeResponse: kdbxweb.KdbxChallengeResponseFn = function (challenge) {
         const responses = new Map<string, string>([
             [
@@ -22,11 +21,7 @@ describe('Kdbx', () => {
     };
 
     before(() => {
-        kdbxweb.CryptoEngine.argon2 = argon2;
-    });
-
-    after(() => {
-        kdbxweb.CryptoEngine.argon2 = cryptoEngineArgon2;
+        kdbxweb.CryptoEngine.setArgon2Impl(argon2);
     });
 
     it('sets all imports without issues', () => {
@@ -183,7 +178,6 @@ describe('Kdbx', () => {
     });
 
     it('loads kdbx4 file with argon2 kdf', function () {
-        this.timeout(10000);
         const cred = new kdbxweb.Credentials(
             kdbxweb.ProtectedValue.fromString('demo'),
             TestResources.demoKey
@@ -201,7 +195,6 @@ describe('Kdbx', () => {
     });
 
     it('loads kdbx4 file with argon2id kdf', function () {
-        this.timeout(10000);
         const cred = new kdbxweb.Credentials(
             kdbxweb.ProtectedValue.fromString('demo'),
             TestResources.demoKey
@@ -219,7 +212,6 @@ describe('Kdbx', () => {
     });
 
     it('loads kdbx3 file with chacha20', function () {
-        this.timeout(10000);
         const cred = new kdbxweb.Credentials(
             kdbxweb.ProtectedValue.fromString('demo'),
             TestResources.demoKey
@@ -241,7 +233,6 @@ describe('Kdbx', () => {
     });
 
     it('loads kdbx4 file with aes kdf', function () {
-        this.timeout(10000);
         const cred = new kdbxweb.Credentials(kdbxweb.ProtectedValue.fromString('demo'));
         return kdbxweb.Kdbx.load(TestResources.aesKdfKdbx4, cred).then((db) => {
             expect(db).to.be.a(kdbxweb.Kdbx);
@@ -256,7 +247,6 @@ describe('Kdbx', () => {
     });
 
     it('loads kdbx4 file with argon2 kdf and chacha20 encryption', function () {
-        this.timeout(10000);
         const cred = new kdbxweb.Credentials(
             kdbxweb.ProtectedValue.fromString('demo'),
             TestResources.demoKey
@@ -274,7 +264,6 @@ describe('Kdbx', () => {
     });
 
     it('loads kdbx3 file with challenge-response', function () {
-        this.timeout(10000);
         const cred = new kdbxweb.Credentials(
             kdbxweb.ProtectedValue.fromString('demo'),
             null,
@@ -287,7 +276,6 @@ describe('Kdbx', () => {
     });
 
     it('loads a kdbx4 file with challenge-response', function () {
-        this.timeout(10000);
         const cred = new kdbxweb.Credentials(
             kdbxweb.ProtectedValue.fromString('demo'),
             null,
@@ -300,7 +288,6 @@ describe('Kdbx', () => {
     });
 
     it('upgrades file to latest version', function () {
-        this.timeout(10000);
         const cred = new kdbxweb.Credentials(
             kdbxweb.ProtectedValue.fromString('demo'),
             TestResources.demoKey
@@ -324,7 +311,6 @@ describe('Kdbx', () => {
     });
 
     it('upgrades file to V4 with aes kdf', function () {
-        this.timeout(10000);
         const cred = new kdbxweb.Credentials(
             kdbxweb.ProtectedValue.fromString('demo'),
             TestResources.demoKey
@@ -349,7 +335,6 @@ describe('Kdbx', () => {
     });
 
     it('upgrades file to V4 with argon2id kdf', function () {
-        this.timeout(10000);
         const cred = new kdbxweb.Credentials(
             kdbxweb.ProtectedValue.fromString('demo'),
             TestResources.demoKey
@@ -374,7 +359,6 @@ describe('Kdbx', () => {
     });
 
     it('downgrades file to V3', function () {
-        this.timeout(10000);
         const cred = new kdbxweb.Credentials(
             kdbxweb.ProtectedValue.fromString('demo'),
             TestResources.demoKey
@@ -410,7 +394,6 @@ describe('Kdbx', () => {
     });
 
     it('saves and loads custom data', function () {
-        this.timeout(10000);
         const cred = new kdbxweb.Credentials(
             kdbxweb.ProtectedValue.fromString('demo'),
             TestResources.demoKey
@@ -984,7 +967,6 @@ describe('Kdbx', () => {
     });
 
     it('imports an entry from another file', function () {
-        this.timeout(10000);
         const cred = new kdbxweb.Credentials(
             kdbxweb.ProtectedValue.fromString('demo'),
             TestResources.demoKey

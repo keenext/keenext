@@ -20,16 +20,21 @@ export class KdbxBinaries {
 
     computeHashes(): Promise<void> {
         // this method is called after the file is loaded
-        const promises = [...this._mapById].map(([id, binary]) =>
-            KdbxBinaries.getBinaryHash(binary).then((hash) => {
-                this._idToHash.set(id, hash);
-                this._mapByHash.set(hash, binary);
-            })
+        // Hashes are computed in parallel but inserted in file order, so the pool keeps the
+        // file's binary order regardless of which hash resolves first.
+        const binaries = [...this._mapById];
+        return Promise.all(binaries.map(([, binary]) => KdbxBinaries.getBinaryHash(binary))).then(
+            (hashes) => {
+                binaries.forEach(([id, binary], index) => {
+                    this._idToHash.set(id, hashes[index]);
+                    if (!this._mapByHash.has(hashes[index])) {
+                        this._mapByHash.set(hashes[index], binary);
+                    }
+                });
+                // it won't be used anymore
+                this._mapById.clear();
+            }
         );
-        return Promise.all(promises).then(() => {
-            // it won't be used anymore
-            this._mapById.clear();
-        });
     }
 
     private static getBinaryHash(binary: KdbxBinaryIn): Promise<string> {

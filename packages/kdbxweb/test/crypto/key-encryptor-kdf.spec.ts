@@ -8,8 +8,6 @@ describe('KeyEncryptorKdf', () => {
     );
     const exp = '5d2a000401200200130000000000000000000000000000000000000000000000';
 
-    const cryptoEngineArgon2 = CryptoEngine.argon2;
-
     before(() => {
         CryptoEngine.setArgon2Impl(
             (password, salt, memory, iterations, length, parallelism, type, version) => {
@@ -26,10 +24,6 @@ describe('KeyEncryptorKdf', () => {
                 return Promise.resolve(res);
             }
         );
-    });
-
-    after(() => {
-        CryptoEngine.argon2 = cryptoEngineArgon2;
     });
 
     it('calls argon2 function', () => {

@@ -1,5 +1,7 @@
-import { Argon2Type, Argon2Version } from '../../lib/crypto/crypto-engine';
+import { argon2d, argon2id } from 'hash-wasm';
+import { Argon2Type, Argon2TypeArgon2id, Argon2Version } from '../../lib/crypto/crypto-engine';
 
+// Upstream used an emscripten build of the reference implementation; hash-wasm is the one the app uses.
 export function argon2(
     password: ArrayBuffer,
     salt: ArrayBuffer,
@@ -10,46 +12,17 @@ export function argon2(
     type: Argon2Type,
     version: Argon2Version
 ): Promise<ArrayBuffer> {
-    let Module = require('./argon2-asm.min');
-    if (Module.default) {
-        Module = Module.default;
+    if (version !== 0x13) {
+        return Promise.reject(new Error(`argon2 version ${version} not supported`));
     }
-    const passwordLen = password.byteLength;
-    password = Module.allocate(new Uint8Array(password), 'i8', Module.ALLOC_NORMAL);
-    const saltLen = salt.byteLength;
-    salt = Module.allocate(new Uint8Array(salt), 'i8', Module.ALLOC_NORMAL);
-    const hash = <number>Module.allocate(new Array(length), 'i8', Module.ALLOC_NORMAL);
-    const encodedLen = 512;
-    const encoded = Module.allocate(new Array(encodedLen), 'i8', Module.ALLOC_NORMAL);
-    try {
-        const res = Module._argon2_hash(
-            iterations,
-            memory,
-            parallelism,
-            password,
-            passwordLen,
-            salt,
-            saltLen,
-            hash,
-            length,
-            encoded,
-            encodedLen,
-            type,
-            version
-        );
-        if (res) {
-            return Promise.reject(`Argon2 error: ${res}`);
-        }
-        const hashArr = new Uint8Array(length);
-        for (let i = 0; i < length; i++) {
-            hashArr[i] = Module.HEAP8[hash + i];
-        }
-        Module._free(password);
-        Module._free(salt);
-        Module._free(hash);
-        Module._free(encoded);
-        return Promise.resolve(hashArr);
-    } catch (e) {
-        return Promise.reject(e);
-    }
+    const fn = type === Argon2TypeArgon2id ? argon2id : argon2d;
+    return fn({
+        password: new Uint8Array(password),
+        salt: new Uint8Array(salt),
+        memorySize: memory,
+        iterations,
+        hashLength: length,
+        parallelism,
+        outputType: 'binary'
+    }).then((hash) => hash.buffer.slice(hash.byteOffset, hash.byteOffset + hash.byteLength) as ArrayBuffer);
 }

@@ -3,7 +3,7 @@ import * as KeyEncryptorAes from './key-encryptor-aes';
 import { VarDictionary, VarDictionaryAnyValue } from '../utils/var-dictionary';
 import { KdbxError } from '../errors/kdbx-error';
 import { ErrorCodes, KdfId } from '../defs/consts';
-import { bytesToBase64, zeroBuffer } from '../utils/byte-utils';
+import { arrayToBuffer, bytesToBase64, zeroBuffer } from '../utils/byte-utils';
 import { Argon2Type } from './crypto-engine';
 import { Int64 } from '../utils/int64';
 
@@ -90,7 +90,7 @@ function encryptAes(key: ArrayBuffer, kdfParams: VarDictionary) {
 
     return KeyEncryptorAes.encrypt(new Uint8Array(key), new Uint8Array(salt), rounds).then(
         (key) => {
-            return CryptoEngine.sha256(key).then((hash) => {
+            return CryptoEngine.sha256(arrayToBuffer(key)).then((hash) => {
                 zeroBuffer(key);
                 return hash;
             });

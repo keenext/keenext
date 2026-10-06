@@ -20,40 +20,21 @@ declare global {
     }
 }
 
-function createDOMParser() {
-    if (global.DOMParser) {
-        return new global.DOMParser();
+// The DOM implementation comes from the environment: browsers have it built in,
+// Node users install one (e.g. @xmldom/xmldom) as globalThis.DOMParser/XMLSerializer.
+// A parser that reports errors by throwing or by a <parsererror> element both work.
+function createDOMParser(): DOMParser {
+    if (!globalThis.DOMParser) {
+        throw new KdbxError(ErrorCodes.NotImplemented, 'DOMParser is not available');
     }
-
-    const parserArg = {
-        errorHandler: {
-            warning: (e: Error) => {
-                throw e;
-            },
-            error: (e: Error) => {
-                throw e;
-            },
-            fatalError: (e: Error) => {
-                throw e;
-            }
-        }
-    };
-
-    /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-call */
-    const { DOMParser } = require('@xmldom/xmldom');
-    return <typeof global.DOMParser>new DOMParser(parserArg);
-    /* eslint-enable */
+    return new globalThis.DOMParser();
 }
 
-function createXMLSerializer() {
-    if (global.XMLSerializer) {
-        return new global.XMLSerializer();
+function createXMLSerializer(): XMLSerializer {
+    if (!globalThis.XMLSerializer) {
+        throw new KdbxError(ErrorCodes.NotImplemented, 'XMLSerializer is not available');
     }
-
-    /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-call */
-    const { XMLSerializer } = require('@xmldom/xmldom');
-    return <typeof global.XMLSerializer>new XMLSerializer();
-    /* eslint-enable */
+    return new globalThis.XMLSerializer();
 }
 
 export function parse(xml: string): Document {

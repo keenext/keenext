@@ -15,8 +15,6 @@ describe('XmlUtils', () => {
         return str.replace(/\s/g, '');
     }
 
-    const isNode = !!global.process?.versions?.node;
-
     describe('parse', () => {
         it('parses XML document', () => {
             const xml = XmlUtils.parse('<root><item><cd>&lt;&gt;</cd></item></root>');
@@ -26,27 +24,25 @@ describe('XmlUtils', () => {
             expect(xml.documentElement.firstChild!.firstChild!.textContent).to.be('<>');
         });
 
-        if (isNode) {
-            it('uses the global DOMParser if possible', () => {
-                const doc = {
-                    documentElement: 'hello',
-                    getElementsByTagName: () => []
+        it('uses the global DOMParser', () => {
+            const doc = {
+                documentElement: 'hello',
+                getElementsByTagName: () => []
+            };
+            const original = globalThis.DOMParser;
+            try {
+                // @ts-ignore
+                globalThis.DOMParser = class {
+                    parseFromString() {
+                        return doc;
+                    }
                 };
-                try {
-                    // @ts-ignore
-                    global.DOMParser = class {
-                        parseFromString() {
-                            return doc;
-                        }
-                    };
-                    const xml = XmlUtils.parse('<root><item><cd>&lt;&gt;</cd></item></root>');
-                    expect(xml).to.be(doc);
-                } finally {
-                    // @ts-ignore
-                    delete global.DOMParser;
-                }
-            });
-        }
+                const xml = XmlUtils.parse('<root><item><cd>&lt;&gt;</cd></item></root>');
+                expect(xml).to.be(doc);
+            } finally {
+                globalThis.DOMParser = original;
+            }
+        });
 
         it('throws error for non-xml document', () => {
             expect(() => {
@@ -107,24 +103,22 @@ describe('XmlUtils', () => {
             );
         });
 
-        if (isNode) {
-            it('uses the global XMLSerializer if possible', () => {
-                try {
-                    // @ts-ignore
-                    global.XMLSerializer = class {
-                        serializeToString() {
-                            return 'xml';
-                        }
-                    };
-                    const doc = XmlUtils.parse('<root><item><cd>123</cd><e></e></item></root>');
-                    const xml = XmlUtils.serialize(doc, true);
-                    expect(xml).to.be('xml');
-                } finally {
-                    // @ts-ignore
-                    delete global.XMLSerializer;
-                }
-            });
-        }
+        it('uses the global XMLSerializer', () => {
+            const original = globalThis.XMLSerializer;
+            try {
+                // @ts-ignore
+                globalThis.XMLSerializer = class {
+                    serializeToString() {
+                        return 'xml';
+                    }
+                };
+                const doc = XmlUtils.parse('<root><item><cd>123</cd><e></e></item></root>');
+                const xml = XmlUtils.serialize(doc, true);
+                expect(xml).to.be('xml');
+            } finally {
+                globalThis.XMLSerializer = original;
+            }
+        });
 
         it('pretty prints processing instructions', () => {
             const doc = XmlUtils.parse(

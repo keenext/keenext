@@ -54,17 +54,6 @@ describe('ByteUtils', () => {
         it('converts base64-string to byte array', () => {
             expect(ByteUtils.base64ToBytes(base64)).to.be.eql(bytes);
         });
-
-        it('converts base64-string to byte array using Buffer', () => {
-            const atob = global.atob;
-            // @ts-ignore
-            global.atob = undefined;
-            try {
-                expect(ByteUtils.base64ToBytes(base64)).to.be.eql(bytes);
-            } finally {
-                global.atob = atob;
-            }
-        });
     });
 
     describe('bytesToBase64', () => {
@@ -74,17 +63,6 @@ describe('ByteUtils', () => {
 
         it('converts ArrayBuffer base64-string', () => {
             expect(ByteUtils.bytesToBase64(bytes.buffer)).to.be.eql(base64);
-        });
-
-        it('converts byte array to base64-string using Buffer', () => {
-            const btoa = global.btoa;
-            // @ts-ignore
-            global.btoa = undefined;
-            try {
-                expect(ByteUtils.bytesToBase64(bytes)).to.be.eql(base64);
-            } finally {
-                global.btoa = btoa;
-            }
         });
     });
 

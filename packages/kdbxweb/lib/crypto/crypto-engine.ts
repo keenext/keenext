@@ -1,19 +1,8 @@
-/*
-    @note           as of node 19, webcrypto is now global.
-                    update script to work with node 19, until then, build with node 18
-                        - https://nodejs.org/id/blog/announcements/v19-release-announce#stable-webcrypto
-
-                        - The WebCrypto API is now stable (with the exception of the following algorithms:
-                            Ed25519, Ed448, X25519, and X448)
-
-                        - Use globalThis.crypto or require('node:crypto').webcrypto to access this module.
-*/
-
 import { KdbxError } from '../errors/kdbx-error';
 import { ErrorCodes } from '../defs/consts';
 import { arrayToBuffer, hexToBytes } from '../utils/byte-utils';
 import { ChaCha20 } from './chacha20';
-import * as nodeCrypto from 'crypto';
+import { Twofish } from './twofish';
 
 const EmptySha256 = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
 const EmptySha512 =
@@ -24,51 +13,34 @@ const EmptySha512 =
 // https://developer.mozilla.org/en-US/docs/Web/API/Crypto/getRandomValues
 const MaxRandomQuota = 65536;
 
+// WebCrypto only: available in all browsers and globally in Node >= 19.
+function webCrypto(): Crypto {
+    if (!globalThis.crypto?.subtle) {
+        throw new KdbxError(ErrorCodes.NotImplemented, 'WebCrypto is not available');
+    }
+    return globalThis.crypto;
+}
+
 export function sha256(data: ArrayBuffer): Promise<ArrayBuffer> {
     if (!data.byteLength) {
         return Promise.resolve(arrayToBuffer(hexToBytes(EmptySha256)));
     }
-    if (global.crypto?.subtle) {
-        return global.crypto.subtle.digest({ name: 'SHA-256' }, data);
-    } else {
-        return new Promise((resolve) => {
-            const sha = nodeCrypto.createHash('sha256');
-            const hash = sha.update(Buffer.from(data)).digest();
-            resolve(hash.buffer);
-        });
-    }
+    return webCrypto().subtle.digest({ name: 'SHA-256' }, data);
 }
 
 export function sha512(data: ArrayBuffer): Promise<ArrayBuffer> {
     if (!data.byteLength) {
         return Promise.resolve(arrayToBuffer(hexToBytes(EmptySha512)));
     }
-    if (global.crypto?.subtle) {
-        return global.crypto.subtle.digest({ name: 'SHA-512' }, data);
-    } else {
-        return new Promise((resolve) => {
-            const sha = nodeCrypto.createHash('sha512');
-            const hash = sha.update(Buffer.from(data)).digest();
-            resolve(hash.buffer);
-        });
-    }
+    return webCrypto().subtle.digest({ name: 'SHA-512' }, data);
 }
 
 export function hmacSha256(key: ArrayBuffer, data: ArrayBuffer): Promise<ArrayBuffer> {
-    if (global.crypto?.subtle) {
-        const algo = { name: 'HMAC', hash: { name: 'SHA-256' } };
-        return global.crypto.subtle
-            .importKey('raw', key, algo, false, ['sign'])
-            .then((subtleKey) => {
-                return global.crypto.subtle.sign(algo, subtleKey, data);
-            });
-    } else {
-        return new Promise((resolve) => {
-            const hmac = nodeCrypto.createHmac('sha256', Buffer.from(key));
-            const hash = hmac.update(Buffer.from(data)).digest();
-            resolve(hash.buffer);
-        });
-    }
+    const algo = { name: 'HMAC', hash: { name: 'SHA-256' } };
+    const { subtle } = webCrypto();
+    return subtle.importKey('raw', key, algo, false, ['sign']).then((subtleKey) => {
+        return subtle.sign(algo, subtleKey, data);
+    });
 }
 
 export abstract class AesCbc {
@@ -88,99 +60,70 @@ class AesCbcSubtle extends AesCbc {
     }
 
     importKey(key: ArrayBuffer): Promise<void> {
-        return global.crypto.subtle
-            .importKey('raw', key, { name: 'AES-CBC' }, false, ['encrypt', 'decrypt'])
+        return webCrypto()
+            .subtle.importKey('raw', key, { name: 'AES-CBC' }, false, ['encrypt', 'decrypt'])
             .then((key) => {
                 this._key = key;
             });
     }
 
     encrypt(data: ArrayBuffer, iv: ArrayBuffer): Promise<ArrayBuffer> {
-        return global.crypto.subtle.encrypt(
-            { name: 'AES-CBC', iv },
-            this.key,
-            data
-        ) as Promise<ArrayBuffer>;
-    }
-
-    decrypt(data: ArrayBuffer, iv: ArrayBuffer): Promise<ArrayBuffer> {
-        return global.crypto.subtle.decrypt({ name: 'AES-CBC', iv }, this.key, data).catch(() => {
-            throw new KdbxError(ErrorCodes.InvalidKey, 'invalid key');
-        }) as Promise<ArrayBuffer>;
-    }
-}
-
-class AesCbcNode extends AesCbc {
-    private _key: ArrayBuffer | undefined;
-
-    private get key(): ArrayBuffer {
-        if (!this._key) {
-            throw new KdbxError(ErrorCodes.InvalidState, 'no key');
-        }
-        return this._key;
-    }
-
-    importKey(key: ArrayBuffer): Promise<void> {
-        this._key = key;
-        return Promise.resolve();
-    }
-
-    encrypt(data: ArrayBuffer, iv: ArrayBuffer): Promise<ArrayBuffer> {
-        return Promise.resolve().then(() => {
-            const cipher = nodeCrypto.createCipheriv(
-                'aes-256-cbc',
-                Buffer.from(this.key),
-                Buffer.from(iv)
-            );
-            const block = cipher.update(Buffer.from(data));
-            return arrayToBuffer(Buffer.concat([block, cipher.final()]));
-        });
+        return Promise.resolve().then(() =>
+            webCrypto().subtle.encrypt({ name: 'AES-CBC', iv }, this.key, data)
+        );
     }
 
     decrypt(data: ArrayBuffer, iv: ArrayBuffer): Promise<ArrayBuffer> {
         return Promise.resolve()
-            .then(() => {
-                const cipher = nodeCrypto.createDecipheriv(
-                    'aes-256-cbc',
-                    Buffer.from(this.key),
-                    Buffer.from(iv)
-                );
-                const block = cipher.update(Buffer.from(data));
-                return arrayToBuffer(Buffer.concat([block, cipher.final()]));
-            })
-            .catch(() => {
+            .then(() => webCrypto().subtle.decrypt({ name: 'AES-CBC', iv }, this.key, data))
+            .catch((e: unknown) => {
+                if (e instanceof KdbxError) {
+                    throw e;
+                }
                 throw new KdbxError(ErrorCodes.InvalidKey, 'invalid key');
             });
     }
 }
 
 export function createAesCbc(): AesCbc {
-    if (global.crypto?.subtle) {
-        return new AesCbcSubtle();
-    } else {
-        return new AesCbcNode();
-    }
+    return new AesCbcSubtle();
 }
 
-function safeRandomWeb(len: number): Uint8Array {
+export function random(len: number): Uint8Array {
+    const crypto = webCrypto();
     const randomBytes = new Uint8Array(len);
     while (len > 0) {
         let segmentSize = len % MaxRandomQuota;
         segmentSize = segmentSize > 0 ? segmentSize : MaxRandomQuota;
         const randomBytesSegment = new Uint8Array(segmentSize);
-        global.crypto.getRandomValues(randomBytesSegment);
+        crypto.getRandomValues(randomBytesSegment);
         len -= segmentSize;
         randomBytes.set(randomBytesSegment, len);
     }
     return randomBytes;
 }
 
-export function random(len: number): Uint8Array {
-    if (global.crypto?.subtle) {
-        return safeRandomWeb(len);
-    } else {
-        return new Uint8Array(nodeCrypto.randomBytes(len));
-    }
+/**
+ * Twofish-256 in CBC mode with PKCS#7 padding, as used for KDBX payloads by
+ * KeePass (TwofishCipher plugin), KeePassXC and KeePassDX.
+ */
+export function twofishCbc(
+    data: ArrayBuffer,
+    key: ArrayBuffer,
+    iv: ArrayBuffer,
+    encrypt: boolean
+): Promise<ArrayBuffer> {
+    return Promise.resolve().then(() => {
+        const cipher = new Twofish(new Uint8Array(key));
+        try {
+            const result = encrypt
+                ? cipher.encryptCbc(new Uint8Array(data), new Uint8Array(iv))
+                : cipher.decryptCbc(new Uint8Array(data), new Uint8Array(iv));
+            return arrayToBuffer(result);
+        } finally {
+            cipher.clear();
+        }
+    });
 }
 
 export function chacha20(

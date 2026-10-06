@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { ByteUtils } from '../../lib';
 
 export const TestResources = {
@@ -31,17 +32,7 @@ export const TestResources = {
     kdbx41: readFile('KDBX4.1.kdbx')
 };
 
-function readFile(name: string) {
-    let content;
-    try {
-        content = require('base64-loader!../../resources/' + name);
-    } catch (e) {
-        content = readNodeFile('../../resources/' + name);
-    }
-    content = ByteUtils.arrayToBuffer(ByteUtils.base64ToBytes(content));
-    return content;
-}
-
-function readNodeFile(filePath: string): Buffer {
-    return require('fs').readFileSync(require('path').join(__dirname, filePath), 'base64');
+function readFile(name: string): ArrayBuffer {
+    const data = readFileSync(new URL(`../../resources/${name}`, import.meta.url));
+    return ByteUtils.arrayToBuffer(new Uint8Array(data));
 }

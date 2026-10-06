@@ -244,7 +244,7 @@ export class KdbxFormat {
             const newData = new Uint8Array(data.byteLength + ssb.length);
             newData.set(ssb);
             newData.set(new Uint8Array(data), ssb.length);
-            data = newData;
+            data = arrayToBuffer(newData);
             return this.getMasterKeyV3().then((masterKey) => {
                 return this.encryptData(arrayToBuffer(data), masterKey).then((data) => {
                     zeroBuffer(masterKey);
@@ -274,7 +274,7 @@ export class KdbxFormat {
                     transformRounds
                 ).then((encKey) => {
                     zeroBuffer(credHash);
-                    return CryptoEngine.sha256(encKey).then((keyHash) => {
+                    return CryptoEngine.sha256(arrayToBuffer(encKey)).then((keyHash) => {
                         zeroBuffer(encKey);
 
                         const chalRespLength = chalResp ? chalResp.byteLength : 0;
@@ -415,6 +415,8 @@ export class KdbxFormat {
                 return this.transformDataV4Aes(data, cipherKey, false);
             case CipherId.ChaCha20:
                 return this.transformDataV4ChaCha20(data, cipherKey);
+            case CipherId.Twofish:
+                return this.transformDataTwofish(data, cipherKey, false);
             default:
                 return Promise.reject(new KdbxError(ErrorCodes.Unsupported, 'unsupported cipher'));
         }
@@ -430,9 +432,23 @@ export class KdbxFormat {
                 return this.transformDataV4Aes(data, cipherKey, true);
             case CipherId.ChaCha20:
                 return this.transformDataV4ChaCha20(data, cipherKey);
+            case CipherId.Twofish:
+                return this.transformDataTwofish(data, cipherKey, true);
             default:
                 return Promise.reject(new KdbxError(ErrorCodes.Unsupported, 'unsupported cipher'));
         }
+    }
+
+    private transformDataTwofish(
+        data: ArrayBuffer,
+        cipherKey: ArrayBuffer,
+        encrypt: boolean
+    ): Promise<ArrayBuffer> {
+        const iv = this.kdbx.header.encryptionIV;
+        if (!iv) {
+            throw new KdbxError(ErrorCodes.FileCorrupt, 'no encryption IV');
+        }
+        return CryptoEngine.twofishCbc(data, cipherKey, iv, encrypt);
     }
 
     private transformDataV4Aes(

@@ -29,31 +29,21 @@ export function stringToBytes(str: string): Uint8Array {
 }
 
 export function base64ToBytes(str: string): Uint8Array {
-    if (typeof atob === 'function') {
-        const byteStr = atob(str);
-        const arr = new Uint8Array(byteStr.length);
-        for (let i = 0; i < byteStr.length; i++) {
-            arr[i] = byteStr.charCodeAt(i);
-        }
-        return arr;
-    } else {
-        const buffer = Buffer.from(str, 'base64');
-        return new Uint8Array(buffer);
+    const byteStr = atob(str);
+    const arr = new Uint8Array(byteStr.length);
+    for (let i = 0; i < byteStr.length; i++) {
+        arr[i] = byteStr.charCodeAt(i);
     }
+    return arr;
 }
 
 export function bytesToBase64(arr: ArrayBufferOrArray): string {
     const intArr = arr instanceof ArrayBuffer ? new Uint8Array(arr) : arr;
-    if (typeof btoa === 'function') {
-        let str = '';
-        for (let i = 0; i < intArr.length; i++) {
-            str += String.fromCharCode(intArr[i]);
-        }
-        return btoa(str);
-    } else {
-        const buffer = Buffer.from(arr);
-        return buffer.toString('base64');
+    let str = '';
+    for (let i = 0; i < intArr.length; i++) {
+        str += String.fromCharCode(intArr[i]);
     }
+    return btoa(str);
 }
 
 export function hexToBytes(hex: string): Uint8Array {
@@ -81,11 +71,12 @@ export function arrayToBuffer(arr: ArrayBufferOrArray): ArrayBuffer {
     if (arr instanceof ArrayBuffer) {
         return arr;
     }
-    const ab = arr.buffer;
+    // SharedArrayBuffer is never used here; every Uint8Array is backed by an ArrayBuffer.
+    const ab = arr.buffer as ArrayBuffer;
     if (arr.byteOffset === 0 && arr.byteLength === ab.byteLength) {
         return ab;
     }
-    return arr.buffer.slice(arr.byteOffset, arr.byteOffset + arr.byteLength);
+    return ab.slice(arr.byteOffset, arr.byteOffset + arr.byteLength);
 }
 
 export function zeroBuffer(arr: ArrayBufferOrArray): void {
