@@ -5,9 +5,13 @@ A Nextcloud app (id `nextkeeweb`) for opening and editing KeePass databases (`.k
 - Databases are decrypted in the browser. The server stores and serves the encrypted file; it never receives the master password, key files or decrypted contents.
 - Clicking a `.kdbx` file in the Files app opens it here; Files' "New" menu creates databases. Inside the app, databases are opened with the Nextcloud file picker or from the list of recently opened ones, which also remembers the key file used.
 - Changes made elsewhere while a database is open (KeePassXC through the desktop client, another browser tab) are merged rather than overwritten.
-- KDBX 3.1 and 4.x, Argon2d/Argon2id and AES-KDF, AES-256 and ChaCha20, password and/or key file.
+- KDBX 3.1 and 4.x, Argon2d/Argon2id and AES-KDF, AES-256, ChaCha20 and Twofish, password and/or key file.
+- Import from CSV (KeePassXC, Bitwarden, browsers …), Bitwarden JSON, KeePass XML and other `.kdbx` files; export as KeePass XML or CSV.
+- Health check (weak, reused, expiring passwords) with an opt-in Have I Been Pwned lookup; TOTP with QR codes.
 
-What is covered compared to KeePassXC, and what is not yet: [docs/features.md](docs/features.md). How the code is organised: [docs/architecture.md](docs/architecture.md).
+![An entry with TOTP, attachments and history](docs/screenshots/entry.png)
+
+What is covered compared to KeePassXC, and what is not yet: [docs/features.md](docs/features.md). How the code is organised: [docs/architecture.md](docs/architecture.md). The KDBX library is a fork of kdbxweb in [packages/kdbxweb](packages/kdbxweb/FORK.md).
 
 Requires Nextcloud 33–35.
 
@@ -26,13 +30,13 @@ The compose file mounts the checkout as `custom_apps/nextkeeweb`, enables the ap
 
 | Command | |
 |---|---|
-| `npm test` | Unit and KeePassXC compatibility tests (Vitest) |
+| `npm test` | Unit and KeePassXC compatibility tests, then the kdbxweb fork's suite (Vitest) |
 | `npm run test:e2e` | Browser tests against the compose Nextcloud (Playwright, uses the installed Chrome) |
 | `npm run typecheck` / `npm run lint` | `vue-tsc`, ESLint with the Nextcloud config |
 | `composer test` / `composer psalm` / `composer cs:check` | PHPUnit, Psalm, Nextcloud PHP coding standard |
 | `npm run l10n` | Regenerates `l10n/*.js` from `l10n/*.json` |
 | `make appstore` | Builds `build/nextkeeweb.tar.gz` |
-| `tests/fixtures/generate.sh` | Regenerates the KeePassXC-written fixtures |
+| `tests/fixtures/generate.sh` | Regenerates the KeePassXC-written fixtures (needs `npm run build -w kdbxweb`) |
 
 ### Translations
 
@@ -40,4 +44,4 @@ Strings are marked with `t('nextkeeweb', …)` / `n('nextkeeweb', …)` imported
 
 ## License
 
-AGPL-3.0-or-later. The passphrase word list is the EFF Large Wordlist (CC BY 3.0 US), see `src/core/wordlists/`.
+AGPL-3.0-or-later. `packages/kdbxweb` is MIT (its own `LICENSE`). The passphrase word list is the EFF Large Wordlist (CC BY 3.0 US), see `src/core/wordlists/`.

@@ -3,6 +3,7 @@
 ## Layers
 
 ```
+packages/kdbxweb/ Our fork of kdbxweb (KDBX format and crypto), see its FORK.md.
 src/core/        KeePass logic on top of kdbxweb. No Vue, no Nextcloud; runs in Node for tests.
 src/services/    Browser and Nextcloud adapters: WebDAV storage, OCS API, file picker, clipboard, Argon2 worker.
 src/stores/      Pinia: open databases (vault.ts) and user settings.
@@ -39,9 +40,9 @@ Entries are edited as plain `EntryDraft` copies (core/entries.ts). `applyDraft` 
 
 ## Crypto
 
-kdbxweb uses WebCrypto for AES, SHA and HMAC and its own ChaCha20. Argon2 comes from hash-wasm (WebAssembly), installed into kdbxweb by `core/crypto.ts`. In the browser it runs in a module worker (`workers/argon2.worker.ts`), which imports only `core/argon2.ts` to stay small. The page's CSP allows `wasm-unsafe-eval` and same-origin workers (PageController).
+kdbxweb (the fork in `packages/kdbxweb`) uses WebCrypto for AES, SHA and HMAC and its own ChaCha20 and Twofish. Argon2 comes from hash-wasm (WebAssembly), installed into kdbxweb by `core/crypto.ts`. In the browser it runs in a module worker (`workers/argon2.worker.ts`), which imports only `core/argon2.ts` to stay small. The page's CSP allows `wasm-unsafe-eval`, same-origin workers and, for the opt-in breach check, `api.pwnedpasswords.com` (PageController).
 
-kdbxweb references Node's `crypto` and `@xmldom/xmldom` but only uses them when WebCrypto or `DOMParser` are missing. The Vite config replaces both with an empty module, so neither ends up in the bundle; xmldom is only used by the Node test runs.
+The fork has no Node fallbacks: it needs WebCrypto and a global `DOMParser`/`XMLSerializer`, which browsers provide and the Node test setups (`tests/setup.ts`, `packages/kdbxweb/test/setup.ts`) install from `@xmldom/xmldom`. Vite and Vitest compile the fork from `packages/kdbxweb/lib`; its `dist/` build serves Node scripts and type declarations (`npm install` builds it).
 
 ## Data from the file is untrusted
 
@@ -57,7 +58,8 @@ A database may come from someone else (shared folder). Entry URLs become links o
 ## Tests
 
 - `tests/core`: unit tests of the core layer (Vitest, Node).
-- `tests/compat`: kdbxweb against KeePassXC-written files, checked with `keepassxc-cli`. The fixture source is `tests/fixtures/source.xml`.
+- `tests/compat`: kdbxweb against KeePassXC-written files, checked with `keepassxc-cli`: unmodified saves, edits, cipher changes, CSV/XML export and import. The fixture source is `tests/fixtures/source.xml`; `generate.sh` builds the files.
+- `packages/kdbxweb/test`: upstream's suite plus Twofish known-answer tests.
 - `tests/l10n.spec.ts`: translations complete and consistent.
 - `tests/php`: PHPUnit for the services.
 - `tests/e2e`: Playwright against the compose Nextcloud, including edits made with `keepassxc-cli` while the database is open in the browser.

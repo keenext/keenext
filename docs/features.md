@@ -10,7 +10,7 @@
 | AES-KDF, Argon2d, Argon2id | ✅ | Argon2 v1.3 only; v1.0 was never written by KDBX 4 clients. |
 | AES-256, ChaCha20, Twofish | ✅ | Twofish in the kdbxweb fork (`packages/kdbxweb/FORK.md`), checked against KeePassXC both ways. |
 | Password, key file, both | ✅ | Key file from Nextcloud or from the device. XML (`.keyx`, v1/v2), 32-byte, hex and arbitrary files. |
-| YubiKey challenge-response | ❌ | Would need WebHID access to the OTP interface; kdbxweb accepts a challenge-response function. |
+| YubiKey challenge-response | 🚫 | Browsers block the YubiKey OTP interface: WebHID refuses devices that report as keyboards, WebUSB refuses HID and smart card devices. Would need a native helper. Databases protected this way cannot be opened. |
 | Create database | ✅ | KDBX 4, Argon2id 64 MiB, ChaCha20. |
 | Change master key, KDF, cipher | ✅ | Database settings dialog. AES-KDF databases can be upgraded to Argon2id/KDBX 4. |
 | Name, description, default username, recycle bin, history limits | ✅ | |
