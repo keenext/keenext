@@ -86,6 +86,11 @@ describe('XmlUtils', () => {
             expect(xml.documentElement.nodeName).to.be('root');
             expect(xml.documentElement.firstChild!.nodeName).to.be('item');
         });
+
+        it('keeps tab, line feed and carriage return', () => {
+            const xml = XmlUtils.parse('<root>a\tb\nc&#13;d\u0001e</root>');
+            expect(xml.documentElement.textContent).to.be('a\tb\nc\rde');
+        });
     });
 
     describe('serialize', () => {
@@ -364,6 +369,23 @@ describe('XmlUtils', () => {
             const xml = XmlUtils.parse('<item></item>');
             const dt = XmlUtils.getDate(xml.documentElement);
             expect(dt).to.be(undefined);
+        });
+
+        it('clamps binary dates after 9999 to its end', () => {
+            // Written by KeePassDX: year 286,428,884
+            const xml = XmlUtils.parse('<item>JoU/Fe4cIAA=</item>');
+            const dt = XmlUtils.getDate(xml.documentElement);
+            expect(dt!.toISOString()).to.be('9999-12-31T23:59:59.000Z');
+        });
+
+        it('returns undefined for unparsable text dates', () => {
+            const xml = XmlUtils.parse('<item>286428884-01-01T00:00:00Z</item>');
+            expect(XmlUtils.getDate(xml.documentElement)).to.be(undefined);
+        });
+
+        it('returns undefined for short binary dates', () => {
+            const xml = XmlUtils.parse('<item>AQID</item>');
+            expect(XmlUtils.getDate(xml.documentElement)).to.be(undefined);
         });
     });
 

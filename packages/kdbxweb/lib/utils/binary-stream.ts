@@ -1,3 +1,10 @@
+import { KdbxError } from '../errors/kdbx-error';
+import { ErrorCodes } from '../defs/consts';
+
+/**
+ * Reads past the end throw FileCorrupt, so parsers of untrusted data get exactly
+ * the number of bytes a length field announces or an error.
+ */
 export class BinaryStream {
     private _arrayBuffer: ArrayBuffer;
     private _dataView: DataView;
@@ -19,7 +26,14 @@ export class BinaryStream {
         return this._arrayBuffer.byteLength;
     }
 
+    private checkAvailable(size: number): void {
+        if (this._pos + size > this._arrayBuffer.byteLength) {
+            throw new KdbxError(ErrorCodes.FileCorrupt, 'unexpected end of data');
+        }
+    }
+
     readBytes(size: number): ArrayBuffer {
+        this.checkAvailable(size);
         const buffer = this._arrayBuffer.slice(this._pos, this._pos + size);
         this._pos += size;
         return buffer;
@@ -61,6 +75,7 @@ export class BinaryStream {
     }
 
     getInt8(): number {
+        this.checkAvailable(1);
         const value = this._dataView.getInt8(this._pos);
         this._pos += 1;
         return value;
@@ -73,6 +88,7 @@ export class BinaryStream {
     }
 
     getUint8(): number {
+        this.checkAvailable(1);
         const value = this._dataView.getUint8(this._pos);
         this._pos += 1;
         return value;
@@ -85,6 +101,7 @@ export class BinaryStream {
     }
 
     getInt16(littleEndian: boolean): number {
+        this.checkAvailable(2);
         const value = this._dataView.getInt16(this._pos, littleEndian);
         this._pos += 2;
         return value;
@@ -97,6 +114,7 @@ export class BinaryStream {
     }
 
     getUint16(littleEndian: boolean): number {
+        this.checkAvailable(2);
         const value = this._dataView.getUint16(this._pos, littleEndian);
         this._pos += 2;
         return value;
@@ -109,6 +127,7 @@ export class BinaryStream {
     }
 
     getInt32(littleEndian: boolean): number {
+        this.checkAvailable(4);
         const value = this._dataView.getInt32(this._pos, littleEndian);
         this._pos += 4;
         return value;
@@ -121,6 +140,7 @@ export class BinaryStream {
     }
 
     getUint32(littleEndian: boolean): number {
+        this.checkAvailable(4);
         const value = this._dataView.getUint32(this._pos, littleEndian);
         this._pos += 4;
         return value;
@@ -133,6 +153,7 @@ export class BinaryStream {
     }
 
     getFloat32(littleEndian: boolean): number {
+        this.checkAvailable(4);
         const value = this._dataView.getFloat32(this._pos, littleEndian);
         this._pos += 4;
         return value;
@@ -145,6 +166,7 @@ export class BinaryStream {
     }
 
     getFloat64(littleEndian: boolean): number {
+        this.checkAvailable(8);
         const value = this._dataView.getFloat64(this._pos, littleEndian);
         this._pos += 8;
         return value;

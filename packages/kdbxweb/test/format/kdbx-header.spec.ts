@@ -404,7 +404,7 @@ describe('KdbxHeader', () => {
         expect(() => {
             KdbxHeader.read(
                 new BinaryStream(
-                    ByteUtils.hexToBytes('03d9a29a67fb4bb5010004000320000000011111111').buffer
+                    ByteUtils.hexToBytes('03d9a29a67fb4bb501000400030400000011111111').buffer
                 ),
                 new KdbxContext({ kdbx })
             );
@@ -412,6 +412,71 @@ describe('KdbxHeader', () => {
             expect(e.code).to.be(Consts.ErrorCodes.Unsupported);
             expect(e.message).to.contain('compression');
         });
+    });
+
+    it('throws error for short fixed-size fields', () => {
+        for (const [field, name] of [
+            ['03', 'compression flags'],
+            ['06', 'transform rounds'],
+            ['0a', 'inner random stream id']
+        ]) {
+            expect(() => {
+                KdbxHeader.read(
+                    new BinaryStream(
+                        // KDBX 3.1: 2-byte field sizes
+                        ByteUtils.hexToBytes('03d9a29a67fb4bb501000300' + field + '02000101').buffer
+                    ),
+                    new KdbxContext({ kdbx })
+                );
+            }).to.throwException((e) => {
+                expect(e.code).to.be(Consts.ErrorCodes.FileCorrupt);
+                expect(e.message).to.contain(`bad ${name} length`);
+            });
+        }
+    });
+
+    it('throws error for a field longer than the file', () => {
+        expect(() => {
+            KdbxHeader.read(
+                new BinaryStream(
+                    ByteUtils.hexToBytes('03d9a29a67fb4bb501000400021000000031c1f2e6').buffer
+                ),
+                new KdbxContext({ kdbx })
+            );
+        }).to.throwException((e) => {
+            expect(e.code).to.be(Consts.ErrorCodes.FileCorrupt);
+            expect(e.message).to.contain('unexpected end of data');
+        });
+    });
+
+    it('skips unknown header fields', () => {
+        const header = KdbxHeader.create();
+        header.generateSalts();
+        const stm = new BinaryStream();
+        header.write(stm);
+        const written = new Uint8Array(stm.getWrittenBytes());
+        // After signature and version: field id 0x7f, 4-byte size 2, two data bytes.
+        const unknownField = ByteUtils.hexToBytes('7f02000000abcd');
+        const withUnknown = new Uint8Array(written.length + unknownField.length);
+        withUnknown.set(written.subarray(0, 12));
+        withUnknown.set(unknownField, 12);
+        withUnknown.set(written.subarray(12), 12 + unknownField.length);
+
+        const read = KdbxHeader.read(
+            new BinaryStream(withUnknown.buffer),
+            new KdbxContext({ kdbx })
+        );
+        expect(read.dataCipherUuid!.toString()).to.be(header.dataCipherUuid!.toString());
+        expect(ByteUtils.bytesToHex(read.masterSeed!)).to.be(ByteUtils.bytesToHex(header.masterSeed!));
+        expect(read.endPos).to.be(withUnknown.length);
+    });
+
+    it('generates a 12-byte IV for ChaCha20 in v3', () => {
+        const header = new KdbxHeader();
+        header.versionMajor = 3;
+        header.dataCipherUuid = new KdbxUuid(Consts.CipherId.ChaCha20);
+        header.generateSalts();
+        expect(header.encryptionIV!.byteLength).to.be(12);
     });
 
     it('throws error for empty files', () => {

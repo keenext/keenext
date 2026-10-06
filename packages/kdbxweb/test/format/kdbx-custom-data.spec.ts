@@ -1,5 +1,12 @@
 import expect from 'expect.js';
-import { Kdbx, KdbxContext, KdbxCustomData, KdbxCustomDataItem, XmlUtils } from '../../lib';
+import {
+    Kdbx,
+    KdbxContext,
+    KdbxCustomData,
+    KdbxCustomDataItem,
+    KdbxHeader,
+    XmlUtils
+} from '../../lib';
 
 describe('KdbxCustomData', () => {
     const kdbx = new Kdbx();
@@ -73,6 +80,30 @@ describe('KdbxCustomData', () => {
         expect(
             XmlUtils.serialize(<Document>(<unknown>xml.documentElement)).replace(/\s/g, '')
         ).to.eql('<root/>');
+    });
+
+    it('writes modification time in binary for KDBX 4.1 and as text for XML export', () => {
+        const kdbx41 = new Kdbx();
+        kdbx41.header = KdbxHeader.create();
+        kdbx41.header.versionMinor = 1;
+        const customData = new Map<string, KdbxCustomDataItem>([
+            ['k', { value: 'v', lastModified: new Date('2021-01-20T18:10:44Z') }]
+        ]);
+        const written = (exportXml: boolean) => {
+            const xml = XmlUtils.create('root');
+            KdbxCustomData.write(
+                xml.documentElement,
+                new KdbxContext({ kdbx: kdbx41, exportXml }),
+                customData
+            );
+            return XmlUtils.serialize(<Document>(<unknown>xml.documentElement));
+        };
+        expect(written(false)).to.contain(
+            '<LastModificationTime>JGma1w4AAAA=</LastModificationTime>'
+        );
+        expect(written(true)).to.contain(
+            '<LastModificationTime>2021-01-20T18:10:44Z</LastModificationTime>'
+        );
     });
 
     it('skips keys without values', () => {

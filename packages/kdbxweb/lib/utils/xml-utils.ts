@@ -11,6 +11,8 @@ import { KdbxBinaries, KdbxBinaryOrRef } from '../format/kdbx-binaries';
 
 const DateRegex = /\.\d\d\d/;
 const EpochSeconds = 62135596800;
+// The latest date .NET (KeePass) can represent; also within the range of Date.
+const LatestDateMs = Date.UTC(9999, 11, 31, 23, 59, 59);
 const TagsSplitRegex = /\s*[;,:]\s*/;
 
 declare global {
@@ -41,8 +43,9 @@ export function parse(xml: string): Document {
     const parser = createDOMParser();
 
     let doc;
+    // Removes the control characters XML 1.0 forbids; tab, line feed and carriage return are allowed.
     // eslint-disable-next-line no-control-regex
-    xml = xml.replace(/[\x00-\x09\x0B-\x0C\x0E-\x1F]/g, '');
+    xml = xml.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
     try {
         doc = parser.parseFromString(xml, 'application/xml');
     } catch (e) {
@@ -179,17 +182,27 @@ export function setBytes(node: Node, bytes: ArrayBuffer | Uint8Array | string | 
     setText(node, bytes ? bytesToBase64(arrayToBuffer(bytes)) : undefined);
 }
 
+/**
+ * Binary dates after 9999-12-31 (KeePassDX writes some far beyond) are clamped to it,
+ * so they keep comparing as latest and can be written back.
+ * Text dates that do not parse, and binary values shorter than 8 bytes, read as absent.
+ */
 export function getDate(node: Node): Date | undefined {
     const text = getText(node);
     if (!text) {
         return undefined;
     }
     if (text.indexOf(':') > 0) {
-        return new Date(text);
+        const date = new Date(text);
+        return isNaN(date.getTime()) ? undefined : date;
     }
-    const bytes = new DataView(arrayToBuffer(base64ToBytes(text)));
-    const secondsFrom00 = new Int64(bytes.getUint32(0, true), bytes.getUint32(4, true)).value;
-    const diff = (secondsFrom00 - EpochSeconds) * 1000;
+    const bytes = base64ToBytes(text);
+    if (bytes.byteLength < 8) {
+        return undefined;
+    }
+    const view = new DataView(arrayToBuffer(bytes));
+    const secondsFrom00 = view.getUint32(4, true) * 0x100000000 + view.getUint32(0, true);
+    const diff = Math.min((secondsFrom00 - EpochSeconds) * 1000, LatestDateMs);
     return new Date(diff);
 }
 

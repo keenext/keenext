@@ -184,13 +184,7 @@ export class KdbxCredentials {
     }
 
     static createRandomKeyFile(version = 1): Promise<Uint8Array> {
-        const keyLength = 32;
-        const keyBytes = CryptoEngine.random(keyLength),
-            salt = CryptoEngine.random(keyLength);
-        for (let i = 0; i < keyLength; i++) {
-            keyBytes[i] ^= salt[i];
-            keyBytes[i] ^= (Math.random() * 1000) % 255;
-        }
+        const keyBytes = CryptoEngine.random(32);
         return KdbxCredentials.createKeyFileWithHash(arrayToBuffer(keyBytes), version);
     }
 

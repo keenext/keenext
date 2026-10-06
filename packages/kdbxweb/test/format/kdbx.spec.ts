@@ -1090,6 +1090,98 @@ describe('Kdbx', () => {
         }
     });
 
+    it('writes KDBX4.1 modification times of custom data and icons in binary', async () => {
+        const cred = new kdbxweb.Credentials(kdbxweb.ProtectedValue.fromString('test'));
+        const db = await kdbxweb.Kdbx.load(TestResources.kdbx41, cred);
+        const saved = await kdbxweb.Kdbx.load(await db.save(), cred, { preserveXml: true });
+        const xml = kdbxweb.XmlUtils.serialize(saved.xml!);
+
+        const times = [...xml.matchAll(/<LastModificationTime>(.*?)<\/LastModificationTime>/g)];
+        expect(times.length).to.be.greaterThan(0);
+        for (const [, time] of times) {
+            expect(time).to.match(/^[A-Za-z0-9+/]{11}=$/);
+        }
+        expect(saved.meta.customData.get('Test_A')!.lastModified).to.eql(
+            new Date('2021-01-20T18:10:44.000Z')
+        );
+        expect(
+            saved.meta.customIcons.get('3q2nWI0en0W/wvhaCFJsnw==')!.lastModified?.toISOString()
+        ).to.be('2021-05-05T18:28:34.000Z');
+    });
+
+    it('keeps attachments after one whose binary is missing', async () => {
+        const cred = new kdbxweb.Credentials(kdbxweb.ProtectedValue.fromString('test'));
+        const db = kdbxweb.Kdbx.create(cred, 'example');
+        const entry = db.createEntry(db.getDefaultGroup());
+        entry.binaries.set('missing', { hash: 'deadbeef', value: new Uint8Array([1]).buffer });
+        entry.binaries.set('present', await db.createBinary(new Uint8Array([2, 3])));
+
+        const loaded = await kdbxweb.Kdbx.load(await db.save(), cred);
+        expect([...loaded.getDefaultGroup().entries[0].binaries.keys()]).to.eql(['present']);
+    });
+
+    it('keeps tabs in unprotected fields', async () => {
+        const cred = new kdbxweb.Credentials(kdbxweb.ProtectedValue.fromString('test'));
+        const db = kdbxweb.Kdbx.create(cred, 'example');
+        const entry = db.createEntry(db.getDefaultGroup());
+        entry.fields.set('Notes', 'col1\tcol2');
+
+        const loaded = await kdbxweb.Kdbx.load(await db.save(), cred);
+        expect(loaded.getDefaultGroup().entries[0].fields.get('Notes')).to.be('col1\tcol2');
+    });
+
+    describe('encryption IV length', () => {
+        // KDBX 3 header fields: 1-byte id, 2-byte size; 7 is EncryptionIV.
+        function replaceV3HeaderField(file: ArrayBuffer, fieldId: number, value: Uint8Array) {
+            const bytes = new Uint8Array(file);
+            const view = new DataView(file);
+            for (let pos = 12; ; ) {
+                const id = bytes[pos];
+                const size = view.getUint16(pos + 1, true);
+                if (id === fieldId) {
+                    const result = new Uint8Array(file.byteLength - size + value.length);
+                    result.set(bytes.subarray(0, pos + 1));
+                    new DataView(result.buffer).setUint16(pos + 1, value.length, true);
+                    result.set(value, pos + 3);
+                    result.set(bytes.subarray(pos + 3 + size), pos + 3 + value.length);
+                    return result.buffer;
+                }
+                if (id === 0) {
+                    throw new Error(`no header field ${fieldId}`);
+                }
+                pos += 3 + size;
+            }
+        }
+
+        async function createV3ChaCha20() {
+            const cred = new kdbxweb.Credentials(kdbxweb.ProtectedValue.fromString('test'));
+            const db = kdbxweb.Kdbx.create(cred, 'example');
+            db.setVersion(3);
+            db.header.keyEncryptionRounds = 1000;
+            db.header.dataCipherUuid = new kdbxweb.KdbxUuid(kdbxweb.Consts.CipherId.ChaCha20);
+            return { cred, file: await db.save() };
+        }
+
+        it('writes and reads a 12-byte ChaCha20 IV in KDBX 3', async () => {
+            const { cred, file } = await createV3ChaCha20();
+            const loaded = await kdbxweb.Kdbx.load(file, cred);
+            expect(loaded.header.encryptionIV!.byteLength).to.be(12);
+        });
+
+        it('rejects an IV of the wrong length', async () => {
+            const { cred, file } = await createV3ChaCha20();
+            const tampered = replaceV3HeaderField(file, 7, new Uint8Array(16));
+            try {
+                await kdbxweb.Kdbx.load(tampered, cred);
+                throw new Error('We should not get here');
+            } catch (e) {
+                expect(e).to.be.a(kdbxweb.KdbxError);
+                expect((e as kdbxweb.KdbxError).code).to.be(kdbxweb.Consts.ErrorCodes.FileCorrupt);
+                expect((e as kdbxweb.KdbxError).message).to.contain('bad encryption IV length: 16');
+            }
+        });
+    });
+
     function checkDb(db: any) {
         expect(db.meta.name).to.be('demo');
         expect(db.meta.nameChanged.toISOString()).to.be('2015-08-16T14:45:23.000Z');

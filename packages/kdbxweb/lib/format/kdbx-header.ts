@@ -80,6 +80,13 @@ const LastMinorVersions: { [major: number]: number } = {
     4: 1
 } as const;
 
+function readFixedUint32(bytes: ArrayBuffer, name: string): number {
+    if (bytes.byteLength !== 4) {
+        throw new KdbxError(ErrorCodes.FileCorrupt, `bad ${name} length`);
+    }
+    return new DataView(bytes).getUint32(0, true);
+}
+
 export class KdbxHeader {
     static readonly MaxFileVersion = HeaderConst.MaxSupportedVersion;
 
@@ -154,7 +161,7 @@ export class KdbxHeader {
     }
 
     private readCompressionFlags(bytes: ArrayBuffer): void {
-        const id = new DataView(bytes).getUint32(0, true);
+        const id = readFixedUint32(bytes, 'compression flags');
         if (id < 0 || id >= Object.keys(CompressionAlgorithm).length) {
             throw new KdbxError(ErrorCodes.Unsupported, 'compression');
         }
@@ -192,6 +199,9 @@ export class KdbxHeader {
     }
 
     private readTransformRounds(bytes: ArrayBuffer): void {
+        if (bytes.byteLength !== 8) {
+            throw new KdbxError(ErrorCodes.FileCorrupt, 'bad transform rounds length');
+        }
         this.keyEncryptionRounds = new BinaryStream(bytes).getUint64(true);
     }
 
@@ -237,7 +247,7 @@ export class KdbxHeader {
     }
 
     private readInnerRandomStreamID(bytes: ArrayBuffer): void {
-        this.crsAlgorithm = new DataView(bytes).getUint32(0, true);
+        this.crsAlgorithm = readFixedUint32(bytes, 'inner random stream id');
     }
 
     private writeInnerRandomStreamID(stm: BinaryStream): void {
@@ -289,6 +299,9 @@ export class KdbxHeader {
     }
 
     private readBinary(bytes: ArrayBuffer, ctx: KdbxContext): void {
+        if (!bytes.byteLength) {
+            throw new KdbxError(ErrorCodes.FileCorrupt, 'empty binary field');
+        }
         const view = new DataView(bytes);
         const flags = view.getUint8(0);
         const isProtected = flags & HeaderConst.FlagBinaryProtected;
@@ -331,6 +344,10 @@ export class KdbxHeader {
         const bytes = size > 0 ? stm.readBytes(size) : new ArrayBuffer(0);
 
         const headerField = fields[headerId];
+        if (!headerField) {
+            // Unknown fields are skipped, as KeePass and KeePassXC do.
+            return true;
+        }
         switch (headerField.name) {
             case 'EndOfHeader':
             case 'Comment':
@@ -593,16 +610,15 @@ export class KdbxHeader {
             this.transformSeed = arrayToBuffer(CryptoEngine.random(32));
             this.streamStartBytes = arrayToBuffer(CryptoEngine.random(32));
             this.protectedStreamKey = arrayToBuffer(CryptoEngine.random(32));
-            this.encryptionIV = arrayToBuffer(CryptoEngine.random(16));
         } else {
             this.protectedStreamKey = arrayToBuffer(CryptoEngine.random(64));
             if (!this.kdfParameters || !this.dataCipherUuid) {
                 throw new KdbxError(ErrorCodes.InvalidState, 'no kdf params');
             }
             this.kdfParameters.set('S', ValueType.Bytes, arrayToBuffer(CryptoEngine.random(32)));
-            const ivLength = this.dataCipherUuid.toString() === CipherId.ChaCha20 ? 12 : 16;
-            this.encryptionIV = arrayToBuffer(CryptoEngine.random(ivLength));
         }
+        const ivLength = this.dataCipherUuid?.toString() === CipherId.ChaCha20 ? 12 : 16;
+        this.encryptionIV = arrayToBuffer(CryptoEngine.random(ivLength));
     }
 
     setVersion(version: number): void {

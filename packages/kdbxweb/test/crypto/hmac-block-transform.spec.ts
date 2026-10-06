@@ -28,6 +28,36 @@ describe('HmacBlockTransform', () => {
         });
     });
 
+    it('throws error for a stream cut at a block boundary', async () => {
+        const src = new Uint8Array(1024 * 1024 * 2 + 2);
+        const enc = new Uint8Array(await HmacBlockTransform.encrypt(src.buffer, key));
+        const firstBlockEnd = 32 + 4 + 1024 * 1024;
+        // First block, then a forged empty final block: zero HMAC, zero length.
+        const cut = new Uint8Array(firstBlockEnd + 32 + 4);
+        cut.set(enc.subarray(0, firstBlockEnd));
+        try {
+            await HmacBlockTransform.decrypt(cut.buffer, key);
+            throw new Error('We should not get here');
+        } catch (e) {
+            expect(e).to.be.a(KdbxError);
+            expect((e as KdbxError).code).to.be(Consts.ErrorCodes.FileCorrupt);
+            expect((e as KdbxError).message).to.contain('invalid hash block');
+        }
+    });
+
+    it('throws error for a stream without final block', async () => {
+        const src = new Uint8Array([1, 2, 3, 4, 5]);
+        const enc = await HmacBlockTransform.encrypt(src.buffer, key);
+        try {
+            await HmacBlockTransform.decrypt(enc.slice(0, enc.byteLength - 36), key);
+            throw new Error('We should not get here');
+        } catch (e) {
+            expect(e).to.be.a(KdbxError);
+            expect((e as KdbxError).code).to.be(Consts.ErrorCodes.FileCorrupt);
+            expect((e as KdbxError).message).to.contain('unexpected end of data');
+        }
+    });
+
     it('throws error for invalid hash block', () => {
         const src = new Uint8Array([1, 2, 3, 4, 5]);
         return HmacBlockTransform.encrypt(src.buffer, key).then((enc) => {

@@ -439,15 +439,23 @@ export class KdbxFormat {
         }
     }
 
+    private getEncryptionIV(length: number): ArrayBuffer {
+        const iv = this.kdbx.header.encryptionIV;
+        if (!iv) {
+            throw new KdbxError(ErrorCodes.FileCorrupt, 'no encryption IV');
+        }
+        if (iv.byteLength !== length) {
+            throw new KdbxError(ErrorCodes.FileCorrupt, `bad encryption IV length: ${iv.byteLength}`);
+        }
+        return iv;
+    }
+
     private transformDataTwofish(
         data: ArrayBuffer,
         cipherKey: ArrayBuffer,
         encrypt: boolean
     ): Promise<ArrayBuffer> {
-        const iv = this.kdbx.header.encryptionIV;
-        if (!iv) {
-            throw new KdbxError(ErrorCodes.FileCorrupt, 'no encryption IV');
-        }
+        const iv = this.getEncryptionIV(16);
         return CryptoEngine.twofishCbc(data, cipherKey, iv, encrypt);
     }
 
@@ -457,10 +465,7 @@ export class KdbxFormat {
         encrypt: boolean
     ): Promise<ArrayBuffer> {
         const aesCbc = CryptoEngine.createAesCbc();
-        const iv = this.kdbx.header.encryptionIV;
-        if (!iv) {
-            throw new KdbxError(ErrorCodes.FileCorrupt, 'no encryption IV');
-        }
+        const iv = this.getEncryptionIV(16);
         return aesCbc.importKey(cipherKey).then(() => {
             return encrypt ? aesCbc.encrypt(data, iv) : aesCbc.decrypt(data, iv);
         });
@@ -470,10 +475,7 @@ export class KdbxFormat {
         data: ArrayBuffer,
         cipherKey: ArrayBuffer
     ): Promise<ArrayBuffer> {
-        const iv = this.kdbx.header.encryptionIV;
-        if (!iv) {
-            throw new KdbxError(ErrorCodes.FileCorrupt, 'no encryption IV');
-        }
+        const iv = this.getEncryptionIV(12);
         return CryptoEngine.chacha20(data, cipherKey, iv);
     }
 

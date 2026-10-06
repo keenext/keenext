@@ -1,5 +1,5 @@
 import expect from 'expect.js';
-import { BinaryStream } from '../../lib';
+import { BinaryStream, Consts, KdbxError } from '../../lib';
 
 describe('BinaryStream', () => {
     const arr = new Uint8Array(100);
@@ -114,8 +114,32 @@ describe('BinaryStream', () => {
         for (let i = 0; i < 100; i++) {
             stm.getUint8();
         }
-        bytes = stm.readBytes(5);
+        bytes = stm.readBytes(0);
         expect(bytes.byteLength).to.be(0);
+    });
+
+    it('throws error when reading past the end', () => {
+        const expectEndOfData = (read: (stm: BinaryStream) => void) => {
+            const stm = new BinaryStream(new ArrayBuffer(3));
+            expect(() => read(stm)).to.throwException((e) => {
+                expect(e).to.be.a(KdbxError);
+                expect(e.code).to.be(Consts.ErrorCodes.FileCorrupt);
+                expect(e.message).to.contain('unexpected end of data');
+            });
+        };
+        expectEndOfData((stm) => stm.readBytes(4));
+        expectEndOfData((stm) => stm.getUint32(true));
+        expectEndOfData((stm) => stm.getInt32(true));
+        expectEndOfData((stm) => stm.getFloat64(true));
+        expectEndOfData((stm) => stm.getUint64(true));
+        expectEndOfData((stm) => {
+            stm.readBytes(2);
+            stm.getUint16(true);
+        });
+        expectEndOfData((stm) => {
+            stm.readBytesToEnd();
+            stm.getUint8();
+        });
     });
 
     it('returns position', () => {

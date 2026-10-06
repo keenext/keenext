@@ -44,32 +44,32 @@ export function decrypt(data: ArrayBuffer, key: ArrayBuffer): Promise<ArrayBuffe
             blockHash: ArrayBuffer,
             totalLength = 0;
 
+        // The empty final block carries an HMAC too; checking it detects a stream
+        // cut at a block boundary.
         const next = (): Promise<ArrayBuffer> => {
             blockHash = stm.readBytes(32);
             blockLength = stm.getUint32(true);
-            if (blockLength > 0) {
-                totalLength += blockLength;
-                const blockData = stm.readBytes(blockLength);
-                return getBlockHmac(key, blockIndex, blockLength, blockData).then(
-                    (calculatedBlockHash) => {
-                        if (!arrayBufferEquals(calculatedBlockHash, blockHash)) {
-                            throw new KdbxError(ErrorCodes.FileCorrupt, 'invalid hash block');
-                        } else {
-                            buffers.push(blockData);
-                            blockIndex++;
-                            return next();
-                        }
+            const blockData = stm.readBytes(blockLength);
+            totalLength += blockLength;
+            return getBlockHmac(key, blockIndex, blockLength, blockData).then(
+                (calculatedBlockHash) => {
+                    if (!arrayBufferEquals(calculatedBlockHash, blockHash)) {
+                        throw new KdbxError(ErrorCodes.FileCorrupt, 'invalid hash block');
                     }
-                );
-            } else {
-                const ret = new Uint8Array(totalLength);
-                let offset = 0;
-                for (let i = 0; i < buffers.length; i++) {
-                    ret.set(new Uint8Array(buffers[i]), offset);
-                    offset += buffers[i].byteLength;
+                    if (blockLength > 0) {
+                        buffers.push(blockData);
+                        blockIndex++;
+                        return next();
+                    }
+                    const ret = new Uint8Array(totalLength);
+                    let offset = 0;
+                    for (let i = 0; i < buffers.length; i++) {
+                        ret.set(new Uint8Array(buffers[i]), offset);
+                        offset += buffers[i].byteLength;
+                    }
+                    return ret.buffer;
                 }
-                return Promise.resolve(ret.buffer);
-            }
+            );
         };
         return next();
     });

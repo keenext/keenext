@@ -14,6 +14,15 @@ Base: upstream `master` at `7601e45d2a437f35a7fa3d767164eab60bc05d42` (2024-12-2
 | `KdbxBinaries.computeHashes` keeps file order | `format/kdbx-binaries.ts` | Hashes resolved in arbitrary order with WebCrypto, so the binary pool (and the order of attachments in saved files) changed between saves. |
 | Explicit `ArrayBuffer` conversions where `Uint8Array`s were passed as `ArrayBuffer` | `format/kdbx-header.ts`, `format/kdbx-uuid.ts`, `format/kdbx-credentials.ts`, `format/kdbx-format.ts`, `crypto/key-encryptor-kdf.ts`, `crypto/protected-value.ts`, `utils/byte-utils.ts` | Older TypeScript accepted this; TypeScript ≥ 5.7 does not. `KdbxUuid.toBytes()` now really returns an `ArrayBuffer` as declared. `ProtectedValue.clone()` copies explicitly. |
 | Type-only names exported with `export type` | `index.ts` | Per-file transpilers (Vite, Vitest) otherwise emit exports that are `undefined` at runtime. |
+| Reads past the end of a `BinaryStream` throw `FileCorrupt` | `utils/binary-stream.ts` | Upstream shortens such reads silently or throws `RangeError`; parsers of the header, inner header, `VarDictionary` and block streams now get exactly the announced number of bytes or a `KdbxError`. |
+| Header: unknown field ids are skipped; compression flags, transform rounds, inner random stream id and inner-header binaries are length-checked | `format/kdbx-header.ts` | Upstream crashes with `TypeError` on unknown ids; KeePass and KeePassXC skip them. |
+| Encryption IV length checked per cipher (AES and Twofish 16 bytes, ChaCha20 12); ChaCha20 gets a 12-byte IV in KDBX 3 as well | `format/kdbx-format.ts`, `format/kdbx-header.ts` | Upstream writes a 16-byte IV for ChaCha20 in KDBX 3, which KeePassXC rejects. |
+| The HMAC of the empty final block of the KDBX 4 block stream is verified | `crypto/hmac-block-transform.ts` | Upstream accepts a stream cut at a block boundary followed by a forged final block. |
+| Tabs survive XML parsing | `utils/xml-utils.ts` | Upstream's control-character filter removes tabs from all unprotected fields. |
+| Binary dates after 9999-12-31 are clamped to it; unparsable text dates and binary dates shorter than 8 bytes read as absent | `utils/xml-utils.ts` | KeePassDX writes dates far beyond; upstream throws `too large number` and the file does not open (upstream issue #48). |
+| KDBX 4.1 `LastModificationTime` of custom data and custom icons is written in binary | `format/kdbx-custom-data.ts`, `format/kdbx-meta.ts` | Upstream writes ISO text, which KeePass rejects (upstream issue #49, PR #62). |
+| An attachment whose binary is missing from the pool is skipped; the entry's other attachments are written | `format/kdbx-entry.ts` | Upstream drops every attachment after the missing one. |
+| `createRandomKeyFile` takes its key from `CryptoEngine.random` alone | `format/kdbx-credentials.ts` | Upstream mixes in `Math.random()`. |
 
 ## Changes to `test/`
 
@@ -22,6 +31,8 @@ Base: upstream `master` at `7601e45d2a437f35a7fa3d767164eab60bc05d42` (2024-12-2
 - Argon2 in tests uses hash-wasm instead of upstream's prebuilt emscripten blob.
 - Resources are read with `fs`; `KdbxUuid` byte assertions compare byte values.
 - New: `test/crypto/twofish.spec.ts` (known-answer tests from the Twofish submission, CBC round trips, wrong-key handling). Interoperability with KeePassXC is covered by the app's `tests/compat` (files written by KeePassXC with Twofish, and files written here, opened by KeePassXC).
+- Each `lib/` change in the table above has a regression test next to the tests of the file it changes; `kdbx.spec.ts` covers the ones that need a save and load (attachments, tabs, KDBX 4.1 times, IV length).
+- Two upstream tests expected the lenient `BinaryStream`: `binary-stream.spec.ts` reads zero bytes at the end instead of five, and the bad-compression test in `kdbx-header.spec.ts` uses a complete 4-byte field.
 
 ## Build
 
@@ -32,5 +43,5 @@ Base: upstream `master` at `7601e45d2a437f35a7fa3d767164eab60bc05d42` (2024-12-2
 - Untrusted input: the whole KDBX file (header fields, inner header, XML). Parsing entry points: `format/kdbx-format.ts` (`load`), `format/kdbx-header.ts`, `utils/var-dictionary.ts`, `utils/xml-utils.ts`.
 - Key handling: `format/kdbx-credentials.ts`, `crypto/key-encryptor-*.ts`, `crypto/protected-value.ts` (XOR-masked in-memory values, not encryption).
 - Integrity: KDBX 4 header HMAC and HMAC block stream (`crypto/hmac-block-transform.ts`); KDBX 3 relies on stream start bytes and the hashed block stream.
-- `KdbxCredentials.createRandomKeyFile` mixes `Math.random()` into CSPRNG output; harmless for strength (XOR with random bytes) but worth a look.
-- Not changed from upstream and worth reviewing first: the XML handling of protected values (`XmlUtils.setProtectedValue`/`getProtectedText`), ChaCha20/Salsa20 implementations, `merge`.
+- KDF parameters (AES-KDF rounds, Argon2 memory, iterations, parallelism) come from the file without upper bounds and run before the key can be verified; limits and cancellation belong to the application.
+- Not changed from upstream and worth reviewing first: the XML handling of protected values (`XmlUtils.setProtectedValue`/`getProtectedText`), ChaCha20/Salsa20 implementations, `merge` (`KdbxEntry.copyFrom` does not copy custom data, quality check or previous parent group; `KdbxGroup.copyFrom` does not copy tags or custom data).
