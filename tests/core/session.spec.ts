@@ -71,6 +71,22 @@ describe('DatabaseSession', () => {
 		expect(titles).toEqual(['Local', 'Remote', 'Shared'])
 	})
 
+	it('keeps custom data of entries added elsewhere when merging', async () => {
+		const { storage, session } = await setup()
+		await storage.editElsewhere((db) => {
+			const entry = createEntry(db, db.getDefaultGroup(), { ...emptyDraft(), title: 'Remote' })
+			// Where KeePassXC keeps an entry's browser integration settings
+			entry.customData = new Map([['KeePassXC-Browser Settings', { value: '{"Allow":["example.org"]}' }]])
+		})
+		createEntry(session.db, session.db.getDefaultGroup(), { ...emptyDraft(), title: 'Local' })
+		session.markChanged()
+		expect(await session.save()).toEqual({ pulled: true, pushed: true })
+
+		const stored = await openDatabase((await storage.read()).data, createCredentials({ password: 'test' }))
+		expect(entryByTitle(stored, 'Remote').customData?.get('KeePassXC-Browser Settings')?.value)
+			.toBe('{"Allow":["example.org"]}')
+	})
+
 	afterEach(() => {
 		vi.useRealTimers()
 	})

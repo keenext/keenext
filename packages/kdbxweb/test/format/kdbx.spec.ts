@@ -1012,6 +1012,23 @@ describe('Kdbx', () => {
         });
     });
 
+    it('imports custom data but not the previous parent group of another file', () => {
+        const cred = new kdbxweb.Credentials(kdbxweb.ProtectedValue.fromString('demo'));
+        const source = kdbxweb.Kdbx.create(cred, 'source');
+        const entry = source.createEntry(source.getDefaultGroup());
+        entry.customData = new Map([['k', { value: 'v' }]]);
+        entry.previousParentGroup = kdbxweb.KdbxUuid.random();
+        entry.pushHistory();
+
+        const db = kdbxweb.Kdbx.create(cred, 'target');
+        const imported = db.importEntry(entry, db.getDefaultGroup(), source);
+        for (const e of [imported, ...imported.history]) {
+            expect([...e.customData!]).to.eql([['k', { value: 'v' }]]);
+            expect(e.previousParentGroup).to.be(undefined);
+        }
+        expect(imported.history.length).to.be(1);
+    });
+
     it('creates missing uuids', () => {
         const cred = new kdbxweb.Credentials(kdbxweb.ProtectedValue.fromString(''));
         const xml = kdbxweb.ByteUtils.bytesToString(TestResources.emptyUuidXml).toString();

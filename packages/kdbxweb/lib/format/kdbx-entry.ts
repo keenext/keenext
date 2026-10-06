@@ -333,6 +333,10 @@ export class KdbxEntry {
         this.history.splice(index, count);
     }
 
+    /**
+     * Copies the entry's state, everything but history, parentGroup and _editState.
+     * Merge, history snapshots and importEntry rely on this being complete.
+     */
     copyFrom(entry: KdbxEntry): void {
         this.uuid = entry.uuid;
         this.icon = entry.icon;
@@ -342,6 +346,9 @@ export class KdbxEntry {
         this.overrideUrl = entry.overrideUrl;
         this.tags = entry.tags.slice();
         this.times = entry.times.clone();
+        this.previousParentGroup = entry.previousParentGroup;
+        this.customData = KdbxCustomData.copy(entry.customData);
+        this.qualityCheck = entry.qualityCheck;
 
         this.fields = new Map<string, KdbxEntryField>();
         for (const [name, value] of entry.fields) {

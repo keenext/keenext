@@ -287,13 +287,19 @@ export class KdbxGroup {
         return selectedIx;
     }
 
+    /**
+     * Copies the group's own state; groups, entries and parentGroup are left to merge.
+     */
     copyFrom(group: KdbxGroup): void {
         this.uuid = group.uuid;
         this.name = group.name;
         this.notes = group.notes;
         this.icon = group.icon;
         this.customIcon = group.customIcon;
+        this.tags = group.tags.slice();
         this.times = group.times.clone();
+        this.previousParentGroup = group.previousParentGroup;
+        this.customData = KdbxCustomData.copy(group.customData);
         this.expanded = group.expanded;
         this.defaultAutoTypeSeq = group.defaultAutoTypeSeq;
         this.enableAutoType = group.enableAutoType;

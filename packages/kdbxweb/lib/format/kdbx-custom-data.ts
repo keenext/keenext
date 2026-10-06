@@ -7,6 +7,13 @@ export type KdbxCustomDataItem = { value: string | undefined; lastModified?: Dat
 export type KdbxCustomDataMap = Map<string, KdbxCustomDataItem>;
 
 export class KdbxCustomData {
+    static copy(customData: KdbxCustomDataMap | undefined): KdbxCustomDataMap | undefined {
+        if (!customData) {
+            return undefined;
+        }
+        return new Map([...customData].map(([key, item]) => [key, { ...item }]));
+    }
+
     static read(node: Node): KdbxCustomDataMap {
         const customData = new Map<string, KdbxCustomDataItem>();
         for (let i = 0, cn = node.childNodes, len = cn.length; i < len; i++) {

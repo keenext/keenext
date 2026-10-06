@@ -23,6 +23,7 @@ Base: upstream `master` at `7601e45d2a437f35a7fa3d767164eab60bc05d42` (2024-12-2
 | KDBX 4.1 `LastModificationTime` of custom data and custom icons is written in binary | `format/kdbx-custom-data.ts`, `format/kdbx-meta.ts` | Upstream writes ISO text, which KeePass rejects (upstream issue #49, PR #62). |
 | An attachment whose binary is missing from the pool is skipped; the entry's other attachments are written | `format/kdbx-entry.ts` | Upstream drops every attachment after the missing one. |
 | `createRandomKeyFile` takes its key from `CryptoEngine.random` alone | `format/kdbx-credentials.ts` | Upstream mixes in `Math.random()`. |
+| `KdbxEntry.copyFrom` also copies custom data, quality check and previous parent group; `KdbxGroup.copyFrom` also copies tags, custom data and previous parent group; `importEntry` clears the previous parent group | `format/kdbx-entry.ts`, `format/kdbx-group.ts`, `format/kdbx-custom-data.ts`, `format/kdbx.ts` | Merge, history snapshots and `importEntry` copy through `copyFrom`; upstream loses these properties there, e.g. KeePassXC's browser settings in entry custom data on every sync merge. |
 
 ## Changes to `test/`
 
@@ -31,7 +32,8 @@ Base: upstream `master` at `7601e45d2a437f35a7fa3d767164eab60bc05d42` (2024-12-2
 - Argon2 in tests uses hash-wasm instead of upstream's prebuilt emscripten blob.
 - Resources are read with `fs`; `KdbxUuid` byte assertions compare byte values.
 - New: `test/crypto/twofish.spec.ts` (known-answer tests from the Twofish submission, CBC round trips, wrong-key handling). Interoperability with KeePassXC is covered by the app's `tests/compat` (files written by KeePassXC with Twofish, and files written here, opened by KeePassXC).
-- Each `lib/` change in the table above has a regression test next to the tests of the file it changes; `kdbx.spec.ts` covers the ones that need a save and load (attachments, tabs, KDBX 4.1 times, IV length).
+- Each `lib/` change in the table above has a regression test next to the tests of the file it changes; `kdbx.spec.ts` covers the ones that need a save and load (attachments, tabs, KDBX 4.1 times, IV length, import), `kdbx.merge.spec.ts` the merge of custom data and tags.
+- `kdbx-entry.spec.ts` and `kdbx-group.spec.ts` check that `copyFrom` copies every own property of a fresh instance except an explicit list; a property added to the class fails there until the test populates it.
 - Two upstream tests expected the lenient `BinaryStream`: `binary-stream.spec.ts` reads zero bytes at the end instead of five, and the bad-compression test in `kdbx-header.spec.ts` uses a complete 4-byte field.
 
 ## Build
@@ -44,4 +46,4 @@ Base: upstream `master` at `7601e45d2a437f35a7fa3d767164eab60bc05d42` (2024-12-2
 - Key handling: `format/kdbx-credentials.ts`, `crypto/key-encryptor-*.ts`, `crypto/protected-value.ts` (XOR-masked in-memory values, not encryption).
 - Integrity: KDBX 4 header HMAC and HMAC block stream (`crypto/hmac-block-transform.ts`); KDBX 3 relies on stream start bytes and the hashed block stream.
 - KDF parameters (AES-KDF rounds, Argon2 memory, iterations, parallelism) come from the file without upper bounds and run before the key can be verified; limits and cancellation belong to the application.
-- Not changed from upstream and worth reviewing first: the XML handling of protected values (`XmlUtils.setProtectedValue`/`getProtectedText`), ChaCha20/Salsa20 implementations, `merge` (`KdbxEntry.copyFrom` does not copy custom data, quality check or previous parent group; `KdbxGroup.copyFrom` does not copy tags or custom data).
+- Not changed from upstream and worth reviewing first: the XML handling of protected values (`XmlUtils.setProtectedValue`/`getProtectedText`), ChaCha20/Salsa20 implementations, the CRDT logic of `merge` (`KdbxGroup.mergeCollection`, `KdbxEntry.mergeHistory`).

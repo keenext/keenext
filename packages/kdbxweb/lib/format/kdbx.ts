@@ -278,13 +278,16 @@ export class Kdbx {
         const newEntry = new KdbxEntry();
         const uuid = KdbxUuid.random();
 
+        // previousParentGroup names a group of the source file
         newEntry.copyFrom(entry);
         newEntry.uuid = uuid;
+        newEntry.previousParentGroup = undefined;
 
         for (const historyEntry of entry.history) {
             const newHistoryEntry = new KdbxEntry();
             newHistoryEntry.copyFrom(historyEntry);
             newHistoryEntry.uuid = uuid;
+            newHistoryEntry.previousParentGroup = undefined;
             newEntry.history.push(newHistoryEntry);
         }
 

@@ -758,6 +758,64 @@ describe('Kdbx.merge', () => {
         assertDbEquals(db, exp);
     });
 
+    it('adds remote entry with custom data and KDBX 4.1 properties', () => {
+        const db = getTestDb(),
+            remote = getTestDb();
+        const entry = remote.createEntry(remote.getDefaultGroup());
+        entry.customData = new Map([['KeePassXC-Browser Settings', { value: '{"Allow":[]}' }]]);
+        entry.qualityCheck = false;
+        entry.previousParentGroup = id.g1;
+        db.merge(remote);
+        const merged = db.getDefaultGroup().entries.find((e) => e.uuid.equals(entry.uuid))!;
+        expect(merged).to.be.ok();
+        expect(merged).not.to.be(entry);
+        expect([...merged.customData!]).to.eql([
+            ['KeePassXC-Browser Settings', { value: '{"Allow":[]}' }]
+        ]);
+        expect(merged.qualityCheck).to.be(false);
+        expect(merged.previousParentGroup).to.be(id.g1);
+    });
+
+    it('takes custom data of a later remote entry and keeps the local state in history', () => {
+        const db = getTestDb(),
+            remote = getTestDb();
+        db.getDefaultGroup().entries[0].customData = new Map([['k', { value: 'local' }]]);
+        const entry = remote.getDefaultGroup().entries[0];
+        entry.customData = new Map([['k', { value: 'remote' }]]);
+        entry.times.lastModTime = dt.upd4;
+        db.merge(remote);
+        const merged = db.getDefaultGroup().entries[0];
+        expect([...merged.customData!]).to.eql([['k', { value: 'remote' }]]);
+        const previous = merged.history[merged.history.length - 1];
+        expect(previous.lastModTime).to.be(dt.upd3.getTime());
+        expect([...previous.customData!]).to.eql([['k', { value: 'local' }]]);
+    });
+
+    it('adds remote group with tags and custom data', () => {
+        const db = getTestDb(),
+            remote = getTestDb();
+        const group = remote.createGroup(remote.getDefaultGroup(), 'tagged');
+        group.tags = ['t1', 't2'];
+        group.customData = new Map([['k', { value: 'v' }]]);
+        db.merge(remote);
+        const merged = db.getDefaultGroup().groups.find((g) => g.uuid.equals(group.uuid))!;
+        expect(merged.tags).to.eql(['t1', 't2']);
+        expect([...merged.customData!]).to.eql([['k', { value: 'v' }]]);
+    });
+
+    it('takes tags and custom data of a later remote group', () => {
+        const db = getTestDb(),
+            remote = getTestDb();
+        const group = remote.getDefaultGroup().groups[1];
+        group.tags = ['remote'];
+        group.customData = new Map([['k', { value: 'remote' }]]);
+        group.times.lastModTime = dt.upd2;
+        db.merge(remote);
+        const merged = db.getDefaultGroup().groups[1];
+        expect(merged.tags).to.eql(['remote']);
+        expect([...merged.customData!]).to.eql([['k', { value: 'remote' }]]);
+    });
+
     it('ignores remote entry with same date', () => {
         const db = getTestDb(),
             remote = getTestDb();
