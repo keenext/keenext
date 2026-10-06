@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { attempt, fetchFromStorage, keepassxcShow, login, openInFiles, seedDatabase, unlock } from './helpers.ts'
+import { attempt, DIR, fetchFromStorage, keepassxcShow, login, openInFiles, seedDatabase, unlock } from './helpers.ts'
 
 test.beforeEach(async ({ page }) => {
 	await login(page)
@@ -41,4 +41,12 @@ test('opens a Twofish database written by KeePassXC', async ({ page }) => {
 	await page.getByRole('link', { name: 'Internet' }).click()
 	await page.getByText('GitHub', { exact: true }).click()
 	await expect(page.locator('.entry-details').getByText('jan@example.org')).toBeVisible()
+})
+
+test('shows the KeePass icon for .kdbx files in the Files app', async ({ page }) => {
+	const name = seedDatabase('keepassxc-password.kdbx', `e2e-icon-${Date.now()}.kdbx`)
+	await page.goto(`/apps/files/files?dir=/${DIR}`)
+	const preview = page.locator(`[data-cy-files-list-row-name="${name}"] img.files-list__row-icon-preview`)
+	await expect(preview).toHaveAttribute('src', /\/core\/preview\?fileId=/)
+	await expect.poll(() => preview.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth)).toBeGreaterThan(0)
 })

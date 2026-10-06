@@ -6,6 +6,7 @@ namespace OCA\NextKeeWeb\AppInfo;
 
 use OCA\Files\Event\LoadAdditionalScriptsEvent;
 use OCA\NextKeeWeb\Listener\LoadFilesIntegration;
+use OCA\NextKeeWeb\Preview\KdbxIconProvider;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
@@ -21,6 +22,7 @@ final class Application extends App implements IBootstrap {
 	#[\Override]
 	public function register(IRegistrationContext $context): void {
 		$context->registerEventListener(LoadAdditionalScriptsEvent::class, LoadFilesIntegration::class);
+		$context->registerPreviewProvider(KdbxIconProvider::class, KdbxIconProvider::MIME_REGEX);
 	}
 
 	#[\Override]

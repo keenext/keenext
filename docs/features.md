@@ -84,5 +84,5 @@
 | File picker, recently opened list | ✅ | Follows renames and moves; remembers the key file per database. |
 | Read-only shares | ✅ | Opened read-only; editing actions and shortcuts are disabled. |
 | Public link shares | ❌ | |
-| Own file type icon for `.kdbx` | ❌ | Files shows the generic icon. |
+| Own file type icon for `.kdbx` | ✅ | Delivered as a preview (`lib/Preview/KdbxIconProvider.php`); the generic icon remains where previews are disabled. |
 | Translations | ◐ | English, German (`de`, `de_DE`). |
