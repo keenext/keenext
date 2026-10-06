@@ -65,3 +65,31 @@ test('moves an entry by dragging it onto a group', async ({ page }) => {
 	await expect.poll(() => attempt(() => keepassxcList(fetchFromStorage(name), '/Internet')), { timeout: 20_000 })
 		.toContain('Hausbank')
 })
+
+test('checks passwords against Have I Been Pwned with hash prefixes only', async ({ page }) => {
+	const name = seedDatabase('keepassxc-password.kdbx', `e2e-pwned-${Date.now()}.kdbx`)
+	const requests: { url: string, headers: Record<string, string> }[] = []
+	await page.route('https://api.pwnedpasswords.com/range/*', async (route) => {
+		requests.push({ url: route.request().url(), headers: route.request().headers() })
+		// SHA-1("1234") = 7110EDA4D09E062AA5E4A390B0A572AC0D2C0220, the Hausbank PIN.
+		const body = route.request().url().endsWith('/7110E') ? 'DA4D09E062AA5E4A390B0A572AC0D2C0220:2413945\r\n' : ''
+		await route.fulfill({ status: 200, contentType: 'text/plain', body })
+	})
+	await openInFiles(page, name)
+	await unlock(page)
+	await navigationActions(page, name)
+	await page.getByRole('menuitem', { name: 'Health check' }).click()
+
+	const report = page.getByRole('dialog', { name: 'Database health check' })
+	await report.getByRole('button', { name: 'Check with Have I Been Pwned' }).click()
+	await expect(report.getByRole('heading', { name: 'Found in data breaches (1)' })).toBeVisible()
+	await expect(report.getByText('Seen 2,413,945 times')).toBeVisible()
+
+	expect(requests.length).toBeGreaterThan(0)
+	for (const request of requests) {
+		expect(request.url).toMatch(/\/range\/[0-9A-F]{5}$/)
+		expect(request.headers['add-padding']).toBe('true')
+		expect(request.headers.cookie).toBeUndefined()
+		expect(request.headers.requesttoken).toBeUndefined()
+	}
+})

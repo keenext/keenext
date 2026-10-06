@@ -23,7 +23,7 @@
 | Import | ◐ | CSV (KeePassXC, KeePass, Bitwarden, browsers; columns by header), Bitwarden JSON (unencrypted), KeePass XML, KDBX. 1Password and KeePass 1 (.kdb) missing. |
 | Export | ◐ | KeePass XML and CSV with KeePassXC's columns, as a download. HTML missing. |
 | Health check (weak, reused, expired, expiring passwords) | ✅ | Per database, from its menu. Entries with "QualityCheck" off are skipped. |
-| Have I Been Pwned check | ❌ | |
+| Have I Been Pwned check | ✅ | Opt-in from the health check; k-anonymity (5-character SHA-1 prefixes), padded responses, no cookies. |
 
 ## Entries
 

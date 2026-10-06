@@ -51,6 +51,8 @@ final class PageController extends Controller {
 		// Argon2 runs as WebAssembly in a same-origin worker.
 		$csp->allowEvalWasm(true);
 		$csp->addAllowedWorkerSrcDomain("'self'");
+		// Opt-in breach check from the health report; only SHA-1 prefixes are sent.
+		$csp->addAllowedConnectDomain('https://api.pwnedpasswords.com');
 		$response->setContentSecurityPolicy($csp);
 		return $response;
 	}
