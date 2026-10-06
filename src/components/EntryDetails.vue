@@ -207,6 +207,7 @@ import { resolvedField, resolvePlaceholders } from '@/core/placeholders'
 import { readTotp } from '@/core/totp'
 import { t } from '@/l10n'
 import { copySecret } from '@/services/clipboard'
+import { downloadBlob } from '@/services/download'
 import { useSettingsStore } from '@/stores/settings'
 import { useVaultStore } from '@/stores/vault'
 
@@ -279,12 +280,7 @@ function download(name: string): void {
 	if (!attachment) {
 		return
 	}
-	const url = URL.createObjectURL(new Blob([attachmentData(attachment) as Uint8Array<ArrayBuffer>]))
-	const link = document.createElement('a')
-	link.href = url
-	link.download = name
-	link.click()
-	setTimeout(() => URL.revokeObjectURL(url), 1000)
+	downloadBlob(name, attachmentData(attachment) as Uint8Array<ArrayBuffer>)
 }
 
 function onSaved(id: string): void {

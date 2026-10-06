@@ -1,10 +1,12 @@
+import { execFileSync } from 'node:child_process'
 import { beforeAll, describe, expect, it } from 'vitest'
-import { entryByTitle } from '../helpers/databases.ts'
+import { entryByTitle, newDatabase } from '../helpers/databases.ts'
 import { exportXml, fixture, fixturesDir, hasKeepassxc, keepassxc, writeTemp } from '../helpers/keepassxc.ts'
 import { installArgon2 } from '@/core/crypto'
 import { applyDatabaseSettings, createCredentials, getDatabaseSettings, openDatabase, saveDatabase } from '@/core/database'
-import { applyDraft, attachFile, createEntry, deleteEntry, draftFromEntry, emptyDraft } from '@/core/entries'
+import { applyDraft, attachFile, createEntry, deleteEntry, draftFromEntry, emptyDraft, getField } from '@/core/entries'
 import { createGroup } from '@/core/groups'
+import { exportCsv, exportXml as exportKeePassXml, importDatabase, loadXmlDatabase, parseCsv } from '@/core/transfer'
 
 const password = 'test'
 const keyFilePath = `${fixturesDir}keepassxc-keyfile.keyx`
@@ -75,5 +77,34 @@ describe.runIf(hasKeepassxc)('cipher changes made here, read by KeePassXC', () =
 		const expected = { twofish: 'Twofish', chacha20: 'ChaCha20', aes: 'AES' }[cipher]
 		expect(keepassxc('db-info', path, { password })).toContain(expected)
 		expect(keepassxc('show', path, { password }, ['-s', '-a', 'Password', '/Internet/GitHub'])).toBe('gh-secret-2\n')
+	})
+})
+
+describe.runIf(hasKeepassxc)('exports and imports against KeePassXC', () => {
+	const auth = { password }
+
+	it('exports CSV with the same content as KeePassXC', async () => {
+		const db = await openDatabase(fixture('keepassxc-password.kdbx'), createCredentials({ password }))
+		const ours = parseCsv(exportCsv(db))
+		const theirs = parseCsv(keepassxc('export', writeTemp('db.kdbx', fixture('keepassxc-password.kdbx')), auth, ['-f', 'csv']))
+		const byTitle = (rows: string[][]) => new Map(rows.slice(1).map((row) => [row[1], row]))
+		expect(ours[0]).toEqual(theirs[0])
+		expect(byTitle(ours)).toEqual(byTitle(theirs))
+	})
+
+	it('writes KeePass XML that KeePassXC imports', async () => {
+		const db = await openDatabase(fixture('keepassxc-password.kdbx'), createCredentials({ password }))
+		const xmlPath = writeTemp('export.xml', new TextEncoder().encode(await exportKeePassXml(db)))
+		const imported = `${xmlPath}.kdbx`
+		execFileSync('keepassxc-cli', ['import', '-q', '-p', xmlPath, imported], { input: 'test\ntest\n' })
+		expect(keepassxc('show', imported, auth, ['-s', '-a', 'Password', '-a', 'Recovery codes', '/Internet/GitHub'])).toBe('gh-secret-2\naaaa-bbbb\ncccc-dddd\n')
+	})
+
+	it('imports KeePassXC\'s XML export', async () => {
+		const xml = keepassxc('export', writeTemp('db.kdbx', fixture('keepassxc-password.kdbx')), auth, ['-f', 'xml'])
+		const target = newDatabase()
+		const result = importDatabase(target, target.getDefaultGroup(), 'From KeePassXC', await loadXmlDatabase(xml))
+		expect(result.entries).toBe(5)
+		expect(getField(entryByTitle(target, 'GitHub'), 'Password')).toBe('gh-secret-2')
 	})
 })

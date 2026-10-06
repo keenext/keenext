@@ -82,9 +82,10 @@ async function chooseFolder(): Promise<void> {
 	}
 }
 
-async function submit(): Promise<void> {
+/** Resolves to false on failure, which keeps the dialog open with the error shown. */
+async function submit(): Promise<boolean> {
 	if (!valid.value || busy.value) {
-		return
+		return false
 	}
 	busy.value = true
 	error.value = ''
@@ -96,8 +97,10 @@ async function submit(): Promise<void> {
 			credentials: { password: password.value === '' ? undefined : password.value, ...key },
 		})
 		emit('close')
+		return true
 	} catch (cause) {
 		error.value = vault.describeError(cause)
+		return false
 	} finally {
 		busy.value = false
 	}
@@ -105,7 +108,7 @@ async function submit(): Promise<void> {
 
 const buttons = computed(() => [
 	{ label: t('nextkeeweb', 'Cancel'), callback: () => emit('close') },
-	{ label: busy.value ? t('nextkeeweb', 'Creating…') : t('nextkeeweb', 'Create'), type: 'submit' as const, variant: 'primary' as const, disabled: !valid.value || busy.value },
+	{ label: busy.value ? t('nextkeeweb', 'Creating…') : t('nextkeeweb', 'Create'), variant: 'primary' as const, disabled: !valid.value || busy.value, callback: async () => (await submit()) || false },
 ])
 </script>
 

@@ -58,3 +58,16 @@ export async function pickFolder(startAt = '/'): Promise<string | null> {
 		.pickNodes())
 	return node ? node.path : null
 }
+
+const IMPORTABLE = /\.(kdbx|xml|csv|json)$/i
+
+export async function pickImportFile(startAt = '/'): Promise<PickedFile | null> {
+	const node = await pick(() => getFilePickerBuilder(t('nextkeeweb', 'Choose file to import'))
+		.setMultiSelect(false)
+		.startAt(startAt)
+		.setFilter((candidate) => candidate.type === FileType.Folder || IMPORTABLE.test(candidate.basename))
+		.addButton({ label: t('nextkeeweb', 'Import'), callback: () => undefined, variant: 'primary' })
+		.build()
+		.pickNodes())
+	return node ? toPicked(node) : null
+}

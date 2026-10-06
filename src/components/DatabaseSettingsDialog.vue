@@ -153,9 +153,10 @@ function switchToArgon2(): void {
 const keyValid = computed(() => !changeKey.value
 	|| ((newPassword.value !== '' || newKeyFile.value !== null) && newPassword.value === repeatPassword.value))
 
-async function save(): Promise<void> {
+/** Resolves to false on failure, which keeps the dialog open with the error shown. */
+async function save(): Promise<boolean> {
 	if (!form.value || busy.value) {
-		return
+		return false
 	}
 	busy.value = true
 	error.value = ''
@@ -171,11 +172,13 @@ async function save(): Promise<void> {
 			}
 		})
 		if (!(await vault.save(props.database.id))) {
-			return
+			return false
 		}
 		emit('close')
+		return true
 	} catch (cause) {
 		error.value = vault.describeError(cause)
+		return false
 	} finally {
 		busy.value = false
 	}
@@ -183,7 +186,7 @@ async function save(): Promise<void> {
 
 const buttons = computed(() => [
 	{ label: t('nextkeeweb', 'Cancel'), callback: (): void => emit('close') },
-	{ label: busy.value ? t('nextkeeweb', 'Saving…') : t('nextkeeweb', 'Save'), variant: 'primary' as const, disabled: busy.value || !keyValid.value || !props.database.writable, callback: (): void => { void save() } },
+	{ label: busy.value ? t('nextkeeweb', 'Saving…') : t('nextkeeweb', 'Save'), variant: 'primary' as const, disabled: busy.value || !keyValid.value || !props.database.writable, callback: async () => (await save()) || false },
 ])
 </script>
 

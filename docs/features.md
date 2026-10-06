@@ -8,8 +8,7 @@
 |---|---|---|
 | KDBX 3.1, 4.0, 4.1 | ✅ | Unmodified files resave without differences in KeePassXC's XML export (`tests/compat`). |
 | AES-KDF, Argon2d, Argon2id | ✅ | Argon2 v1.3 only; v1.0 was never written by KDBX 4 clients. |
-| AES-256, ChaCha20 | ✅ | |
-| Twofish | ❌ | Not implemented in kdbxweb; such files are reported as unsupported. Needs a cipher implementation added to kdbxweb. |
+| AES-256, ChaCha20, Twofish | ✅ | Twofish in the kdbxweb fork (`packages/kdbxweb/FORK.md`), checked against KeePassXC both ways. |
 | Password, key file, both | ✅ | Key file from Nextcloud or from the device. XML (`.keyx`, v1/v2), 32-byte, hex and arbitrary files. |
 | YubiKey challenge-response | ❌ | Would need WebHID access to the OTP interface; kdbxweb accepts a challenge-response function. |
 | Create database | ✅ | KDBX 4, Argon2id 64 MiB, ChaCha20. |
@@ -20,8 +19,9 @@
 | Autosave | ✅ | Per user setting, 1.5 s after the last change. |
 | Changes made elsewhere | ✅ | Detected via ETag on save and by polling; merged, not overwritten. |
 | Backup before saving | ◐ | Not done by the app; Nextcloud's file versions keep previous states. |
-| Merge another database | ❌ | The merge itself exists (used for conflicts); no UI to pick a second file. |
-| Import (CSV, 1Password, Bitwarden, KeePass 1) / Export (CSV, XML, HTML) | ❌ | |
+| Merge another database | ✅ | Import a `.kdbx`: another copy of the same database is merged, a different one is copied into a new group. |
+| Import | ◐ | CSV (KeePassXC, KeePass, Bitwarden, browsers; columns by header), Bitwarden JSON (unencrypted), KeePass XML, KDBX. 1Password and KeePass 1 (.kdb) missing. |
+| Export | ◐ | KeePass XML and CSV with KeePassXC's columns, as a download. HTML missing. |
 | Health check (weak, reused, expired, expiring passwords) | ✅ | Per database, from its menu. Entries with "QualityCheck" off are skipped. |
 | Have I Been Pwned check | ❌ | |
 
