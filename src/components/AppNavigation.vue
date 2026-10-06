@@ -1,7 +1,7 @@
 <template>
-	<NcAppNavigation :aria-label="t('keepassweb', 'Databases')">
+	<NcAppNavigation :aria-label="t('nextkeeweb', 'Databases')">
 		<template #list>
-			<NcAppNavigationCaption v-if="vault.databases.length > 0" :name="t('keepassweb', 'Open databases')" />
+			<NcAppNavigationCaption v-if="vault.databases.length > 0" :name="t('nextkeeweb', 'Open databases')" />
 			<NcAppNavigationItem
 				v-for="database in vault.databases"
 				:key="database.id"
@@ -16,7 +16,7 @@
 					<NcIconSvgWrapper v-else :path="database.session ? mdiShieldKeyOutline : mdiLock" />
 				</template>
 				<template v-if="database.dirty" #counter>
-					<span class="unsaved-dot" :title="t('keepassweb', 'Unsaved changes')" />
+					<span class="unsaved-dot" :title="t('nextkeeweb', 'Unsaved changes')" />
 				</template>
 				<template #actions>
 					<template v-if="database.session">
@@ -24,32 +24,32 @@
 							<template #icon>
 								<NcIconSvgWrapper :path="mdiContentSave" />
 							</template>
-							{{ t('keepassweb', 'Save') }}
+							{{ t('nextkeeweb', 'Save') }}
 						</NcActionButton>
 						<NcActionButton closeAfterClick @click="databaseSettings = database.id">
 							<template #icon>
 								<NcIconSvgWrapper :path="mdiCog" />
 							</template>
-							{{ t('keepassweb', 'Database settings') }}
+							{{ t('nextkeeweb', 'Database settings') }}
 						</NcActionButton>
 						<NcActionButton closeAfterClick @click="report = database.id">
 							<template #icon>
 								<NcIconSvgWrapper :path="mdiShieldCheckOutline" />
 							</template>
-							{{ t('keepassweb', 'Health check') }}
+							{{ t('nextkeeweb', 'Health check') }}
 						</NcActionButton>
 						<NcActionButton closeAfterClick @click="vault.lock(database.id)">
 							<template #icon>
 								<NcIconSvgWrapper :path="mdiLock" />
 							</template>
-							{{ t('keepassweb', 'Lock') }}
+							{{ t('nextkeeweb', 'Lock') }}
 						</NcActionButton>
 					</template>
 					<NcActionButton closeAfterClick @click="vault.close(database.id)">
 						<template #icon>
 							<NcIconSvgWrapper :path="mdiClose" />
 						</template>
-						{{ t('keepassweb', 'Close') }}
+						{{ t('nextkeeweb', 'Close') }}
 					</NcActionButton>
 				</template>
 
@@ -63,17 +63,17 @@
 
 		<template #footer>
 			<ul class="app-navigation-footer">
-				<NcAppNavigationItem :name="t('keepassweb', 'Open database')" @click="emit('openDatabase')">
+				<NcAppNavigationItem :name="t('nextkeeweb', 'Open database')" @click="emit('openDatabase')">
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiFolderOpenOutline" />
 					</template>
 				</NcAppNavigationItem>
-				<NcAppNavigationItem :name="t('keepassweb', 'New database')" @click="emit('newDatabase')">
+				<NcAppNavigationItem :name="t('nextkeeweb', 'New database')" @click="emit('newDatabase')">
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiPlus" />
 					</template>
 				</NcAppNavigationItem>
-				<NcAppNavigationItem :name="t('keepassweb', 'Settings')" @click="emit('openSettings')">
+				<NcAppNavigationItem :name="t('nextkeeweb', 'Settings')" @click="emit('openSettings')">
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiCog" />
 					</template>

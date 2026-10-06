@@ -30,12 +30,12 @@ const color = computed(() => ({
 
 const label = computed(() => {
 	const names = {
-		poor: t('keepassweb', 'Poor'),
-		weak: t('keepassweb', 'Weak'),
-		good: t('keepassweb', 'Good'),
-		excellent: t('keepassweb', 'Excellent'),
+		poor: t('nextkeeweb', 'Poor'),
+		weak: t('nextkeeweb', 'Weak'),
+		good: t('nextkeeweb', 'Good'),
+		excellent: t('nextkeeweb', 'Excellent'),
 	}
-	return t('keepassweb', '{quality} ({bits} bits)', { quality: names[strength.value.level], bits: strength.value.bits })
+	return t('nextkeeweb', '{quality} ({bits} bits)', { quality: names[strength.value.level], bits: strength.value.bits })
 })
 </script>
 

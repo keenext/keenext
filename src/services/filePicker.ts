@@ -27,10 +27,10 @@ async function pick(build: () => Promise<INode[]>): Promise<INode | null> {
 }
 
 export async function pickDatabase(): Promise<PickedFile | null> {
-	const node = await pick(() => getFilePickerBuilder(t('keepassweb', 'Open KeePass database'))
+	const node = await pick(() => getFilePickerBuilder(t('nextkeeweb', 'Open KeePass database'))
 		.setMultiSelect(false)
 		.setFilter((candidate) => candidate.type === FileType.Folder || candidate.basename.toLowerCase().endsWith('.kdbx'))
-		.addButton({ label: t('keepassweb', 'Open'), callback: () => undefined, variant: 'primary' })
+		.addButton({ label: t('nextkeeweb', 'Open'), callback: () => undefined, variant: 'primary' })
 		.build()
 		.pickNodes())
 	return node ? toPicked(node) : null
@@ -38,22 +38,22 @@ export async function pickDatabase(): Promise<PickedFile | null> {
 
 /** Starts in `startAt` (usually the database's folder), where key files tend to live. */
 export async function pickKeyFile(startAt = '/'): Promise<PickedFile | null> {
-	const node = await pick(() => getFilePickerBuilder(t('keepassweb', 'Choose key file'))
+	const node = await pick(() => getFilePickerBuilder(t('nextkeeweb', 'Choose key file'))
 		.setMultiSelect(false)
 		.startAt(startAt)
-		.addButton({ label: t('keepassweb', 'Use as key file'), callback: () => undefined, variant: 'primary' })
+		.addButton({ label: t('nextkeeweb', 'Use as key file'), callback: () => undefined, variant: 'primary' })
 		.build()
 		.pickNodes())
 	return node ? toPicked(node) : null
 }
 
 export async function pickFolder(startAt = '/'): Promise<string | null> {
-	const node = await pick(() => getFilePickerBuilder(t('keepassweb', 'Choose folder'))
+	const node = await pick(() => getFilePickerBuilder(t('nextkeeweb', 'Choose folder'))
 		.setMultiSelect(false)
 		.startAt(startAt)
 		.allowDirectories(true)
 		.setFilter((candidate) => candidate.type === FileType.Folder)
-		.addButton({ label: t('keepassweb', 'Choose'), callback: () => undefined, variant: 'primary' })
+		.addButton({ label: t('nextkeeweb', 'Choose'), callback: () => undefined, variant: 'primary' })
 		.build()
 		.pickNodes())
 	return node ? node.path : null

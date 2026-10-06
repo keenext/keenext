@@ -17,15 +17,15 @@ function isDatabase(node: INode): boolean {
 }
 
 registerFileAction({
-	id: 'keepassweb-open',
-	displayName: () => t('keepassweb', 'Open in KeePass Web'),
+	id: 'nextkeeweb-open',
+	displayName: () => t('nextkeeweb', 'Open in NextKeeWeb'),
 	iconSvgInline: () => icon,
 	enabled: ({ nodes }) => nodes.length === 1
 		&& isDatabase(nodes[0]!)
 		&& nodes[0]!.fileid !== undefined
 		&& (nodes[0]!.permissions & Permission.READ) !== 0,
 	exec: async ({ nodes }) => {
-		window.location.href = generateUrl('/apps/keepassweb/?fileId={fileId}', { fileId: nodes[0].fileid! })
+		window.location.href = generateUrl('/apps/nextkeeweb/?fileId={fileId}', { fileId: nodes[0].fileid! })
 		return null
 	},
 	default: DefaultType.DEFAULT,
@@ -33,12 +33,12 @@ registerFileAction({
 })
 
 addNewFileMenuEntry({
-	id: 'keepassweb-new',
-	displayName: t('keepassweb', 'New KeePass database'),
+	id: 'nextkeeweb-new',
+	displayName: t('nextkeeweb', 'New KeePass database'),
 	category: NewMenuEntryCategory.CreateNew,
 	iconSvgInline: icon,
 	enabled: (folder) => (folder.permissions & Permission.CREATE) !== 0,
 	handler: (folder) => {
-		window.location.href = generateUrl('/apps/keepassweb/?new=1&dir={dir}', { dir: folder.path })
+		window.location.href = generateUrl('/apps/nextkeeweb/?new=1&dir={dir}', { dir: folder.path })
 	},
 })

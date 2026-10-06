@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\KeePassWeb\Tests\Service;
+namespace OCA\NextKeeWeb\Tests\Service;
 
-use OCA\KeePassWeb\Service\FileResolver;
-use OCA\KeePassWeb\Service\RecentFilesService;
+use OCA\NextKeeWeb\Service\FileResolver;
+use OCA\NextKeeWeb\Service\RecentFilesService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Config\IUserConfig;
 use OCP\Files\NotFoundException;

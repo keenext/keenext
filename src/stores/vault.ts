@@ -45,17 +45,17 @@ const AUTOSAVE_DELAY = 1500
 function describeError(error: unknown): string {
 	if (error instanceof DatabaseOpenError) {
 		switch (error.reason) {
-			case 'invalid-key': return t('keepassweb', 'Wrong password or key file')
-			case 'corrupt': return t('keepassweb', 'The file is not a valid KeePass database')
-			case 'unsupported': return t('keepassweb', 'This database format is not supported')
+			case 'invalid-key': return t('nextkeeweb', 'Wrong password or key file')
+			case 'corrupt': return t('nextkeeweb', 'The file is not a valid KeePass database')
+			case 'unsupported': return t('nextkeeweb', 'This database format is not supported')
 		}
 	}
 	if (error instanceof StorageError) {
 		switch (error.reason) {
-			case 'forbidden': return t('keepassweb', 'You are not allowed to change this file')
-			case 'not-found': return t('keepassweb', 'The file no longer exists')
-			case 'locked': return t('keepassweb', 'The file is locked by another application')
-			case 'exists': return t('keepassweb', 'A file with this name already exists')
+			case 'forbidden': return t('nextkeeweb', 'You are not allowed to change this file')
+			case 'not-found': return t('nextkeeweb', 'The file no longer exists')
+			case 'locked': return t('nextkeeweb', 'The file is locked by another application')
+			case 'exists': return t('nextkeeweb', 'A file with this name already exists')
 		}
 	}
 	return error instanceof Error ? error.message : String(error)
@@ -95,7 +95,7 @@ export const useVaultStore = defineStore('vault', () => {
 		try {
 			recent.value = await getRecent()
 		} catch (error) {
-			showError(t('keepassweb', 'Could not load recent databases: {error}', { error: describeError(error) }))
+			showError(t('nextkeeweb', 'Could not load recent databases: {error}', { error: describeError(error) }))
 		}
 	}
 
@@ -232,11 +232,11 @@ export const useVaultStore = defineStore('vault', () => {
 		try {
 			const result = await session.save()
 			if (result.pulled) {
-				showSuccess(t('keepassweb', 'Changes made elsewhere were merged into {name}', { name: database.name }))
+				showSuccess(t('nextkeeweb', 'Changes made elsewhere were merged into {name}', { name: database.name }))
 			}
 			return true
 		} catch (error) {
-			showError(t('keepassweb', 'Could not save {name}: {error}', { name: database.name, error: describeError(error) }))
+			showError(t('nextkeeweb', 'Could not save {name}: {error}', { name: database.name, error: describeError(error) }))
 			return false
 		} finally {
 			database.saving = false
@@ -254,7 +254,7 @@ export const useVaultStore = defineStore('vault', () => {
 		try {
 			const result = await session.sync()
 			if (result.pulled && result.pushed) {
-				showSuccess(t('keepassweb', 'Changes made elsewhere were merged into {name}', { name: database.name }))
+				showSuccess(t('nextkeeweb', 'Changes made elsewhere were merged into {name}', { name: database.name }))
 			}
 		} catch {
 			// Polling is best-effort; explicit saves report errors.

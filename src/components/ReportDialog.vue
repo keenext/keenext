@@ -1,10 +1,10 @@
 <template>
 	<NcDialog
-		:name="t('keepassweb', 'Database health check')"
+		:name="t('nextkeeweb', 'Database health check')"
 		:buttons="buttons"
 		size="normal"
 		@update:open="(open) => open || emit('close')">
-		<NcEmptyContent v-if="sections.every((section) => section.items.length === 0)" :name="t('keepassweb', 'No problems found')">
+		<NcEmptyContent v-if="sections.every((section) => section.items.length === 0)" :name="t('nextkeeweb', 'No problems found')">
 			<template #icon>
 				<NcIconSvgWrapper :path="mdiShieldCheckOutline" />
 			</template>
@@ -58,11 +58,11 @@ const view = useDatabaseView(() => props.database)
 function describe(issue: HealthIssue): string {
 	switch (issue.kind) {
 		case 'weak':
-			return issue.detail === 'poor' ? t('keepassweb', 'Poor') : t('keepassweb', 'Weak')
+			return issue.detail === 'poor' ? t('nextkeeweb', 'Poor') : t('nextkeeweb', 'Weak')
 		case 'reused':
-			return n('keepassweb', 'Used in {count} entry', 'Used in {count} entries', Number(issue.detail), { count: Number(issue.detail) })
+			return n('nextkeeweb', 'Used in {count} entry', 'Used in {count} entries', Number(issue.detail), { count: Number(issue.detail) })
 		case 'expiring':
-			return n('keepassweb', 'in {count} day', 'in {count} days', Number(issue.detail), { count: Number(issue.detail) })
+			return n('nextkeeweb', 'in {count} day', 'in {count} days', Number(issue.detail), { count: Number(issue.detail) })
 		default:
 			return issue.entry.times.expiryTime?.toLocaleDateString() ?? ''
 	}
@@ -71,17 +71,17 @@ function describe(issue: HealthIssue): string {
 const sections = computed(() => {
 	const issues = view.value ? healthReport(view.value.db) : []
 	const titles: Record<HealthIssue['kind'], string> = {
-		expired: t('keepassweb', 'Expired'),
-		expiring: t('keepassweb', 'Expiring soon'),
-		weak: t('keepassweb', 'Weak passwords'),
-		reused: t('keepassweb', 'Reused passwords'),
+		expired: t('nextkeeweb', 'Expired'),
+		expiring: t('nextkeeweb', 'Expiring soon'),
+		weak: t('nextkeeweb', 'Weak passwords'),
+		reused: t('nextkeeweb', 'Reused passwords'),
 	}
 	return (Object.keys(titles) as HealthIssue['kind'][]).map((kind) => ({
 		kind,
 		title: titles[kind],
 		items: issues.filter((issue) => issue.kind === kind).map((issue) => ({
 			id: issue.entry.uuid.id,
-			title: getField(issue.entry, StandardField.Title) || t('keepassweb', '(no title)'),
+			title: getField(issue.entry, StandardField.Title) || t('nextkeeweb', '(no title)'),
 			path: entryPath(issue.entry).join(' › '),
 			detail: describe(issue),
 		})),
@@ -96,7 +96,7 @@ function open(id: string): void {
 }
 
 const buttons = computed(() => [
-	{ label: t('keepassweb', 'Close'), callback: () => emit('close') },
+	{ label: t('nextkeeweb', 'Close'), callback: () => emit('close') },
 ])
 </script>
 

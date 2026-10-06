@@ -8,4 +8,4 @@ installArgon2(createWorkerArgon2())
 
 createApp(App)
 	.use(createPinia())
-	.mount('#keepassweb')
+	.mount('#nextkeeweb')

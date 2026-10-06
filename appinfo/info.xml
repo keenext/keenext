@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
-	<id>keepassweb</id>
-	<name>KeePass Web</name>
+	<id>nextkeeweb</id>
+	<name>NextKeeWeb</name>
 	<summary>Open and edit KeePass (KDBX) password databases stored in your Nextcloud</summary>
 	<description><![CDATA[Open and edit KeePass databases (.kdbx) directly in Nextcloud, compatible with KeePassXC, KeePass and KeePassDX.
 
@@ -14,7 +14,7 @@
 	<version>0.1.0</version>
 	<licence>agpl</licence>
 	<author>Jan-Hendrik Meyer</author>
-	<namespace>KeePassWeb</namespace>
+	<namespace>NextKeeWeb</namespace>
 	<category>security</category>
 	<category>tools</category>
 	<dependencies>
@@ -22,8 +22,8 @@
 	</dependencies>
 	<navigations>
 		<navigation>
-			<name>KeePass</name>
-			<route>keepassweb.page.index</route>
+			<name>NextKeeWeb</name>
+			<route>nextkeeweb.page.index</route>
 			<icon>app.svg</icon>
 		</navigation>
 	</navigations>

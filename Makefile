@@ -1,4 +1,4 @@
-app_name := keepassweb
+app_name := nextkeeweb
 build_dir := build
 package := $(build_dir)/$(app_name)
 

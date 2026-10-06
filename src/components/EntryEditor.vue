@@ -1,11 +1,11 @@
 <template>
 	<form class="entry-editor" @submit.prevent="save">
-		<h2>{{ entry ? t('keepassweb', 'Edit entry') : t('keepassweb', 'New entry') }}</h2>
+		<h2>{{ entry ? t('nextkeeweb', 'Edit entry') : t('nextkeeweb', 'New entry') }}</h2>
 
 		<div class="entry-editor__title">
 			<NcButton
-				:aria-label="t('keepassweb', 'Choose icon')"
-				:title="t('keepassweb', 'Choose icon')"
+				:aria-label="t('nextkeeweb', 'Choose icon')"
+				:title="t('nextkeeweb', 'Choose icon')"
 				@click="iconOpen = true">
 				<template #icon>
 					<EntryIcon
@@ -15,51 +15,51 @@
 						:customIcon="draft.customIcon" />
 				</template>
 			</NcButton>
-			<NcTextField v-model="draft.title" :label="t('keepassweb', 'Title')" autofocus />
+			<NcTextField v-model="draft.title" :label="t('nextkeeweb', 'Title')" autofocus />
 		</div>
-		<NcTextField v-model="draft.username" :label="t('keepassweb', 'Username')" autocomplete="off" />
+		<NcTextField v-model="draft.username" :label="t('nextkeeweb', 'Username')" autocomplete="off" />
 		<div class="entry-editor__password">
 			<NcPasswordField
 				v-model="draft.password"
-				:label="t('keepassweb', 'Password')"
+				:label="t('nextkeeweb', 'Password')"
 				autocomplete="new-password"
 				:checkPasswordStrength="false" />
-			<NcButton :aria-label="t('keepassweb', 'Generate password')" :title="t('keepassweb', 'Generate password')" @click="generatorOpen = true">
+			<NcButton :aria-label="t('nextkeeweb', 'Generate password')" :title="t('nextkeeweb', 'Generate password')" @click="generatorOpen = true">
 				<template #icon>
 					<NcIconSvgWrapper :path="mdiDiceMultiple" />
 				</template>
 			</NcButton>
 		</div>
 		<StrengthMeter v-if="draft.password" :password="draft.password" />
-		<NcTextField v-model="draft.url" :label="t('keepassweb', 'URL')" type="url" />
+		<NcTextField v-model="draft.url" :label="t('nextkeeweb', 'URL')" type="url" />
 
 		<NcSelect
 			v-model="draft.tags"
 			:options="knownTags"
-			:inputLabel="t('keepassweb', 'Tags')"
+			:inputLabel="t('nextkeeweb', 'Tags')"
 			multiple
 			taggable
 			keepOpen />
 
 		<div class="entry-editor__expiry">
 			<NcCheckboxRadioSwitch :modelValue="draft.expires !== null" @update:modelValue="toggleExpiry">
-				{{ t('keepassweb', 'Expires') }}
+				{{ t('nextkeeweb', 'Expires') }}
 			</NcCheckboxRadioSwitch>
 			<NcDateTimePickerNative
 				v-if="draft.expires !== null"
 				v-model="draft.expires"
 				type="datetime-local"
-				:label="t('keepassweb', 'Expiry date')" />
+				:label="t('nextkeeweb', 'Expiry date')" />
 		</div>
 
 		<NcTextArea
 			v-model="draft.notes"
-			:label="t('keepassweb', 'Notes')"
+			:label="t('nextkeeweb', 'Notes')"
 			resize="vertical"
 			rows="4" />
 
 		<section class="entry-editor__section">
-			<h3>{{ t('keepassweb', 'Additional attributes') }}</h3>
+			<h3>{{ t('nextkeeweb', 'Additional attributes') }}</h3>
 			<!-- The otp field is edited through the TOTP dialog. -->
 			<div
 				v-for="(field, index) in draft.customFields"
@@ -68,31 +68,31 @@
 				class="entry-editor__custom-field">
 				<NcTextField
 					v-model="field.key"
-					:label="t('keepassweb', 'Name')"
+					:label="t('nextkeeweb', 'Name')"
 					:error="fieldErrors[index] !== undefined"
 					:helperText="fieldErrors[index]" />
 				<NcPasswordField
 					v-if="field.protected"
 					v-model="field.value"
-					:label="t('keepassweb', 'Value')"
+					:label="t('nextkeeweb', 'Value')"
 					:checkPasswordStrength="false" />
 				<NcTextArea
 					v-else
 					v-model="field.value"
-					:label="t('keepassweb', 'Value')"
+					:label="t('nextkeeweb', 'Value')"
 					resize="vertical"
 					rows="1" />
 				<NcButton
 					variant="tertiary"
 					:pressed="field.protected"
-					:aria-label="t('keepassweb', 'Protect value')"
-					:title="t('keepassweb', 'Protect value (hide and encrypt in memory)')"
+					:aria-label="t('nextkeeweb', 'Protect value')"
+					:title="t('nextkeeweb', 'Protect value (hide and encrypt in memory)')"
 					@update:pressed="(pressed) => field.protected = pressed">
 					<template #icon>
 						<NcIconSvgWrapper :path="field.protected ? mdiLock : mdiLockOpenVariant" />
 					</template>
 				</NcButton>
-				<NcButton variant="tertiary" :aria-label="t('keepassweb', 'Remove attribute')" @click="draft.customFields.splice(index, 1)">
+				<NcButton variant="tertiary" :aria-label="t('nextkeeweb', 'Remove attribute')" @click="draft.customFields.splice(index, 1)">
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiDelete" />
 					</template>
@@ -103,24 +103,24 @@
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiPlus" />
 					</template>
-					{{ t('keepassweb', 'Add attribute') }}
+					{{ t('nextkeeweb', 'Add attribute') }}
 				</NcButton>
 				<NcButton @click="totpOpen = true">
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiTimerOutline" />
 					</template>
-					{{ hasTotp ? t('keepassweb', 'Change TOTP') : t('keepassweb', 'Set up TOTP') }}
+					{{ hasTotp ? t('nextkeeweb', 'Change TOTP') : t('nextkeeweb', 'Set up TOTP') }}
 				</NcButton>
 			</div>
 		</section>
 
 		<section class="entry-editor__section">
-			<h3>{{ t('keepassweb', 'Attachments') }}</h3>
+			<h3>{{ t('nextkeeweb', 'Attachments') }}</h3>
 			<ul>
 				<li v-for="(attachment, index) in draft.attachments" :key="attachment.name" class="entry-editor__attachment">
 					<NcIconSvgWrapper :path="mdiPaperclip" :size="20" />
 					<span>{{ attachment.name }}</span>
-					<NcButton variant="tertiary" :aria-label="t('keepassweb', 'Remove {name}', { name: attachment.name })" @click="draft.attachments.splice(index, 1)">
+					<NcButton variant="tertiary" :aria-label="t('nextkeeweb', 'Remove {name}', { name: attachment.name })" @click="draft.attachments.splice(index, 1)">
 						<template #icon>
 							<NcIconSvgWrapper :path="mdiDelete" />
 						</template>
@@ -131,7 +131,7 @@
 				<template #icon>
 					<NcIconSvgWrapper :path="mdiPaperclip" />
 				</template>
-				{{ t('keepassweb', 'Add attachment') }}
+				{{ t('nextkeeweb', 'Add attachment') }}
 			</NcButton>
 			<input
 				ref="fileInput"
@@ -143,13 +143,13 @@
 
 		<div class="entry-editor__actions">
 			<NcButton @click="emit('cancel')">
-				{{ t('keepassweb', 'Cancel') }}
+				{{ t('nextkeeweb', 'Cancel') }}
 			</NcButton>
 			<NcButton type="submit" variant="primary" :disabled="!valid">
 				<template #icon>
 					<NcIconSvgWrapper :path="mdiCheck" />
 				</template>
-				{{ t('keepassweb', 'Save') }}
+				{{ t('nextkeeweb', 'Save') }}
 			</NcButton>
 		</div>
 
@@ -243,11 +243,11 @@ const fieldErrors = computed(() => {
 	const seen = new Set<string>()
 	draft.customFields.forEach((field, index) => {
 		if (field.key.trim() === '') {
-			errors[index] = t('keepassweb', 'Name is required')
+			errors[index] = t('nextkeeweb', 'Name is required')
 		} else if (isStandardField(field.key)) {
-			errors[index] = t('keepassweb', 'This name is reserved')
+			errors[index] = t('nextkeeweb', 'This name is reserved')
 		} else if (seen.has(field.key)) {
-			errors[index] = t('keepassweb', 'Name already used')
+			errors[index] = t('nextkeeweb', 'Name already used')
 		}
 		seen.add(field.key)
 	})

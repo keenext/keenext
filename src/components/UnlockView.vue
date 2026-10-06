@@ -2,7 +2,7 @@
 	<div class="unlock">
 		<form class="unlock__form" @submit.prevent="submit">
 			<NcIconSvgWrapper :path="mdiShieldLockOutline" :size="64" class="unlock__icon" />
-			<h2>{{ t('keepassweb', 'Unlock {name}', { name: database.name }) }}</h2>
+			<h2>{{ t('nextkeeweb', 'Unlock {name}', { name: database.name }) }}</h2>
 			<p class="unlock__path">
 				{{ database.path }}
 			</p>
@@ -10,7 +10,7 @@
 			<NcPasswordField
 				ref="passwordField"
 				v-model="password"
-				:label="t('keepassweb', 'Password')"
+				:label="t('nextkeeweb', 'Password')"
 				:checkPasswordStrength="false"
 				:disabled="busy"
 				autocomplete="current-password"
@@ -22,7 +22,7 @@
 				{{ error }}
 			</NcNoteCard>
 			<NcNoteCard v-if="!database.writable" type="info">
-				{{ t('keepassweb', 'You can only read this database; changes cannot be saved.') }}
+				{{ t('nextkeeweb', 'You can only read this database; changes cannot be saved.') }}
 			</NcNoteCard>
 
 			<NcButton
@@ -34,10 +34,10 @@
 					<NcLoadingIcon v-if="busy" :size="20" />
 					<NcIconSvgWrapper v-else :path="mdiLockOpenVariant" />
 				</template>
-				{{ busy ? t('keepassweb', 'Unlocking…') : t('keepassweb', 'Unlock') }}
+				{{ busy ? t('nextkeeweb', 'Unlocking…') : t('nextkeeweb', 'Unlock') }}
 			</NcButton>
 			<p class="unlock__hint">
-				{{ t('keepassweb', 'The database is decrypted in your browser. Your password is never sent to the server.') }}
+				{{ t('nextkeeweb', 'The database is decrypted in your browser. Your password is never sent to the server.') }}
 			</p>
 		</form>
 	</div>

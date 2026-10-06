@@ -1,37 +1,37 @@
 <template>
 	<NcDialog
-		:name="t('keepassweb', 'New KeePass database')"
+		:name="t('nextkeeweb', 'New KeePass database')"
 		:buttons="buttons"
 		isForm
 		@submit="submit"
 		@update:open="(open) => open || emit('close')">
 		<div class="new-database">
-			<NcTextField v-model="name" :label="t('keepassweb', 'File name')" autofocus />
+			<NcTextField v-model="name" :label="t('nextkeeweb', 'File name')" autofocus />
 			<div class="new-database__folder">
-				<span>{{ t('keepassweb', 'Folder: {folder}', { folder }) }}</span>
+				<span>{{ t('nextkeeweb', 'Folder: {folder}', { folder }) }}</span>
 				<NcButton variant="tertiary" @click="chooseFolder">
-					{{ t('keepassweb', 'Change') }}
+					{{ t('nextkeeweb', 'Change') }}
 				</NcButton>
 			</div>
 			<NcPasswordField
 				v-model="password"
-				:label="t('keepassweb', 'Master password')"
+				:label="t('nextkeeweb', 'Master password')"
 				autocomplete="new-password"
 				:checkPasswordStrength="false" />
 			<StrengthMeter v-if="password" :password="password" />
 			<NcPasswordField
 				v-model="repeat"
-				:label="t('keepassweb', 'Repeat master password')"
+				:label="t('nextkeeweb', 'Repeat master password')"
 				autocomplete="new-password"
 				:checkPasswordStrength="false"
 				:error="repeat !== '' && repeat !== password"
-				:helperText="repeat !== '' && repeat !== password ? t('keepassweb', 'Passwords do not match') : ''" />
+				:helperText="repeat !== '' && repeat !== password ? t('nextkeeweb', 'Passwords do not match') : ''" />
 			<KeyFileChooser v-model="keyFile" :startAt="folder" />
 			<NcNoteCard v-if="error" type="error">
 				{{ error }}
 			</NcNoteCard>
 			<p class="new-database__hint">
-				{{ t('keepassweb', 'KDBX 4 with Argon2id and ChaCha20. Without the master password the database cannot be recovered.') }}
+				{{ t('nextkeeweb', 'KDBX 4 with Argon2id and ChaCha20. Without the master password the database cannot be recovered.') }}
 			</p>
 		</div>
 	</NcDialog>
@@ -62,7 +62,7 @@ const emit = defineEmits<{
 }>()
 
 const vault = useVaultStore()
-const name = ref(t('keepassweb', 'Passwords'))
+const name = ref(t('nextkeeweb', 'Passwords'))
 const folder = ref(props.directory || '/')
 const password = ref('')
 const repeat = ref('')
@@ -104,8 +104,8 @@ async function submit(): Promise<void> {
 }
 
 const buttons = computed(() => [
-	{ label: t('keepassweb', 'Cancel'), callback: () => emit('close') },
-	{ label: busy.value ? t('keepassweb', 'Creating…') : t('keepassweb', 'Create'), type: 'submit' as const, variant: 'primary' as const, disabled: !valid.value || busy.value },
+	{ label: t('nextkeeweb', 'Cancel'), callback: () => emit('close') },
+	{ label: busy.value ? t('nextkeeweb', 'Creating…') : t('nextkeeweb', 'Create'), type: 'submit' as const, variant: 'primary' as const, disabled: !valid.value || busy.value },
 ])
 </script>
 

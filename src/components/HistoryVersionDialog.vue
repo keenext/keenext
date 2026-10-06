@@ -1,11 +1,11 @@
 <template>
 	<NcDialog
-		:name="t('keepassweb', 'Version from {date}', { date: modified })"
+		:name="t('nextkeeweb', 'Version from {date}', { date: modified })"
 		:buttons="buttons"
 		size="normal"
 		@update:open="(open) => open || emit('close')">
 		<p class="history-version__hint">
-			{{ t('keepassweb', 'Values that differ from the current version are marked.') }}
+			{{ t('nextkeeweb', 'Values that differ from the current version are marked.') }}
 		</p>
 		<dl>
 			<FieldRow
@@ -57,11 +57,11 @@ const fields = computed(() => {
 	const old = draftFromEntry(state)
 	const current = draftFromEntry(props.entry)
 	const standard: [string, keyof Pick<EntryDraft, 'title' | 'username' | 'password' | 'url' | 'notes'>, boolean][] = [
-		[t('keepassweb', 'Title'), 'title', false],
-		[t('keepassweb', 'Username'), 'username', false],
-		[t('keepassweb', 'Password'), 'password', true],
-		[t('keepassweb', 'URL'), 'url', false],
-		[t('keepassweb', 'Notes'), 'notes', false],
+		[t('nextkeeweb', 'Title'), 'title', false],
+		[t('nextkeeweb', 'Username'), 'username', false],
+		[t('nextkeeweb', 'Password'), 'password', true],
+		[t('nextkeeweb', 'URL'), 'url', false],
+		[t('nextkeeweb', 'Notes'), 'notes', false],
 	]
 	return [
 		...standard.map(([label, key, secret]) => ({ label, value: old[key], secret, changed: old[key] !== current[key] })),
@@ -76,12 +76,12 @@ const fields = computed(() => {
 
 async function copy(value: string): Promise<void> {
 	await copySecret(value, settingsStore.settings.clipboardClearSeconds)
-	showSuccess(t('keepassweb', 'Copied'))
+	showSuccess(t('nextkeeweb', 'Copied'))
 }
 
 const buttons = computed(() => [
-	{ label: t('keepassweb', 'Close'), callback: () => emit('close') },
-	...(props.canRestore ? [{ label: t('keepassweb', 'Restore this version'), variant: 'primary' as const, callback: () => emit('restore') }] : []),
+	{ label: t('nextkeeweb', 'Close'), callback: () => emit('close') },
+	...(props.canRestore ? [{ label: t('nextkeeweb', 'Restore this version'), variant: 'primary' as const, callback: () => emit('restore') }] : []),
 ])
 </script>
 

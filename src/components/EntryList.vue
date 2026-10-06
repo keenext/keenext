@@ -4,8 +4,8 @@
 			<NcTextField
 				:modelValue="database.query"
 				class="entry-list__search"
-				:label="t('keepassweb', 'Search')"
-				:placeholder="t('keepassweb', 'Search (e.g. github -user:old tag:work)')"
+				:label="t('nextkeeweb', 'Search')"
+				:placeholder="t('nextkeeweb', 'Search (e.g. github -user:old tag:work)')"
 				trailingButtonIcon="close"
 				:showTrailingButton="database.query !== ''"
 				@update:modelValue="(value: string | number) => vault.search(database.id, String(value))"
@@ -15,8 +15,8 @@
 				</template>
 			</NcTextField>
 			<NcButton
-				:aria-label="t('keepassweb', 'New entry')"
-				:title="t('keepassweb', 'New entry (Ctrl+N)')"
+				:aria-label="t('nextkeeweb', 'New entry')"
+				:title="t('nextkeeweb', 'New entry (Ctrl+N)')"
 				:disabled="!canCreate"
 				variant="primary"
 				@click="emit('createEntry')">
@@ -57,13 +57,13 @@
 						<template #icon>
 							<NcIconSvgWrapper :path="mdiAccount" />
 						</template>
-						{{ t('keepassweb', 'Copy username') }}
+						{{ t('nextkeeweb', 'Copy username') }}
 					</NcActionButton>
 					<NcActionButton closeAfterClick @click="copy(row.id, 'Password')">
 						<template #icon>
 							<NcIconSvgWrapper :path="mdiKey" />
 						</template>
-						{{ t('keepassweb', 'Copy password') }}
+						{{ t('nextkeeweb', 'Copy password') }}
 					</NcActionButton>
 					<NcActionLink
 						v-if="row.href"
@@ -73,14 +73,14 @@
 						<template #icon>
 							<NcIconSvgWrapper :path="mdiOpenInNew" />
 						</template>
-						{{ t('keepassweb', 'Open URL') }}
+						{{ t('nextkeeweb', 'Open URL') }}
 					</NcActionLink>
 				</template>
 			</NcListItem>
 		</ul>
 		<NcEmptyContent
 			v-else
-			:name="database.query ? t('keepassweb', 'No matching entries') : t('keepassweb', 'No entries in this group')">
+			:name="database.query ? t('nextkeeweb', 'No matching entries') : t('nextkeeweb', 'No entries in this group')">
 			<template #icon>
 				<NcIconSvgWrapper :path="database.query ? mdiMagnify : mdiKeyOutline" />
 			</template>
@@ -90,7 +90,7 @@
 			class="entry-list__more"
 			wide
 			@click="limit = Infinity">
-			{{ t('keepassweb', 'Show all {count} entries', { count: rows.length }) }}
+			{{ t('nextkeeweb', 'Show all {count} entries', { count: rows.length }) }}
 		</NcButton>
 	</div>
 </template>
@@ -156,7 +156,7 @@ const rows = computed(() => {
 	return entries.value
 		.map((entry) => ({
 			id: entry.uuid.id,
-			title: getField(entry, StandardField.Title) || t('keepassweb', '(no title)'),
+			title: getField(entry, StandardField.Title) || t('nextkeeweb', '(no title)'),
 			username: resolvedField(db, entry, StandardField.UserName),
 			href: openableUrl(resolvedField(db, entry, StandardField.URL)),
 			expired: isExpired(entry),
@@ -177,7 +177,7 @@ const visibleRows = computed(() => rows.value.slice(0, limit.value))
 
 const heading = computed(() => {
 	if (props.database.query.trim()) {
-		return n('keepassweb', '{count} result', '{count} results', rows.value.length, { count: rows.value.length })
+		return n('nextkeeweb', '{count} result', '{count} results', rows.value.length, { count: rows.value.length })
 	}
 	return group.value?.name ?? ''
 })
@@ -189,7 +189,7 @@ async function copy(id: string, field: string): Promise<void> {
 		return
 	}
 	await copySecret(resolvedField(db, entry, field), settingsStore.settings.clipboardClearSeconds)
-	showSuccess(field === StandardField.Password ? t('keepassweb', 'Password copied') : t('keepassweb', 'Username copied'))
+	showSuccess(field === StandardField.Password ? t('nextkeeweb', 'Password copied') : t('nextkeeweb', 'Username copied'))
 }
 </script>
 

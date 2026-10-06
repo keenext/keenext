@@ -10,7 +10,7 @@ test('creates a database from the Files "New" menu that KeePassXC can open', asy
 	await page.goto(`/apps/files/files?dir=/${DIR}`)
 	await page.getByRole('button', { name: 'New', exact: true }).click()
 	await page.getByRole('menuitem', { name: 'New KeePass database' }).click()
-	await page.waitForURL(/\/apps\/keepassweb\//)
+	await page.waitForURL(/\/apps\/nextkeeweb\//)
 
 	const dialog = page.getByRole('dialog')
 	await dialog.getByLabel('File name').fill(name)
@@ -35,7 +35,7 @@ test('remembers the key file of a recently opened database', async ({ page }) =>
 	seedDatabase('keepassxc-keyfile.keyx', 'keepassxc-keyfile.keyx')
 	await page.goto(`/apps/files/files?dir=/${DIR}`)
 	await page.locator(`[data-cy-files-list-row-name="${name}"] [data-cy-files-list-row-name-link]`).click()
-	await page.waitForURL(/\/apps\/keepassweb\//)
+	await page.waitForURL(/\/apps\/nextkeeweb\//)
 
 	await page.getByRole('button', { name: 'Key file from Nextcloud' }).click()
 	const picker = page.getByRole('dialog', { name: 'Choose key file' })
@@ -45,7 +45,7 @@ test('remembers the key file of a recently opened database', async ({ page }) =>
 	await expect(page.getByText('Keyfile entry')).toBeVisible({ timeout: 20_000 })
 
 	// Reload without the database open, then reopen it from the recent list.
-	await page.goto('/apps/keepassweb/')
+	await page.goto('/apps/nextkeeweb/')
 	const recent = page.locator('.start__recent').getByRole('link', { name: new RegExp(name) })
 	await expect(recent).toBeVisible()
 	await expect(page.locator('.start__recent')).toContainText('key file: keepassxc-keyfile.keyx')

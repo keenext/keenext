@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace OCA\KeePassWeb\Listener;
+namespace OCA\NextKeeWeb\Listener;
 
 use OCA\Files\Event\LoadAdditionalScriptsEvent;
-use OCA\KeePassWeb\AppInfo\Application;
+use OCA\NextKeeWeb\AppInfo\Application;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\Util;
 
 /**
- * Adds the "open with KeePass Web" default action for .kdbx files and the
+ * Adds the "Open in NextKeeWeb" default action for .kdbx files and the
  * "New KeePass database" entry to the Files app. Init scripts run before the
  * Files app reads its action registry.
  *

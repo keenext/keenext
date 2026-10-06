@@ -1,49 +1,49 @@
 <template>
 	<NcAppSettingsDialog
 		:open="open"
-		:name="t('keepassweb', 'KeePass Web settings')"
+		:name="t('nextkeeweb', 'NextKeeWeb settings')"
 		showNavigation
 		@update:open="(value) => emit('update:open', value)">
-		<NcAppSettingsSection id="security" :name="t('keepassweb', 'Security')">
+		<NcAppSettingsSection id="security" :name="t('nextkeeweb', 'Security')">
 			<NcTextField
 				:modelValue="String(settings.lockAfterMinutes)"
 				type="number"
-				:label="t('keepassweb', 'Lock databases after inactivity (minutes, 0 = never)')"
+				:label="t('nextkeeweb', 'Lock databases after inactivity (minutes, 0 = never)')"
 				@update:modelValue="(value) => updateLater({ lockAfterMinutes: toInt(value) })" />
 			<NcCheckboxRadioSwitch :modelValue="settings.lockOnHide" @update:modelValue="(value: boolean) => update({ lockOnHide: value })">
-				{{ t('keepassweb', 'Lock databases when the tab is hidden') }}
+				{{ t('nextkeeweb', 'Lock databases when the tab is hidden') }}
 			</NcCheckboxRadioSwitch>
 			<NcTextField
 				:modelValue="String(settings.clipboardClearSeconds)"
 				type="number"
-				:label="t('keepassweb', 'Clear clipboard after (seconds, 0 = never)')"
+				:label="t('nextkeeweb', 'Clear clipboard after (seconds, 0 = never)')"
 				@update:modelValue="(value) => updateLater({ clipboardClearSeconds: toInt(value) })" />
 			<NcCheckboxRadioSwitch :modelValue="settings.rememberKeyFile" @update:modelValue="(value: boolean) => update({ rememberKeyFile: value })">
-				{{ t('keepassweb', 'Remember which key file belongs to a database') }}
+				{{ t('nextkeeweb', 'Remember which key file belongs to a database') }}
 			</NcCheckboxRadioSwitch>
 		</NcAppSettingsSection>
 
-		<NcAppSettingsSection id="saving" :name="t('keepassweb', 'Saving')">
+		<NcAppSettingsSection id="saving" :name="t('nextkeeweb', 'Saving')">
 			<NcCheckboxRadioSwitch :modelValue="settings.autosave" @update:modelValue="(value: boolean) => update({ autosave: value })">
-				{{ t('keepassweb', 'Save automatically after every change') }}
+				{{ t('nextkeeweb', 'Save automatically after every change') }}
 			</NcCheckboxRadioSwitch>
 			<NcTextField
 				:modelValue="String(settings.syncIntervalSeconds)"
 				type="number"
-				:label="t('keepassweb', 'Check for changes made elsewhere every (seconds, 0 = never)')"
+				:label="t('nextkeeweb', 'Check for changes made elsewhere every (seconds, 0 = never)')"
 				@update:modelValue="(value) => updateLater({ syncIntervalSeconds: toInt(value) })" />
 		</NcAppSettingsSection>
 
-		<NcAppSettingsSection id="shortcuts" :name="t('keepassweb', 'Keyboard shortcuts')">
+		<NcAppSettingsSection id="shortcuts" :name="t('nextkeeweb', 'Keyboard shortcuts')">
 			<dl class="shortcuts">
 				<dt><kbd>Ctrl</kbd> + <kbd>S</kbd></dt>
-				<dd>{{ t('keepassweb', 'Save database') }}</dd>
+				<dd>{{ t('nextkeeweb', 'Save database') }}</dd>
 				<dt><kbd>Ctrl</kbd> + <kbd>L</kbd></dt>
-				<dd>{{ t('keepassweb', 'Lock all databases') }}</dd>
+				<dd>{{ t('nextkeeweb', 'Lock all databases') }}</dd>
 				<dt><kbd>Ctrl</kbd> + <kbd>N</kbd></dt>
-				<dd>{{ t('keepassweb', 'New entry') }}</dd>
+				<dd>{{ t('nextkeeweb', 'New entry') }}</dd>
 				<dt><kbd>Ctrl</kbd> + <kbd>F</kbd></dt>
-				<dd>{{ t('keepassweb', 'Search') }}</dd>
+				<dd>{{ t('nextkeeweb', 'Search') }}</dd>
 			</dl>
 		</NcAppSettingsSection>
 	</NcAppSettingsDialog>
@@ -81,7 +81,7 @@ async function update(changes: Partial<Settings>): Promise<void> {
 	try {
 		await settingsStore.update(changes)
 	} catch {
-		showError(t('keepassweb', 'Could not save the settings'))
+		showError(t('nextkeeweb', 'Could not save the settings'))
 	}
 }
 

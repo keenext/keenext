@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace OCA\KeePassWeb\AppInfo;
+namespace OCA\NextKeeWeb\AppInfo;
 
 use OCA\Files\Event\LoadAdditionalScriptsEvent;
-use OCA\KeePassWeb\Listener\LoadFilesIntegration;
+use OCA\NextKeeWeb\Listener\LoadFilesIntegration;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 final class Application extends App implements IBootstrap {
-	public const APP_ID = 'keepassweb';
+	public const APP_ID = 'nextkeeweb';
 
 	public function __construct() {
 		parent::__construct(self::APP_ID);

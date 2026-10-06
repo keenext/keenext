@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\KeePassWeb\Service;
+namespace OCA\NextKeeWeb\Service;
 
 use OCP\Files\File;
 use OCP\Files\IRootFolder;

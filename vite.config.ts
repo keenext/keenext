@@ -7,7 +7,7 @@ export default createAppConfig({
 	main: 'src/main.ts',
 	init: 'src/init.ts',
 }, {
-	appName: 'keepassweb',
+	appName: 'nextkeeweb',
 	// kdbxweb only touches node `crypto` / `@xmldom/xmldom` when WebCrypto or
 	// DOMParser are missing, which never happens in the browser.
 	nodePolyfills: false,

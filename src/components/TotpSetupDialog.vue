@@ -1,30 +1,30 @@
 <template>
 	<NcDialog
-		:name="t('keepassweb', 'Set up TOTP')"
+		:name="t('nextkeeweb', 'Set up TOTP')"
 		:buttons="buttons"
 		@update:open="(open) => open || emit('close')">
 		<div class="totp-setup">
 			<NcTextField
 				v-model="secretOrUri"
-				:label="t('keepassweb', 'Secret key or otpauth:// link')"
+				:label="t('nextkeeweb', 'Secret key or otpauth:// link')"
 				:error="secretOrUri !== '' && !config"
-				:helperText="secretOrUri !== '' && !config ? t('keepassweb', 'Not a valid base32 secret or otpauth link') : ''" />
+				:helperText="secretOrUri !== '' && !config ? t('nextkeeweb', 'Not a valid base32 secret or otpauth link') : ''" />
 			<template v-if="!isUri">
 				<NcCheckboxRadioSwitch v-model="steam">
-					{{ t('keepassweb', 'Steam Guard codes') }}
+					{{ t('nextkeeweb', 'Steam Guard codes') }}
 				</NcCheckboxRadioSwitch>
 				<div class="totp-setup__row">
-					<NcTextField v-model="period" :label="t('keepassweb', 'Period (seconds)')" type="number" />
+					<NcTextField v-model="period" :label="t('nextkeeweb', 'Period (seconds)')" type="number" />
 					<NcTextField
 						v-if="!steam"
 						v-model="digits"
-						:label="t('keepassweb', 'Digits')"
+						:label="t('nextkeeweb', 'Digits')"
 						type="number" />
 					<NcSelect
 						v-if="!steam"
 						v-model="algorithm"
 						:options="['SHA-1', 'SHA-256', 'SHA-512']"
-						:inputLabel="t('keepassweb', 'Algorithm')"
+						:inputLabel="t('nextkeeweb', 'Algorithm')"
 						:clearable="false" />
 				</div>
 			</template>
@@ -92,10 +92,10 @@ const config = computed<TotpConfig | undefined>(() => {
 })
 
 const buttons = computed(() => [
-	...(props.current ? [{ label: t('keepassweb', 'Remove TOTP'), variant: 'error' as const, callback: () => emit('apply', '') }] : []),
-	{ label: t('keepassweb', 'Cancel'), callback: () => emit('close') },
+	...(props.current ? [{ label: t('nextkeeweb', 'Remove TOTP'), variant: 'error' as const, callback: () => emit('apply', '') }] : []),
+	{ label: t('nextkeeweb', 'Cancel'), callback: () => emit('close') },
 	{
-		label: t('keepassweb', 'Save'),
+		label: t('nextkeeweb', 'Save'),
 		variant: 'primary' as const,
 		disabled: !config.value,
 		callback: () => {

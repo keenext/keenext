@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\KeePassWeb\Service;
+namespace OCA\NextKeeWeb\Service;
 
-use OCA\KeePassWeb\AppInfo\Application;
+use OCA\NextKeeWeb\AppInfo\Application;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Config\IUserConfig;
 use OCP\Files\NotFoundException;

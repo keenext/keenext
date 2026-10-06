@@ -1,5 +1,5 @@
 <template>
-	<NcContent appName="keepassweb">
+	<NcContent appName="nextkeeweb">
 		<AppNavigation
 			@openDatabase="openFromPicker"
 			@newDatabase="newDatabaseDirectory = '/'"
@@ -26,7 +26,7 @@
 			<UnlockView :key="vault.active.id" :database="vault.active" />
 		</NcAppContent>
 
-		<NcAppContent v-else :pageHeading="t('keepassweb', 'KeePass')">
+		<NcAppContent v-else :pageHeading="t('nextkeeweb', 'NextKeeWeb')">
 			<StartView @openDatabase="openFromPicker" @newDatabase="newDatabaseDirectory = '/'" />
 		</NcAppContent>
 
@@ -72,7 +72,7 @@ async function open(fileId: number): Promise<void> {
 	try {
 		await vault.openFile(fileId)
 	} catch (error) {
-		showError(t('keepassweb', 'Could not open the database: {error}', { error: vault.describeError(error) }))
+		showError(t('nextkeeweb', 'Could not open the database: {error}', { error: vault.describeError(error) }))
 	}
 }
 

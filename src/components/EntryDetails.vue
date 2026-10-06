@@ -16,7 +16,7 @@
 					:customIcon="entry.customIcon?.id ?? null"
 					:size="40" />
 				<div class="entry-details__heading">
-					<h2>{{ details.title || t('keepassweb', '(no title)') }}</h2>
+					<h2>{{ details.title || t('nextkeeweb', '(no title)') }}</h2>
 					<p class="entry-details__path">
 						{{ details.path }}
 					</p>
@@ -25,47 +25,47 @@
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiPencil" />
 					</template>
-					{{ t('keepassweb', 'Edit') }}
+					{{ t('nextkeeweb', 'Edit') }}
 				</NcButton>
-				<NcActions v-if="database.writable" :aria-label="t('keepassweb', 'More actions')">
+				<NcActions v-if="database.writable" :aria-label="t('nextkeeweb', 'More actions')">
 					<NcActionButton closeAfterClick @click="clone">
 						<template #icon>
 							<NcIconSvgWrapper :path="mdiContentDuplicate" />
 						</template>
-						{{ t('keepassweb', 'Clone entry') }}
+						{{ t('nextkeeweb', 'Clone entry') }}
 					</NcActionButton>
 					<NcActionButton closeAfterClick @click="moving = true">
 						<template #icon>
 							<NcIconSvgWrapper :path="mdiFolderMove" />
 						</template>
-						{{ t('keepassweb', 'Move to group') }}
+						{{ t('nextkeeweb', 'Move to group') }}
 					</NcActionButton>
 					<NcActionButton closeAfterClick @click="remove">
 						<template #icon>
 							<NcIconSvgWrapper :path="mdiDelete" />
 						</template>
-						{{ details.inRecycleBin ? t('keepassweb', 'Delete permanently') : t('keepassweb', 'Delete') }}
+						{{ details.inRecycleBin ? t('nextkeeweb', 'Delete permanently') : t('nextkeeweb', 'Delete') }}
 					</NcActionButton>
 				</NcActions>
 			</header>
 
 			<NcNoteCard v-if="details.expired" type="warning">
-				{{ t('keepassweb', 'This entry expired on {date}', { date: formatDate(details.expires) }) }}
+				{{ t('nextkeeweb', 'This entry expired on {date}', { date: formatDate(details.expires) }) }}
 			</NcNoteCard>
 
 			<dl class="entry-details__fields">
-				<FieldRow :label="t('keepassweb', 'Username')" :value="details.username" @copy="copy(details.username, t('keepassweb', 'Username copied'))" />
+				<FieldRow :label="t('nextkeeweb', 'Username')" :value="details.username" @copy="copy(details.username, t('nextkeeweb', 'Username copied'))" />
 				<FieldRow
-					:label="t('keepassweb', 'Password')"
+					:label="t('nextkeeweb', 'Password')"
 					:value="details.password"
 					secret
-					@copy="copy(details.password, t('keepassweb', 'Password copied'))" />
+					@copy="copy(details.password, t('nextkeeweb', 'Password copied'))" />
 				<FieldRow
-					:label="t('keepassweb', 'URL')"
+					:label="t('nextkeeweb', 'URL')"
 					:value="details.url"
 					link
-					@copy="copy(details.url, t('keepassweb', 'URL copied'))" />
-				<TotpField v-if="details.totp" :config="details.totp" @copy="(code) => copy(code, t('keepassweb', 'TOTP copied'))" />
+					@copy="copy(details.url, t('nextkeeweb', 'URL copied'))" />
+				<TotpField v-if="details.totp" :config="details.totp" @copy="(code) => copy(code, t('nextkeeweb', 'TOTP copied'))" />
 				<FieldRow
 					v-for="field in details.customFields"
 					:key="field.key"
@@ -73,12 +73,12 @@
 					:value="field.value"
 					:secret="field.protected"
 					:multiline="field.value.includes('\n')"
-					@copy="copy(field.value, t('keepassweb', '{field} copied', { field: field.key }))" />
+					@copy="copy(field.value, t('nextkeeweb', '{field} copied', { field: field.key }))" />
 				<FieldRow
 					v-if="details.expires"
-					:label="t('keepassweb', 'Expires')"
+					:label="t('nextkeeweb', 'Expires')"
 					:value="formatDate(details.expires)"
-					@copy="copy(formatDate(details.expires), t('keepassweb', 'Copied'))" />
+					@copy="copy(formatDate(details.expires), t('nextkeeweb', 'Copied'))" />
 			</dl>
 
 			<div v-if="details.tags.length > 0" class="entry-details__tags">
@@ -90,20 +90,20 @@
 			</div>
 
 			<section v-if="details.notes" class="entry-details__section">
-				<h3>{{ t('keepassweb', 'Notes') }}</h3>
+				<h3>{{ t('nextkeeweb', 'Notes') }}</h3>
 				<p class="entry-details__notes">
 					{{ details.notes }}
 				</p>
 			</section>
 
 			<section v-if="details.attachments.length > 0" class="entry-details__section">
-				<h3>{{ t('keepassweb', 'Attachments') }}</h3>
+				<h3>{{ t('nextkeeweb', 'Attachments') }}</h3>
 				<ul>
 					<li v-for="attachment in details.attachments" :key="attachment.name" class="entry-details__attachment">
 						<NcIconSvgWrapper :path="mdiPaperclip" :size="20" />
 						<span>{{ attachment.name }}</span>
 						<span class="entry-details__muted">{{ formatSize(attachment.size) }}</span>
-						<NcButton variant="tertiary" :aria-label="t('keepassweb', 'Download {name}', { name: attachment.name })" @click="download(attachment.name)">
+						<NcButton variant="tertiary" :aria-label="t('nextkeeweb', 'Download {name}', { name: attachment.name })" @click="download(attachment.name)">
 							<template #icon>
 								<NcIconSvgWrapper :path="mdiDownload" />
 							</template>
@@ -118,7 +118,7 @@
 						<template #icon>
 							<NcIconSvgWrapper :path="mdiHistory" />
 						</template>
-						{{ t('keepassweb', 'History ({count})', { count: details.history.length }) }}
+						{{ t('nextkeeweb', 'History ({count})', { count: details.history.length }) }}
 					</NcButton>
 				</h3>
 				<ul v-if="showHistory">
@@ -127,18 +127,18 @@
 							{{ formatDate(state.modified) }}
 						</NcButton>
 						<span class="entry-details__muted">{{ state.summary }}</span>
-						<NcActions v-if="database.writable" :aria-label="t('keepassweb', 'History actions')">
+						<NcActions v-if="database.writable" :aria-label="t('nextkeeweb', 'History actions')">
 							<NcActionButton closeAfterClick @click="restore(state.index)">
 								<template #icon>
 									<NcIconSvgWrapper :path="mdiRestore" />
 								</template>
-								{{ t('keepassweb', 'Restore this version') }}
+								{{ t('nextkeeweb', 'Restore this version') }}
 							</NcActionButton>
 							<NcActionButton closeAfterClick @click="removeHistoryState(state.index)">
 								<template #icon>
 									<NcIconSvgWrapper :path="mdiDelete" />
 								</template>
-								{{ t('keepassweb', 'Delete this version') }}
+								{{ t('nextkeeweb', 'Delete this version') }}
 							</NcActionButton>
 						</NcActions>
 					</li>
@@ -146,11 +146,11 @@
 			</section>
 
 			<p class="entry-details__muted entry-details__times">
-				{{ t('keepassweb', 'Created {created}, modified {modified}', { created: formatDate(details.created), modified: formatDate(details.modified) }) }}
+				{{ t('nextkeeweb', 'Created {created}, modified {modified}', { created: formatDate(details.created), modified: formatDate(details.modified) }) }}
 			</p>
 		</template>
 
-		<NcEmptyContent v-else :name="t('keepassweb', 'Entry not found')" />
+		<NcEmptyContent v-else :name="t('nextkeeweb', 'Entry not found')" />
 
 		<HistoryVersionDialog
 			v-if="historyIndex !== null && entry"
@@ -306,7 +306,7 @@ function clone(): void {
 			return undefined
 		}
 		const draft = draftFromEntry(source)
-		draft.title = t('keepassweb', '{title} - Clone', { title: draft.title })
+		draft.title = t('nextkeeweb', '{title} - Clone', { title: draft.title })
 		return createEntry(db, source.parentGroup ?? db.getDefaultGroup(), draft)
 	})
 	if (created) {
@@ -331,10 +331,10 @@ async function remove(): Promise<void> {
 	const id = entry.value!.uuid.id
 	if (details.value.inRecycleBin || !view.value!.db.meta.recycleBinEnabled) {
 		const confirmed = await showConfirmation({
-			name: t('keepassweb', 'Delete permanently'),
-			text: t('keepassweb', 'Permanently delete "{title}"? This cannot be undone.', { title: details.value.title }),
-			labelConfirm: t('keepassweb', 'Delete permanently'),
-			labelReject: t('keepassweb', 'Cancel'),
+			name: t('nextkeeweb', 'Delete permanently'),
+			text: t('nextkeeweb', 'Permanently delete "{title}"? This cannot be undone.', { title: details.value.title }),
+			labelConfirm: t('nextkeeweb', 'Delete permanently'),
+			labelReject: t('nextkeeweb', 'Cancel'),
 			severity: 'warning',
 		})
 		if (!confirmed) {

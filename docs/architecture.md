@@ -15,7 +15,7 @@ Dependencies point downwards only: components → stores → services → core. 
 
 ## Opening and saving
 
-A database is addressed by its Nextcloud **file id**, not by path. `NextcloudFileStorage` (services/webdav.ts) resolves the current path through `GET /ocs/v2.php/apps/keepassweb/api/v1/files/{id}` before every read, so renaming or moving an open database does not break saving.
+A database is addressed by its Nextcloud **file id**, not by path. `NextcloudFileStorage` (services/webdav.ts) resolves the current path through `GET /ocs/v2.php/apps/nextkeeweb/api/v1/files/{id}` before every read, so renaming or moving an open database does not break saving.
 
 `DatabaseSession` (core/session.ts) owns the open `Kdbx` and its storage and is the only place that writes:
 
@@ -52,7 +52,7 @@ A database may come from someone else (shared folder). Entry URLs become links o
 - `ApiController` (OCS): `files/{id}` (path, etag, writable), `recent` (list/touch/remove/clear), `settings`.
 - `RecentFilesService` stores file ids (and optionally the key file's id, never its content) in the user config and resolves them on read; entries for files that are gone are dropped.
 - `SettingsService::SCHEMA` is the single definition of user settings; values are validated and clamped there. `src/services/api.ts` mirrors the defaults for the client.
-- `LoadFilesIntegration` adds `js/keepassweb-init.mjs` to the Files app.
+- `LoadFilesIntegration` adds `js/nextkeeweb-init.mjs` to the Files app.
 
 ## Tests
 

@@ -1,11 +1,11 @@
 <template>
-	<FieldRow :label="t('keepassweb', 'TOTP')" :value="code" @copy="emit('copy', code)">
+	<FieldRow :label="t('nextkeeweb', 'TOTP')" :value="code" @copy="emit('copy', code)">
 		<span class="totp">
 			<span class="totp__code">{{ formatted }}</span>
 			<NcProgressBar
 				class="totp__progress"
 				:value="progress"
-				:aria-label="t('keepassweb', '{seconds} seconds remaining', { seconds: remaining })" />
+				:aria-label="t('nextkeeweb', '{seconds} seconds remaining', { seconds: remaining })" />
 			<span class="totp__remaining">{{ remaining }}s</span>
 		</span>
 	</FieldRow>
