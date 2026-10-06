@@ -1,4 +1,4 @@
-/node_modules/
+node_modules/
 /js/
 /css/
 /vendor/
@@ -12,3 +12,4 @@
 .DS_Store
 /assets/
 /build/
+/packages/kdbxweb/dist/

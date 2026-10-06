@@ -23,8 +23,8 @@
 			</p>
 			<NcSelect
 				v-model="form.cipher"
-				:options="['aes', 'chacha20']"
-				:getOptionLabel="(option: string) => option === 'aes' ? 'AES-256' : 'ChaCha20'"
+				:options="['aes', 'chacha20', 'twofish']"
+				:getOptionLabel="(option: string) => ({ aes: 'AES-256', chacha20: 'ChaCha20', twofish: 'Twofish' } as Record<string, string>)[option]"
 				:inputLabel="t('nextkeeweb', 'Encryption algorithm')"
 				:clearable="false" />
 			<template v-if="form.kdf.type === 'aes'">

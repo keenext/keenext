@@ -7,11 +7,13 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			'@': fileURLToPath(new URL('./src', import.meta.url)),
+			kdbxweb: fileURLToPath(new URL('./packages/kdbxweb/lib/index.ts', import.meta.url)),
 		},
 	},
 	test: {
 		environment: 'node',
 		include: ['tests/**/*.spec.ts'],
+		setupFiles: ['tests/setup.ts'],
 		// Playwright tests, run with npm run test:e2e.
 		exclude: ['tests/e2e/**'],
 		testTimeout: 30_000,

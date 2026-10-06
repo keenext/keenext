@@ -135,6 +135,19 @@ export function createDatabase(name: string, credentials: KdbxCredentials, kdf: 
 	return db
 }
 
+export type Cipher = 'aes' | 'chacha20' | 'twofish'
+
+const cipherIds: Record<Cipher, string> = {
+	aes: Consts.CipherId.Aes,
+	chacha20: Consts.CipherId.ChaCha20,
+	twofish: Consts.CipherId.Twofish,
+}
+
+function cipherOf(db: Kdbx): Cipher {
+	const id = db.header.dataCipherUuid?.id
+	return (Object.keys(cipherIds) as Cipher[]).find((cipher) => cipherIds[cipher] === id) ?? 'aes'
+}
+
 export interface DatabaseSettings {
 	name: string
 	description: string
@@ -144,7 +157,7 @@ export interface DatabaseSettings {
 	historyMaxItems: number
 	/** bytes, -1 = unlimited */
 	historyMaxSize: number
-	cipher: 'aes' | 'chacha20'
+	cipher: Cipher
 	kdf: KdfSettings | { type: 'aes', rounds: number }
 	version: string
 }
@@ -157,7 +170,7 @@ export function getDatabaseSettings(db: Kdbx): DatabaseSettings {
 		recycleBinEnabled: db.meta.recycleBinEnabled ?? true,
 		historyMaxItems: db.meta.historyMaxItems ?? 10,
 		historyMaxSize: db.meta.historyMaxSize ?? 6 * 1024 * 1024,
-		cipher: db.header.dataCipherUuid?.id === Consts.CipherId.ChaCha20 ? 'chacha20' : 'aes',
+		cipher: cipherOf(db),
 		kdf: getKdf(db),
 		version: `${db.versionMajor}.${db.versionMinor}`,
 	}
@@ -189,7 +202,7 @@ export function applyDatabaseSettings(db: Kdbx, settings: DatabaseSettings): voi
 		db.meta.historyMaxSize = settings.historyMaxSize
 	}
 	if (settings.cipher !== current.cipher) {
-		db.header.dataCipherUuid = new KdbxUuid(settings.cipher === 'chacha20' ? Consts.CipherId.ChaCha20 : Consts.CipherId.Aes)
+		db.header.dataCipherUuid = new KdbxUuid(cipherIds[settings.cipher])
 	}
 	if (JSON.stringify(settings.kdf) !== JSON.stringify(current.kdf) && settings.kdf.type !== 'aes') {
 		if (db.versionMajor < 4) {

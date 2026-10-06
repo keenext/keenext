@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest'
 import { entryByTitle } from '../helpers/databases.ts'
 import { exportXml, fixture, fixturesDir, hasKeepassxc, keepassxc, writeTemp } from '../helpers/keepassxc.ts'
 import { installArgon2 } from '@/core/crypto'
-import { createCredentials, openDatabase, saveDatabase } from '@/core/database'
+import { applyDatabaseSettings, createCredentials, getDatabaseSettings, openDatabase, saveDatabase } from '@/core/database'
 import { applyDraft, attachFile, createEntry, deleteEntry, draftFromEntry, emptyDraft } from '@/core/entries'
 import { createGroup } from '@/core/groups'
 
@@ -14,6 +14,8 @@ const cases = [
 	{ file: 'keepassxc-password-keyfile.kdbx', version: '3.1', auth: { password, keyFile: keyFilePath }, input: { password, keyFile: fixture('keepassxc-keyfile.keyx') } },
 	{ file: 'keepassxc-keyfile-only.kdbx', version: '3.1', auth: { keyFile: keyFilePath }, input: { keyFile: fixture('keepassxc-keyfile.keyx') } },
 	{ file: 'keepassxc-argon2id-chacha20.kdbx', version: '4.1', auth: { password }, input: { password } },
+	{ file: 'keepassxc-argon2id-twofish.kdbx', version: '4.1', auth: { password }, input: { password } },
+	{ file: 'keepassxc-aeskdf-twofish.kdbx', version: '4.1', auth: { password }, input: { password } },
 ]
 
 beforeAll(() => installArgon2())
@@ -61,5 +63,17 @@ describe.runIf(hasKeepassxc)('edits made here, read by KeePassXC', () => {
 		const xml = exportXml(path, auth)
 		const githubXml = xml.slice(xml.indexOf('<Value>GitHub</Value>'))
 		expect(githubXml.slice(0, githubXml.indexOf('</History>'))).toContain('gh-secret-2')
+	})
+})
+
+describe.runIf(hasKeepassxc)('cipher changes made here, read by KeePassXC', () => {
+	it.each(['twofish', 'chacha20', 'aes'] as const)('re-encrypts with %s', async (cipher) => {
+		const db = await openDatabase(fixture('keepassxc-password.kdbx'), createCredentials({ password }))
+		applyDatabaseSettings(db, { ...getDatabaseSettings(db), cipher })
+		const path = writeTemp(`${cipher}.kdbx`, await saveDatabase(db))
+
+		const expected = { twofish: 'Twofish', chacha20: 'ChaCha20', aes: 'AES' }[cipher]
+		expect(keepassxc('db-info', path, { password })).toContain(expected)
+		expect(keepassxc('show', path, { password }, ['-s', '-a', 'Password', '/Internet/GitHub'])).toBe('gh-secret-2\n')
 	})
 })

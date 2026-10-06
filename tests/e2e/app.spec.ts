@@ -33,3 +33,12 @@ test('rejects a wrong password', async ({ page }) => {
 	await unlock(page, 'wrong')
 	await expect(page.getByText('Wrong password or key file')).toBeVisible()
 })
+
+test('opens a Twofish database written by KeePassXC', async ({ page }) => {
+	const name = seedDatabase('keepassxc-argon2id-twofish.kdbx', `e2e-twofish-${Date.now()}.kdbx`)
+	await openInFiles(page, name)
+	await unlock(page)
+	await page.getByRole('link', { name: 'Internet' }).click()
+	await page.getByText('GitHub', { exact: true }).click()
+	await expect(page.locator('.entry-details').getByText('jan@example.org')).toBeVisible()
+})
