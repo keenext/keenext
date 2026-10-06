@@ -1,0 +1,6 @@
+# Databases, key files and test resources are compared byte for byte.
+*.kdbx binary
+*.key -text
+*.keyx -text
+packages/kdbxweb/resources/** -text
+tests/fixtures/** -text
