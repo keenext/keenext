@@ -8,20 +8,48 @@
 				:aria-label="t('nextkeeweb', '{seconds} seconds remaining', { seconds: remaining })" />
 			<span class="totp__remaining">{{ remaining }}s</span>
 		</span>
+		<template v-if="uri" #actions>
+			<NcButton
+				variant="tertiary"
+				:aria-label="t('nextkeeweb', 'Show QR code')"
+				:title="t('nextkeeweb', 'Show QR code')"
+				@click="qrOpen = true">
+				<template #icon>
+					<NcIconSvgWrapper :path="mdiQrcode" />
+				</template>
+			</NcButton>
+		</template>
 	</FieldRow>
+	<NcDialog
+		v-if="qrOpen && uri"
+		:name="t('nextkeeweb', 'TOTP as QR code')"
+		:buttons="[{ label: t('nextkeeweb', 'Close'), callback: () => { qrOpen = false } }]"
+		@update:open="(open) => qrOpen = open">
+		<div class="totp__qr">
+			<QrCode :value="uri" :label="t('nextkeeweb', 'QR code for the authenticator app')" />
+			<p>{{ t('nextkeeweb', 'Scan with an authenticator app to add this account. Anyone who sees this code can generate your one-time codes.') }}</p>
+		</div>
+	</NcDialog>
 </template>
 
 <script setup lang="ts">
 import type { TotpConfig } from '@/core/totp'
 
+import { mdiQrcode } from '@mdi/js'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcDialog from '@nextcloud/vue/components/NcDialog'
+import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcProgressBar from '@nextcloud/vue/components/NcProgressBar'
 import FieldRow from './FieldRow.vue'
+import QrCode from './QrCode.vue'
 import { totpCode, totpRemaining } from '@/core/totp'
 import { t } from '@/l10n'
 
 const props = defineProps<{
 	config: TotpConfig
+	/** otpauth URI offered as QR code; none in previews like the setup dialog. */
+	uri?: string
 }>()
 
 const emit = defineEmits<{
@@ -29,6 +57,7 @@ const emit = defineEmits<{
 }>()
 
 const code = ref('')
+const qrOpen = ref(false)
 const remaining = ref(props.config.period)
 let currentStep = -1
 
@@ -72,6 +101,14 @@ const formatted = computed(() => props.config.encoder === 'steam' || code.value.
 .totp__progress {
 	width: 80px;
 	flex-shrink: 0;
+}
+
+.totp__qr {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 12px;
+	text-align: center;
 }
 
 .totp__remaining {

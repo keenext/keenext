@@ -3,7 +3,7 @@ import type { CustomField, EntryDraft } from './entries.ts'
 
 import { Kdbx as KdbxClass, KdbxCredentials, ProtectedValue } from 'kdbxweb'
 import { createEntry, emptyDraft, getField, isInRecycleBin, recycleBin, StandardField } from './entries.ts'
-import { base32Decode, base32Encode, buildOtpUri, OTP_FIELD, readTotp } from './totp.ts'
+import { base32Decode, buildOtpUri, entryOtpUri, OTP_FIELD } from './totp.ts'
 
 export interface ImportResult {
 	/** Group the import was placed in; for a merge, the database root. */
@@ -74,27 +74,6 @@ function groupPath(group: KdbxGroup | undefined): string {
 	return names.join('/')
 }
 
-/** otpauth URI the way KeePassXC writes it into exports: label "title:username", issuer = title. */
-function exportedTotp(entry: KdbxEntry): string {
-	const config = readTotp(entry)
-	if (!config) {
-		return ''
-	}
-	const title = getField(entry, StandardField.Title)
-	const username = getField(entry, StandardField.UserName)
-	const params = new URLSearchParams({ secret: base32Encode(config.secret), period: String(config.period) })
-	if (config.encoder === 'steam') {
-		params.set('encoder', 'steam')
-	} else {
-		params.set('digits', String(config.digits))
-	}
-	if (config.algorithm !== 'SHA-1') {
-		params.set('algorithm', config.algorithm.replace('-', ''))
-	}
-	params.set('issuer', title)
-	return `otpauth://totp/${encodeURIComponent(title)}:${encodeURIComponent(username)}?${params.toString().replace(/\+/g, '%20')}`
-}
-
 const CSV_HEADER = ['Group', 'Title', 'Username', 'Password', 'URL', 'Notes', 'TOTP', 'Icon', 'Last Modified', 'Created']
 
 /** CSV with KeePassXC's columns. The recycle bin is left out. Contains all passwords in plain text. */
@@ -111,7 +90,7 @@ export function exportCsv(db: Kdbx): string {
 			getField(entry, StandardField.Password),
 			getField(entry, StandardField.URL),
 			getField(entry, StandardField.Notes),
-			exportedTotp(entry),
+			entryOtpUri(entry) ?? '',
 			String(entry.icon ?? 0),
 			isoSeconds(entry.times.lastModTime),
 			isoSeconds(entry.times.creationTime),

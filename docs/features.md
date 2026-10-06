@@ -37,7 +37,7 @@
 | History | ✅ | List, view an old version with changed fields marked, restore, delete. |
 | Standard and custom icons | ◐ | Shown and selectable. Uploading new custom icons and favicon download missing. |
 | Foreground/background colour | ◐ | Kept in the file; not shown or editable. |
-| TOTP | ◐ | KeePassXC `otp`, legacy `TOTP Seed`/`TOTP Settings`, KeePass `TimeOtp-*`; SHA-1/256/512, Steam. Setup dialog. QR code display and scanning missing. |
+| TOTP | ✅ | KeePassXC `otp`, legacy `TOTP Seed`/`TOTP Settings`, KeePass `TimeOtp-*`; SHA-1/256/512, Steam. Setup dialog reads QR codes from images or pasted screenshots; entries show their QR code for authenticator apps. Camera scanning missing. |
 | Placeholders | ◐ | `{REF:…}`, `{S:…}`, `{TITLE}` etc. Date, environment and other placeholders are not resolved. |
 | Clone, move, delete to recycle bin | ✅ | Clone has no "reference username/password" options. |
 | Drag and drop between groups | ✅ | Entries and groups onto groups in the tree. |

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { attempt, fetchFromStorage, keepassxcExport, keepassxcList, login, navigationActions, openInFiles, seedDatabase, unlock } from './helpers.ts'
+import { attempt, fetchFromStorage, keepassxcExport, keepassxcList, keepassxcTotp, login, navigationActions, openInFiles, seedDatabase, unlock } from './helpers.ts'
 
 test.beforeEach(async ({ page }) => {
 	await login(page)
@@ -92,4 +92,33 @@ test('checks passwords against Have I Been Pwned with hash prefixes only', async
 		expect(request.headers.cookie).toBeUndefined()
 		expect(request.headers.requesttoken).toBeUndefined()
 	}
+})
+
+test('shows TOTP as QR code and reads it back from an image', async ({ page }) => {
+	const name = seedDatabase('keepassxc-password.kdbx', `e2e-qr-${Date.now()}.kdbx`)
+	await openInFiles(page, name)
+	await unlock(page)
+	const navigation = page.locator('.app-navigation')
+
+	await navigation.getByRole('link', { name: 'Internet', exact: true }).click()
+	await page.locator('.entry-list').getByText('GitHub', { exact: true }).click()
+	await page.getByRole('button', { name: 'Show QR code' }).click()
+	const qr = await page.getByRole('img', { name: 'QR code for the authenticator app' }).screenshot()
+	await page.getByRole('dialog', { name: 'TOTP as QR code' }).getByRole('button', { name: 'Close' }).last().click()
+
+	await navigation.getByRole('link', { name: 'Banking', exact: true }).click()
+	await page.locator('.entry-list').getByText('Hausbank', { exact: true }).click()
+	await page.getByRole('button', { name: 'Edit', exact: true }).click()
+	await page.getByRole('button', { name: 'Set up TOTP' }).click()
+	const setup = page.getByRole('dialog', { name: 'Set up TOTP' })
+	await setup.locator('input[type="file"]').setInputFiles({ name: 'qr.png', mimeType: 'image/png', buffer: qr })
+	await expect(setup.getByLabel('Secret key or otpauth:// link')).toHaveValue(/^otpauth:\/\/totp\/GitHub:jan%40example\.org\?secret=JBSWY3DPEHPK3PXP/)
+	await setup.getByRole('button', { name: 'Save' }).click()
+	await page.getByRole('button', { name: 'Save', exact: true }).click()
+
+	// Same secret, so KeePassXC computes the same code for both entries.
+	await expect.poll(() => attempt(() => {
+		const file = fetchFromStorage(name)
+		return String(keepassxcTotp(file, '/Banking/Hausbank') === keepassxcTotp(file, '/Internet/GitHub'))
+	}), { timeout: 20_000 }).toBe('true')
 })

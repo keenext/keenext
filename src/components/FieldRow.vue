@@ -15,6 +15,7 @@
 				class="field-row__text">{{ value }}</a>
 			<span v-else class="field-row__text" :class="[{ 'field-row__text--secret': secret && !revealed, 'field-row__text--multiline': multiline }]">{{ displayed }}</span>
 			<span class="field-row__actions">
+				<slot name="actions" />
 				<NcButton
 					v-if="secret && value"
 					variant="tertiary"

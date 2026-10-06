@@ -134,3 +134,7 @@ export function shareReadOnly(name: string, recipient: string, password: string)
 	const base = process.env.NEXTCLOUD_URL ?? 'http://localhost:8091'
 	execFileSync('curl', ['-sf', '-u', `${USER}:${PASSWORD}`, '-H', 'OCS-APIRequest: true', '-X', 'POST', `${base}/ocs/v2.php/apps/files_sharing/api/v1/shares`, '-d', `path=/${DIR}/${name}`, '-d', 'shareType=0', '-d', `shareWith=${recipient}`, '-d', 'permissions=1'])
 }
+
+export function keepassxcTotp(path: string, entry: string): string {
+	return execFileSync('keepassxc-cli', ['show', '-q', '--totp', path, entry], { input: 'test\n', encoding: 'utf8' }).trim()
+}

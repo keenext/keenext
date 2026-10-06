@@ -201,3 +201,27 @@ export function totpRemaining(config: TotpConfig, now = Date.now()): number {
 	const seconds = now / 1000
 	return Math.ceil(config.period - (seconds % config.period))
 }
+
+/**
+ * otpauth URI for an entry as KeePassXC writes it into exports and QR codes:
+ * label "title:username", issuer = title, period and digits always present.
+ */
+export function entryOtpUri(entry: KdbxEntry): string | undefined {
+	const config = readTotp(entry)
+	if (!config) {
+		return undefined
+	}
+	const title = getField(entry, 'Title')
+	const username = getField(entry, 'UserName')
+	const params = new URLSearchParams({ secret: base32Encode(config.secret), period: String(config.period) })
+	if (config.encoder === 'steam') {
+		params.set('encoder', 'steam')
+	} else {
+		params.set('digits', String(config.digits))
+	}
+	if (config.algorithm !== 'SHA-1') {
+		params.set('algorithm', config.algorithm.replace('-', ''))
+	}
+	params.set('issuer', title)
+	return `otpauth://totp/${encodeURIComponent(title)}:${encodeURIComponent(username)}?${params.toString().replace(/\+/g, '%20')}`
+}

@@ -65,7 +65,11 @@
 					:value="details.url"
 					link
 					@copy="copy(details.url, t('nextkeeweb', 'URL copied'))" />
-				<TotpField v-if="details.totp" :config="details.totp" @copy="(code) => copy(code, t('nextkeeweb', 'TOTP copied'))" />
+				<TotpField
+					v-if="details.totp"
+					:config="details.totp"
+					:uri="details.totpUri"
+					@copy="(code) => copy(code, t('nextkeeweb', 'TOTP copied'))" />
 				<FieldRow
 					v-for="field in details.customFields"
 					:key="field.key"
@@ -204,7 +208,7 @@ import {
 	StandardField,
 } from '@/core/entries'
 import { resolvedField, resolvePlaceholders } from '@/core/placeholders'
-import { readTotp } from '@/core/totp'
+import { entryOtpUri, readTotp } from '@/core/totp'
 import { t } from '@/l10n'
 import { copySecret } from '@/services/clipboard'
 import { downloadBlob } from '@/services/download'
@@ -246,6 +250,7 @@ const details = computed(() => {
 		url: resolve(StandardField.URL),
 		notes: getField(current, StandardField.Notes),
 		totp: readTotp(current),
+		totpUri: entryOtpUri(current),
 		customFields: draft.customFields
 			.filter((field) => !hiddenFields.has(field.key))
 			.map((field) => ({ ...field, value: resolvePlaceholders(db, current, field.value) })),
