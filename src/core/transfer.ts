@@ -1,4 +1,4 @@
-import type { Kdbx, KdbxEntry, KdbxGroup } from 'kdbxweb'
+import type { Kdbx, KdbxGroup } from 'kdbxweb'
 import type { CustomField, EntryDraft } from './entries.ts'
 
 import { Kdbx as KdbxClass, KdbxCredentials, ProtectedValue } from 'kdbxweb'

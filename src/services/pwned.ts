@@ -3,7 +3,7 @@ import type { RangeFetcher } from '@/core/pwned'
 export const PWNED_API = 'https://api.pwnedpasswords.com'
 
 /**
- * Plain fetch on purpose: @nextcloud/axios would attach Nextcloud's request
+ * Plain fetch on purpose: `@nextcloud/axios` would attach Nextcloud's request
  * token to a third-party request. No cookies, no referrer; responses are
  * padded so their size does not hint at the prefix.
  */

@@ -114,7 +114,7 @@ function describe(issue: HealthIssue): string {
 	}
 }
 
-function item(entry: KdbxEntry, detail: string) {
+function reportItem(entry: KdbxEntry, detail: string) {
 	return {
 		id: entry.uuid.id,
 		title: getField(entry, StandardField.Title) || t('keenext', '(no title)'),
@@ -135,12 +135,12 @@ const sections = computed(() => {
 		{
 			kind: 'pwned',
 			title: t('keenext', 'Found in data breaches'),
-			items: (breaches.value ?? []).map((result) => item(result.entry, n('keenext', 'Seen {count} time', 'Seen {count} times', result.count, { count: result.count.toLocaleString() }))),
+			items: (breaches.value ?? []).map((result) => reportItem(result.entry, n('keenext', 'Seen {count} time', 'Seen {count} times', result.count, { count: result.count.toLocaleString() }))),
 		},
 		...(Object.keys(titles) as HealthIssue['kind'][]).map((kind) => ({
 			kind,
 			title: titles[kind],
-			items: issues.filter((issue) => issue.kind === kind).map((issue) => item(issue.entry, describe(issue))),
+			items: issues.filter((issue) => issue.kind === kind).map((issue) => reportItem(issue.entry, describe(issue))),
 		})),
 	]
 })
