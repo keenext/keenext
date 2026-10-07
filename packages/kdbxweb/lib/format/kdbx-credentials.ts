@@ -57,6 +57,10 @@ export class KdbxCredentials {
                 this.keyFileHash = ProtectedValue.fromBinary(arrayToBuffer(keyFile));
                 return Promise.resolve();
             }
+            const hashWholeFile = () =>
+                CryptoEngine.sha256(arrayToBuffer(keyFile)).then((hash) => {
+                    this.keyFileHash = ProtectedValue.fromBinary(hash);
+                });
             let keyFileVersion;
             let dataEl;
             try {
@@ -67,13 +71,23 @@ export class KdbxCredentials {
                     return Promise.resolve();
                 }
                 const xml = XmlUtils.parse(keyFileStr.trim());
+                // As in KeePassXC, XML other than a KeyFile document with key data is a
+                // file like any other and hashed as a whole.
+                if (xml.documentElement.tagName !== 'KeyFile') {
+                    return hashWholeFile();
+                }
+                const keyEl = XmlUtils.getChildNode(xml.documentElement, 'Key');
+                dataEl = <Element>XmlUtils.getChildNode(keyEl, 'Data');
+                if (!dataEl?.textContent) {
+                    return hashWholeFile();
+                }
+
                 const metaEl = XmlUtils.getChildNode(xml.documentElement, 'Meta');
                 if (!metaEl) {
                     return Promise.reject(
                         new KdbxError(ErrorCodes.InvalidArg, 'key file without meta')
                     );
                 }
-
                 const versionEl = XmlUtils.getChildNode(metaEl, 'Version');
                 if (!versionEl?.textContent) {
                     return Promise.reject(
@@ -81,24 +95,8 @@ export class KdbxCredentials {
                     );
                 }
                 keyFileVersion = +versionEl.textContent.split('.')[0];
-
-                const keyEl = XmlUtils.getChildNode(xml.documentElement, 'Key');
-                if (!keyEl) {
-                    return Promise.reject(
-                        new KdbxError(ErrorCodes.InvalidArg, 'key file without key')
-                    );
-                }
-
-                dataEl = <Element>XmlUtils.getChildNode(keyEl, 'Data');
-                if (!dataEl?.textContent) {
-                    return Promise.reject(
-                        new KdbxError(ErrorCodes.InvalidArg, 'key file without key data')
-                    );
-                }
             } catch (e) {
-                return CryptoEngine.sha256(arrayToBuffer(keyFile)).then((hash) => {
-                    this.keyFileHash = ProtectedValue.fromBinary(hash);
-                });
+                return hashWholeFile();
             }
 
             switch (keyFileVersion) {

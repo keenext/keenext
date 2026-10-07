@@ -12,6 +12,7 @@ import { KdbxFormat } from './kdbx-format';
 import { KdbxEntry, KdbxEntryEditState } from './kdbx-entry';
 import { KdbxUuid } from './kdbx-uuid';
 import { KdbxContext } from './kdbx-context';
+import { KdbxCustomDataMap } from './kdbx-custom-data';
 
 export interface KdbxEditState {
     entries?: { [name: string]: KdbxEntryEditState };
@@ -618,6 +619,38 @@ export class Kdbx {
             d.write(delObjNode, ctx);
         }
         this.xml = xml;
+    }
+
+    /**
+     * Whether the database holds values the writers store only in KDBX 4.1 files (each
+     * `versionIsAtLeast(4, 1)` check); a quality check of true is the default and does not
+     * count. KeePassXC raises files to 4.1 for the same values.
+     */
+    hasKdbx41Values(): boolean {
+        const hasTimes = (customData: KdbxCustomDataMap | undefined) =>
+            !!customData && [...customData.values()].some((item) => item.lastModified);
+        if (hasTimes(this.meta.customData)) {
+            return true;
+        }
+        for (const icon of this.meta.customIcons.values()) {
+            if (icon.name || icon.lastModified) {
+                return true;
+            }
+        }
+        for (const group of this.groups) {
+            for (const item of group.allGroupsAndEntries()) {
+                const states = item instanceof KdbxEntry ? [item, ...item.history] : [item];
+                for (const state of states) {
+                    if (state.previousParentGroup !== undefined || hasTimes(state.customData)) {
+                        return true;
+                    }
+                    if (state instanceof KdbxGroup ? state.tags.length : state.qualityCheck === false) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     versionIsAtLeast(major: number, minor: number): boolean {

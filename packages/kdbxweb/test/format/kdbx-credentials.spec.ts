@@ -98,8 +98,34 @@ describe('KdbxCredentials', () => {
         );
     });
 
+    async function expectHashedAsWholeFile(text: string) {
+        const keyFile = new TextEncoder().encode(text);
+        const hash = await new KdbxCredentials(null, keyFile).getHash();
+        // A 32-byte key file is used as the key itself.
+        const fileHash = new Uint8Array(await crypto.subtle.digest('SHA-256', keyFile));
+        const expected = await new KdbxCredentials(null, fileHash).getHash();
+        expect(ByteUtils.bytesToHex(hash)).to.be(ByteUtils.bytesToHex(expected));
+    }
+
+    it('hashes XML that is not a key file', async () => {
+        await expectHashedAsWholeFile(
+            '<svg xmlns="http://www.w3.org/2000/svg"><rect width="1" height="1"/></svg>'
+        );
+        await expectHashedAsWholeFile(
+            '<Other><Meta><Version>1.0</Version></Meta><Key><Data>AAAA</Data></Key></Other>'
+        );
+    });
+
+    it('hashes a key file document without key data', async () => {
+        await expectHashedAsWholeFile('<KeyFile/>');
+        await expectHashedAsWholeFile('<KeyFile><Meta><Version>1.0</Version></Meta></KeyFile>');
+        await expectHashedAsWholeFile(
+            '<KeyFile><Meta><Version>1.0</Version></Meta><Key></Key></KeyFile>'
+        );
+    });
+
     it('throws an error for a key file without meta', async () => {
-        const keyFile = new TextEncoder().encode('<KeyFile/>');
+        const keyFile = new TextEncoder().encode('<KeyFile><Key><Data>AAAA</Data></Key></KeyFile>');
         const cred = new KdbxCredentials(null, keyFile);
         try {
             await cred.getHash();
@@ -113,7 +139,9 @@ describe('KdbxCredentials', () => {
     });
 
     it('throws an error for a key file without version', async () => {
-        const keyFile = new TextEncoder().encode('<data><Meta></Meta></data>');
+        const keyFile = new TextEncoder().encode(
+            '<KeyFile><Meta></Meta><Key><Data>AAAA</Data></Key></KeyFile>'
+        );
         const cred = new KdbxCredentials(null, keyFile);
         try {
             await cred.getHash();
@@ -137,38 +165,6 @@ describe('KdbxCredentials', () => {
             expect(e).to.be.a(KdbxError);
             expect((e as KdbxError).code).to.be(Consts.ErrorCodes.FileCorrupt);
             expect((e as KdbxError).message).to.contain('bad keyfile version');
-            return;
-        }
-        expect().fail();
-    });
-
-    it('throws an error for a key file without key', async () => {
-        const keyFile = new TextEncoder().encode(
-            '<KeyFile><Meta><Version>1.0</Version></Meta></KeyFile>'
-        );
-        const cred = new KdbxCredentials(null, keyFile);
-        try {
-            await cred.getHash();
-        } catch (e) {
-            expect(e).to.be.a(KdbxError);
-            expect((e as KdbxError).code).to.be(Consts.ErrorCodes.InvalidArg);
-            expect((e as KdbxError).message).to.contain('key file without key');
-            return;
-        }
-        expect().fail();
-    });
-
-    it('throws an error for a key file without data', async () => {
-        const keyFile = new TextEncoder().encode(
-            '<KeyFile><Meta><Version>1.0</Version></Meta><Key></Key></KeyFile>'
-        );
-        const cred = new KdbxCredentials(null, keyFile);
-        try {
-            await cred.getHash();
-        } catch (e) {
-            expect(e).to.be.a(KdbxError);
-            expect((e as KdbxError).code).to.be(Consts.ErrorCodes.InvalidArg);
-            expect((e as KdbxError).message).to.contain('key file without key data');
             return;
         }
         expect().fail();

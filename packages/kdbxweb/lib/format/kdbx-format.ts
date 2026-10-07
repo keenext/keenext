@@ -114,9 +114,21 @@ export class KdbxFormat {
         });
     }
 
+    /** KDBX 4.0 files become 4.1 when they hold values 4.0 cannot store, instead of losing them. */
+    private raiseMinorVersionIfNeeded(): void {
+        if (
+            this.kdbx.versionMajor === 4 &&
+            this.kdbx.versionMinor < 1 &&
+            this.kdbx.hasKdbx41Values()
+        ) {
+            this.kdbx.header.versionMinor = 1;
+        }
+    }
+
     save(): Promise<ArrayBuffer> {
         return this.kdbx.credentials.ready.then(() => {
             const stm = new BinaryStream();
+            this.raiseMinorVersionIfNeeded();
             this.kdbx.header.generateSalts();
             this.kdbx.header.write(stm);
             if (this.kdbx.versionMajor === 3) {
@@ -197,6 +209,7 @@ export class KdbxFormat {
 
     saveXml(prettyPrint = false): Promise<string> {
         return this.kdbx.credentials.ready.then(() => {
+            this.raiseMinorVersionIfNeeded();
             this.kdbx.header.generateSalts();
             this.ctx.exportXml = true;
             this.kdbx.buildXml(this.ctx);

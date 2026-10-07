@@ -1147,6 +1147,84 @@ describe('Kdbx', () => {
         expect(loaded.getDefaultGroup().entries[0].fields.get('Notes')).to.be('col1\tcol2');
     });
 
+    describe('KDBX 4.1 values', () => {
+        const cred = () => new kdbxweb.Credentials(kdbxweb.ProtectedValue.fromString('test'));
+        const time = new Date('2024-01-01T00:00:00Z');
+
+        const cases: [string, (db: kdbxweb.Kdbx) => void, (db: kdbxweb.Kdbx) => void][] = [
+            [
+                'group tags',
+                (db) => {
+                    db.createGroup(db.getDefaultGroup(), 'tagged').tags = ['t'];
+                },
+                (db) => expect(db.getDefaultGroup().groups[1].tags).to.eql(['t'])
+            ],
+            [
+                'a disabled quality check',
+                (db) => {
+                    db.createEntry(db.getDefaultGroup()).qualityCheck = false;
+                },
+                (db) => expect(db.getDefaultGroup().entries[0].qualityCheck).to.be(false)
+            ],
+            [
+                'a previous parent group',
+                (db) => db.remove(db.createEntry(db.getDefaultGroup())),
+                (db) => {
+                    const recycled = db.getDefaultGroup().groups[0].entries[0];
+                    expect(recycled.previousParentGroup!.equals(db.getDefaultGroup().uuid)).to.be(
+                        true
+                    );
+                }
+            ],
+            [
+                'a custom icon name',
+                (db) => {
+                    db.meta.customIcons.set(kdbxweb.KdbxUuid.random().id, {
+                        data: new Uint8Array([1]).buffer,
+                        name: 'icon'
+                    });
+                },
+                (db) => expect([...db.meta.customIcons.values()][0].name).to.be('icon')
+            ],
+            [
+                'custom data times',
+                (db) => {
+                    db.meta.customData.set('k', { value: 'v', lastModified: time });
+                },
+                (db) => expect(db.meta.customData.get('k')!.lastModified).to.eql(time)
+            ]
+        ];
+
+        for (const [name, set, check] of cases) {
+            it(`saves KDBX 4.0 with ${name} as 4.1`, async () => {
+                const db = kdbxweb.Kdbx.create(cred(), 'example');
+                expect(db.versionMinor).to.be(0);
+                set(db);
+                const loaded = await kdbxweb.Kdbx.load(await db.save(), cred());
+                expect(`${loaded.versionMajor}.${loaded.versionMinor}`).to.be('4.1');
+                check(loaded);
+            });
+        }
+
+        it('keeps KDBX 4.0 without such values', async () => {
+            const db = kdbxweb.Kdbx.create(cred(), 'example');
+            const entry = db.createEntry(db.getDefaultGroup());
+            entry.qualityCheck = true;
+            entry.tags = ['entry tags are KDBX 4.0'];
+            const loaded = await kdbxweb.Kdbx.load(await db.save(), cred());
+            expect(`${loaded.versionMajor}.${loaded.versionMinor}`).to.be('4.0');
+        });
+
+        it('keeps KDBX 3.1', async () => {
+            const db = kdbxweb.Kdbx.create(cred(), 'example');
+            db.setVersion(3);
+            db.header.keyEncryptionRounds = 1000;
+            db.createGroup(db.getDefaultGroup(), 'tagged').tags = ['t'];
+            const loaded = await kdbxweb.Kdbx.load(await db.save(), cred());
+            expect(`${loaded.versionMajor}.${loaded.versionMinor}`).to.be('3.1');
+        });
+    });
+
     describe('encryption IV length', () => {
         // KDBX 3 header fields: 1-byte id, 2-byte size; 7 is EncryptionIV.
         function replaceV3HeaderField(file: ArrayBuffer, fieldId: number, value: Uint8Array) {

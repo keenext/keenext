@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { entryByTitle, newDatabase } from '../helpers/databases.ts'
 import { exportXml, fixture, fixturesDir, hasKeepassxc, keepassxc, writeTemp } from '../helpers/keepassxc.ts'
@@ -106,5 +107,37 @@ describe.runIf(hasKeepassxc)('exports and imports against KeePassXC', () => {
 		const result = importDatabase(target, target.getDefaultGroup(), 'From KeePassXC', await loadXmlDatabase(xml))
 		expect(result.entries).toBe(5)
 		expect(getField(entryByTitle(target, 'GitHub'), 'Password')).toBe('gh-secret-2')
+	})
+})
+
+describe.runIf(hasKeepassxc)('KDBX 4.1 values written here, read by KeePassXC', () => {
+	it('saves group tags and a disabled quality check as KDBX 4.1', async () => {
+		const db = newDatabase()
+		expect(`${db.versionMajor}.${db.versionMinor}`).toBe('4.0')
+		const group = createGroup(db, db.getDefaultGroup(), 'Tagged')
+		group.tags = ['work', 'shared']
+		createEntry(db, group, { ...emptyDraft(), title: 'Excluded', password: 'pw' }).qualityCheck = false
+		const data = await saveDatabase(db)
+
+		// Header: signature (8 bytes), then minor and major version
+		expect(new DataView(data).getUint16(8, true)).toBe(1)
+		const xml = exportXml(writeTemp('kdbx41.kdbx', data), { password })
+		expect(xml).toContain('<Name>Tagged</Name><Notes/><Tags>work, shared</Tags>')
+		expect(xml).toContain('<QualityCheck>False</QualityCheck>')
+	})
+})
+
+describe.runIf(hasKeepassxc)('key files that KeePassXC hashes as a whole', () => {
+	it.each([
+		['an SVG image', '<svg xmlns="http://www.w3.org/2000/svg"><rect width="1" height="1"/></svg>'],
+		['a KeyFile document without key data', '<?xml version="1.0"?><KeyFile><Meta><Version>1.00</Version></Meta></KeyFile>'],
+	])('opens a database KeePassXC created with %s', async (_, content) => {
+		const keyFile = new TextEncoder().encode(content)
+		const keyFilePath = writeTemp('key.file', keyFile)
+		const path = `${keyFilePath}.kdbx`
+		execFileSync('keepassxc-cli', ['db-create', '-q', '-p', '--set-key-file', keyFilePath, path], { input: 'test\ntest\n' })
+
+		const db = await openDatabase(readFileSync(path), createCredentials({ password, keyFile }))
+		expect(db.getDefaultGroup()).toBeTruthy()
 	})
 })
