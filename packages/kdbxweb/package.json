@@ -1,6 +1,6 @@
 {
   "name": "kdbxweb",
-  "version": "2.2.0-keenext.1",
+  "version": "2.2.0-keenext.2",
   "private": true,
   "description": "Fork of keeweb/kdbxweb maintained for KeeNext, see FORK.md",
   "license": "MIT",
