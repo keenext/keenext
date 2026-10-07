@@ -32,4 +32,17 @@ describe('KeyEncryptorAes', () => {
             );
         });
     });
+
+    it('stops when the signal is aborted', async () => {
+        const controller = new AbortController();
+        // 2^53 rounds would never finish; aborting must end it at the next chunk.
+        const result = KeyEncryptorAes.encrypt(data, key, Number.MAX_SAFE_INTEGER, controller.signal);
+        setTimeout(() => controller.abort(), 20);
+        try {
+            await result;
+            throw new Error('We should not get here');
+        } catch (e) {
+            expect((e as Error).name).to.be('AbortError');
+        }
+    });
 });

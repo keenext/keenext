@@ -40,13 +40,15 @@ Entries are edited as plain `EntryDraft` copies (core/entries.ts). `applyDraft` 
 
 ## Crypto
 
-kdbxweb (the fork in `packages/kdbxweb`) uses WebCrypto for AES, SHA and HMAC and its own ChaCha20 and Twofish. Argon2 comes from hash-wasm (WebAssembly), installed into kdbxweb by `core/crypto.ts`. In the browser it runs in a module worker (`workers/argon2.worker.ts`), which imports only `core/argon2.ts` to stay small. The page's CSP allows `wasm-unsafe-eval`, same-origin workers and, for the opt-in breach check, `api.pwnedpasswords.com` (PageController).
+kdbxweb (the fork in `packages/kdbxweb`) uses WebCrypto for AES, SHA and HMAC and its own ChaCha20 and Twofish. Argon2 comes from hash-wasm (WebAssembly), installed into kdbxweb by `core/crypto.ts`. In the browser each derivation runs in its own module worker (`workers/argon2.worker.ts`, which imports only `core/argon2.ts` to stay small); the worker is terminated afterwards, which also frees its WebAssembly memory. Cancelling an unlock aborts the `AbortSignal` passed to `Kdbx.load`: that terminates the Argon2 worker, and AES-KDF stops at its next chunk of rounds. The page's CSP allows `wasm-unsafe-eval`, same-origin workers and, for the opt-in breach check, `api.pwnedpasswords.com` (PageController).
 
 The fork has no Node fallbacks: it needs WebCrypto and a global `DOMParser`/`XMLSerializer`, which browsers provide and the Node test setups (`tests/setup.ts`, `packages/kdbxweb/test/setup.ts`) install from `@xmldom/xmldom`. Vite and Vitest compile the fork from `packages/kdbxweb/lib`; its `dist/` build serves Node scripts and type declarations (`npm install` builds it).
 
 ## Data from the file is untrusted
 
 A database may come from someone else (shared folder). Entry URLs become links only through `openableUrl()` (core/urls.ts), which allows web, mail and similar schemes and rejects `javascript:`, `data:`, `cmd://` and the like. Nothing is rendered with `v-html`. Placeholders (`{REF:…}`, `{S:…}`) are resolved with a depth limit.
+
+The key derivation settings come from the file and run before the key can be checked, so anyone who can write the file could make unlocking or a background sync run for hours. `openDatabase` (core/database.ts) reads them from the header first and throws `CostlyKdfError` above `DEFAULT_KDF_LIMITS` (AES-KDF rounds; Argon2 memory × iterations). The unlock view shows the settings and unlocks only after confirmation; the session then accepts remote versions up to what was confirmed or what the local database itself uses.
 
 ## Backend
 
@@ -58,8 +60,9 @@ A database may come from someone else (shared folder). Entry URLs become links o
 ## Tests
 
 - `tests/core`: unit tests of the core layer (Vitest, Node).
+- `tests/services`: services that can run without a browser, e.g. the Argon2 worker lifecycle against a stand-in `Worker`.
 - `tests/compat`: kdbxweb against KeePassXC-written files, checked with `keepassxc-cli`: unmodified saves, edits, cipher changes, CSV/XML export and import. The fixture source is `tests/fixtures/source.xml`; `generate.sh` builds the files.
-- `packages/kdbxweb/test`: upstream's suite plus Twofish known-answer tests.
+- `packages/kdbxweb/test`: upstream's suite plus the fork's tests (FORK.md).
 - `tests/l10n.spec.ts`: translations complete and consistent.
 - `tests/php`: PHPUnit for the services.
 - `tests/e2e`: Playwright against the compose Nextcloud, including edits made with `keepassxc-cli` while the database is open in the browser.

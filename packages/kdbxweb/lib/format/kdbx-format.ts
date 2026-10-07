@@ -26,6 +26,8 @@ export class KdbxFormat {
     readonly ctx: KdbxContext;
 
     preserveXml = false;
+    /** Stops key derivation when aborted; set by Kdbx.load. */
+    signal: AbortSignal | undefined;
 
     constructor(kdbx: Kdbx) {
         this.kdbx = kdbx;
@@ -284,7 +286,8 @@ export class KdbxFormat {
                 return KeyEncryptorAes.encrypt(
                     new Uint8Array(credHash),
                     transformSeed,
-                    transformRounds
+                    transformRounds,
+                    this.signal
                 ).then((encKey) => {
                     zeroBuffer(credHash);
                     return CryptoEngine.sha256(arrayToBuffer(encKey)).then((keyHash) => {
@@ -396,7 +399,7 @@ export class KdbxFormat {
             throw new KdbxError(ErrorCodes.FileCorrupt, 'no salt');
         }
         return this.kdbx.credentials.getHash(kdfSalt).then((credHash) => {
-            return KeyEncryptorKdf.encrypt(credHash, kdfParams).then((encKey) => {
+            return KeyEncryptorKdf.encrypt(credHash, kdfParams, this.signal).then((encKey) => {
                 zeroBuffer(credHash);
                 if (!encKey || encKey.byteLength !== 32) {
                     return Promise.reject(new KdbxError(ErrorCodes.Unsupported, 'bad derived key'));

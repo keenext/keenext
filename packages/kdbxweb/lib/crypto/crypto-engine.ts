@@ -143,6 +143,10 @@ export const Argon2TypeArgon2id = 2;
 export type Argon2Type = typeof Argon2TypeArgon2d | typeof Argon2TypeArgon2id;
 export type Argon2Version = 0x10 | 0x13;
 
+/**
+ * `signal` is aborted when the caller of Kdbx.load gives up; an implementation that can
+ * stop early (e.g. by terminating a worker) rejects with `signal.reason`.
+ */
 export type Argon2Fn = (
     password: ArrayBuffer,
     salt: ArrayBuffer,
@@ -151,7 +155,8 @@ export type Argon2Fn = (
     length: number,
     parallelism: number,
     type: Argon2Type,
-    version: Argon2Version
+    version: Argon2Version,
+    signal?: AbortSignal
 ) => Promise<ArrayBuffer>;
 
 let argon2impl: Argon2Fn | undefined;
@@ -164,19 +169,27 @@ export function argon2(
     length: number,
     parallelism: number,
     type: Argon2Type,
-    version: Argon2Version
+    version: Argon2Version,
+    signal?: AbortSignal
 ): Promise<ArrayBuffer> {
     if (argon2impl) {
-        return argon2impl(
-            password,
-            salt,
-            memory,
-            iterations,
-            length,
-            parallelism,
-            type,
-            version
-        ).then(arrayToBuffer);
+        const impl = argon2impl;
+        return Promise.resolve()
+            .then(() => {
+                signal?.throwIfAborted();
+                return impl(
+                    password,
+                    salt,
+                    memory,
+                    iterations,
+                    length,
+                    parallelism,
+                    type,
+                    version,
+                    signal
+                );
+            })
+            .then(arrayToBuffer);
     }
     return Promise.reject(new KdbxError(ErrorCodes.NotImplemented, 'argon2 not implemented'));
 }

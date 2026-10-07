@@ -13,10 +13,12 @@ with the next one simulates running ECB multiple times. We limit the maximum
 size of the zero buffer to prevent enormous memory usage.
 */
 
+/** Aborting `signal` rejects with its reason at the next chunk of rounds. */
 export function encrypt(
     credentials: Uint8Array,
     key: Uint8Array | ArrayBuffer,
-    rounds: number
+    rounds: number,
+    signal?: AbortSignal
 ): Promise<Uint8Array> {
     const algo = CryptoEngine.createAesCbc();
     return algo
@@ -25,7 +27,12 @@ export function encrypt(
             const resolvers = [];
             for (let idx = 0; idx < credentialSize; idx += aesBlockSize) {
                 resolvers.push(
-                    encryptBlock(algo, credentials.subarray(idx, idx + aesBlockSize), rounds)
+                    encryptBlock(
+                        algo,
+                        credentials.subarray(idx, idx + aesBlockSize),
+                        rounds,
+                        signal
+                    )
                 );
             }
             return Promise.all(resolvers);
@@ -43,43 +50,37 @@ export function encrypt(
         });
 }
 
-function encryptBlock(
+// Chunks run one after another, so the number of rounds (from the file) costs time, not memory.
+async function encryptBlock(
     algo: CryptoEngine.AesCbc,
     iv: Uint8Array | ArrayBuffer,
-    rounds: number
+    rounds: number,
+    signal: AbortSignal | undefined
 ): Promise<Uint8Array> {
-    let result = Promise.resolve(arrayToBuffer(iv));
+    let result = arrayToBuffer(iv);
     const buffer = new Uint8Array(aesBlockSize * Math.min(rounds, maxRoundsPreIteration));
 
     while (rounds > 0) {
+        signal?.throwIfAborted();
         const currentRounds = Math.min(rounds, maxRoundsPreIteration);
         rounds -= currentRounds;
 
         const dataLen = aesBlockSize * currentRounds;
         const zeroData =
             buffer.length === dataLen ? buffer.buffer : arrayToBuffer(buffer.subarray(0, dataLen));
-        result = encryptBlockBuffer(algo, result, zeroData);
+        result = await encryptBlockBuffer(algo, result, zeroData);
     }
 
-    return result.then((res) => {
-        return new Uint8Array(res);
-    });
+    return new Uint8Array(result);
 }
 
-function encryptBlockBuffer(
+async function encryptBlockBuffer(
     algo: CryptoEngine.AesCbc,
-    promisedIv: Promise<ArrayBuffer>,
+    iv: ArrayBuffer,
     buffer: ArrayBuffer
 ): Promise<ArrayBuffer> {
-    return promisedIv
-        .then((iv) => {
-            return algo.encrypt(buffer, iv);
-        })
-        .then((buf) => {
-            const res = arrayToBuffer(
-                new Uint8Array(buf).subarray(-2 * aesBlockSize, -aesBlockSize)
-            );
-            zeroBuffer(buf);
-            return res;
-        });
+    const buf = await algo.encrypt(buffer, iv);
+    const res = arrayToBuffer(new Uint8Array(buf).subarray(-2 * aesBlockSize, -aesBlockSize));
+    zeroBuffer(buf);
+    return res;
 }

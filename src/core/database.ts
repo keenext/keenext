@@ -1,9 +1,12 @@
 import {
+	BinaryStream,
 	Consts,
 	Int64,
 	Kdbx,
+	KdbxContext,
 	KdbxCredentials,
 	KdbxError,
+	KdbxHeader,
 	KdbxUuid,
 	ProtectedValue,
 	VarDictionary,
@@ -14,13 +17,66 @@ export interface CredentialsInput {
 	keyFile?: Uint8Array
 }
 
-export type OpenErrorReason = 'invalid-key' | 'corrupt' | 'unsupported' | 'unknown'
+export type OpenErrorReason = 'invalid-key' | 'corrupt' | 'unsupported' | 'costly-kdf' | 'unknown'
 
 export class DatabaseOpenError extends Error {
 	constructor(readonly reason: OpenErrorReason, message: string, options?: { cause?: unknown }) {
 		super(message, options)
 		this.name = 'DatabaseOpenError'
 	}
+}
+
+/** The file's key derivation exceeds the limits; `kdf` describes it for a confirmation. */
+export class CostlyKdfError extends DatabaseOpenError {
+	constructor(readonly kdf: Kdf) {
+		super('costly-kdf', 'The key derivation of this database is unusually expensive')
+	}
+}
+
+/**
+ * Upper bounds for the key derivation a file may ask for before it is opened. The
+ * derivation runs before the key can be checked, so anyone who can write the file can
+ * otherwise make unlocking (or a background sync) run for hours.
+ */
+export interface KdfLimits {
+	aesRounds: number
+	/** Argon2 memory in bytes times iterations */
+	argon2Work: number
+}
+
+/** About half a minute to a minute in a desktop browser; KeePassXC's defaults stay far below. */
+export const DEFAULT_KDF_LIMITS: KdfLimits = {
+	aesRounds: 1_000_000_000,
+	argon2Work: 32 * 1024 ** 3,
+}
+
+export function exceedsKdfLimits(kdf: Kdf, limits: KdfLimits): boolean {
+	return kdf.type === 'aes'
+		? kdf.rounds > limits.aesRounds
+		: kdf.memory * kdf.iterations > limits.argon2Work
+}
+
+/** `limits`, raised as far as needed to allow `kdf`. */
+export function kdfLimitsAllowing(kdf: Kdf, limits: KdfLimits = DEFAULT_KDF_LIMITS): KdfLimits {
+	return kdf.type === 'aes'
+		? { ...limits, aesRounds: Math.max(limits.aesRounds, kdf.rounds) }
+		: { ...limits, argon2Work: Math.max(limits.argon2Work, kdf.memory * kdf.iterations) }
+}
+
+/** The key derivation a file asks for, read from its header; undefined if the header does not parse. */
+export function readKdf(data: ArrayBuffer | Uint8Array): Kdf | undefined {
+	try {
+		const header = KdbxHeader.read(new BinaryStream(toArrayBuffer(data)), new KdbxContext({ kdbx: new Kdbx() }))
+		return kdfOf(header)
+	} catch {
+		return undefined
+	}
+}
+
+export interface OpenOptions {
+	/** Aborting stops the key derivation; the promise then rejects with the signal's reason. */
+	signal?: AbortSignal
+	kdfLimits?: KdfLimits
 }
 
 export function createCredentials({ password, keyFile }: CredentialsInput): KdbxCredentials {
@@ -37,11 +93,23 @@ export function toArrayBuffer(data: ArrayBuffer | Uint8Array): ArrayBuffer {
 	return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer
 }
 
-export async function openDatabase(data: ArrayBuffer | Uint8Array, credentials: KdbxCredentials): Promise<Kdbx> {
+/** Throws CostlyKdfError, without deriving anything, if the file's key derivation exceeds the limits. */
+export async function openDatabase(
+	data: ArrayBuffer | Uint8Array,
+	credentials: KdbxCredentials,
+	{ signal, kdfLimits = DEFAULT_KDF_LIMITS }: OpenOptions = {},
+): Promise<Kdbx> {
+	const kdf = readKdf(data)
+	if (kdf && exceedsKdfLimits(kdf, kdfLimits)) {
+		throw new CostlyKdfError(kdf)
+	}
 	await credentials.ready
 	try {
-		return await Kdbx.load(toArrayBuffer(data), credentials)
+		return await Kdbx.load(toArrayBuffer(data), credentials, { signal })
 	} catch (error) {
+		if (signal?.aborted) {
+			throw error
+		}
 		throw classifyOpenError(error)
 	}
 }
@@ -94,10 +162,16 @@ export function setKdf(db: Kdbx, settings: KdfSettings): void {
 	params.set('P', VarDictionary.ValueType.UInt32, settings.parallelism)
 }
 
-export function getKdf(db: Kdbx): KdfSettings | { type: 'aes', rounds: number } {
-	const params = db.header.kdfParameters
+export type Kdf = KdfSettings | { type: 'aes', rounds: number }
+
+export function getKdf(db: Kdbx): Kdf {
+	return kdfOf(db.header)
+}
+
+function kdfOf(header: KdbxHeader): Kdf {
+	const params = header.kdfParameters
 	if (!params) {
-		return { type: 'aes', rounds: db.header.keyEncryptionRounds ?? 0 }
+		return { type: 'aes', rounds: header.keyEncryptionRounds ?? 0 }
 	}
 	const uuid = params.get('$UUID')
 	const id = uuid instanceof ArrayBuffer ? bytesToBase64(new Uint8Array(uuid)) : ''
@@ -112,9 +186,10 @@ export function getKdf(db: Kdbx): KdfSettings | { type: 'aes', rounds: number } 
 	}
 }
 
+/** Exact up to 2^53; larger values (only seen in crafted files) come out approximate. */
 function int64ToNumber(value: unknown): number {
 	if (value instanceof Int64) {
-		return value.value
+		return value.hi * 2 ** 32 + value.lo
 	}
 	return typeof value === 'number' ? value : 0
 }
@@ -158,7 +233,7 @@ export interface DatabaseSettings {
 	/** bytes, -1 = unlimited */
 	historyMaxSize: number
 	cipher: Cipher
-	kdf: KdfSettings | { type: 'aes', rounds: number }
+	kdf: Kdf
 	version: string
 }
 

@@ -21,6 +21,9 @@
 			<NcNoteCard v-if="error" type="error">
 				{{ error }}
 			</NcNoteCard>
+			<NcNoteCard v-if="costlyKdf" type="warning">
+				{{ t('keenext', 'This database asks for an unusually expensive key derivation ({kdf}). Unlocking may take minutes or never finish. Unlock anyway only if you expect these settings.', { kdf: describeKdf(costlyKdf) }) }}
+			</NcNoteCard>
 			<NcNoteCard v-if="!database.writable" type="info">
 				{{ t('keenext', 'You can only read this database; changes cannot be saved.') }}
 			</NcNoteCard>
@@ -34,7 +37,14 @@
 					<NcLoadingIcon v-if="busy" :size="20" />
 					<NcIconSvgWrapper v-else :path="mdiLockOpenVariant" />
 				</template>
-				{{ busy ? t('keenext', 'Unlocking…') : t('keenext', 'Unlock') }}
+				{{ busy ? t('keenext', 'Unlocking…') : costlyKdf ? t('keenext', 'Unlock anyway') : t('keenext', 'Unlock') }}
+			</NcButton>
+			<NcButton
+				v-if="busy"
+				variant="tertiary"
+				wide
+				@click="cancel">
+				{{ t('keenext', 'Cancel') }}
 			</NcButton>
 			<p class="unlock__hint">
 				{{ t('keenext', 'The database is decrypted in your browser. Your password is never sent to the server.') }}
@@ -44,6 +54,7 @@
 </template>
 
 <script setup lang="ts">
+import type { Kdf } from '@/core/database'
 import type { KeyFileChoice } from '@/services/keyFile'
 import type { OpenDatabase } from '@/stores/vault'
 
@@ -55,6 +66,7 @@ import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
 import NcPasswordField from '@nextcloud/vue/components/NcPasswordField'
 import KeyFileChooser from './KeyFileChooser.vue'
+import { CostlyKdfError, kdfLimitsAllowing } from '@/core/database'
 import { t } from '@/l10n'
 import { resolveKeyFile } from '@/services/keyFile'
 import { useVaultStore } from '@/stores/vault'
@@ -68,21 +80,52 @@ const password = ref('')
 const keyFile = ref<KeyFileChoice | null>(props.database.keyFile ? { ...props.database.keyFile } : null)
 const busy = ref(false)
 const error = ref('')
+/** Set once the file asked for more than the default limits; the next submit accepts it. */
+const costlyKdf = ref<Kdf | null>(null)
 const passwordField = ref<{ focus?: () => void } | null>(null)
+let controller: AbortController | null = null
 
 async function submit(): Promise<void> {
 	busy.value = true
 	error.value = ''
+	controller = new AbortController()
+	const { signal } = controller
 	try {
 		const key = await resolveKeyFile(keyFile.value)
-		await vault.unlock(props.database.id, { password: password.value === '' && keyFile.value ? undefined : password.value, ...key })
+		await vault.unlock(
+			props.database.id,
+			{ password: password.value === '' && keyFile.value ? undefined : password.value, ...key },
+			{ signal, kdfLimits: costlyKdf.value ? kdfLimitsAllowing(costlyKdf.value) : undefined },
+		)
 		password.value = ''
 	} catch (cause) {
-		error.value = vault.describeError(cause)
 		busy.value = false
+		if (signal.aborted) {
+			return
+		}
+		if (cause instanceof CostlyKdfError) {
+			costlyKdf.value = cause.kdf
+			return
+		}
+		error.value = vault.describeError(cause)
 		await nextTick()
 		passwordField.value?.focus?.()
 	}
+}
+
+function cancel(): void {
+	controller?.abort()
+}
+
+function describeKdf(kdf: Kdf): string {
+	if (kdf.type === 'aes') {
+		return t('keenext', 'AES-KDF, {rounds} rounds', { rounds: kdf.rounds.toLocaleString() })
+	}
+	return t('keenext', '{type}, {memory} MiB memory, {iterations} iterations', {
+		type: kdf.type === 'argon2id' ? 'Argon2id' : 'Argon2d',
+		memory: Math.round(kdf.memory / 1024 ** 2).toLocaleString(),
+		iterations: kdf.iterations.toLocaleString(),
+	})
 }
 </script>
 

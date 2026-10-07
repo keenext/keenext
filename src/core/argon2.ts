@@ -17,9 +17,17 @@ export interface Argon2Request {
 	version: CryptoEngine.Argon2Version
 }
 
-export type Argon2Compute = (request: Argon2Request) => Promise<Uint8Array>
+/** Rejects with `signal.reason` once aborted; an implementation may stop the work early. */
+export type Argon2Compute = (request: Argon2Request, signal?: AbortSignal) => Promise<Uint8Array>
 
-export const computeArgon2: Argon2Compute = async (request) => {
+/** Runs to the end even when aborted; it only discards the result. */
+export const computeArgon2: Argon2Compute = async (request, signal) => {
+	const hash = await deriveArgon2(request)
+	signal?.throwIfAborted()
+	return hash
+}
+
+async function deriveArgon2(request: Argon2Request): Promise<Uint8Array> {
 	// hash-wasm implements Argon2 v1.3 only; v1.0 predates KDBX 4 and is not written by any current client.
 	if (request.version !== 0x13) {
 		throw new Error(`Unsupported Argon2 version 0x${request.version.toString(16)}`)

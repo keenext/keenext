@@ -6,6 +6,7 @@ OC.L10N.register(
 		"Add attachment": "Anhang hinzufügen",
 		"Add attribute": "Attribut hinzufügen",
 		"Additional attributes": "Zusätzliche Attribute",
+		"AES-KDF, {rounds} rounds": "AES-KDF, {rounds} Runden",
 		"Algorithm": "Algorithmus",
 		"Also use these characters": "Zusätzlich diese Zeichen verwenden",
 		"Attachments": "Anhänge",
@@ -111,6 +112,8 @@ OC.L10N.register(
 		],
 		"Iterations": "Iterationen",
 		"KDBX 4 with Argon2id and ChaCha20. Without the master password the database cannot be recovered.": "KDBX 4 mit Argon2id und ChaCha20. Ohne das Master-Passwort lässt sich die Datenbank nicht wiederherstellen.",
+		"KeeNext": "KeeNext",
+		"KeeNext settings": "Einstellungen für KeeNext",
 		"KeePass database": "KeePass-Datenbank",
 		"KeePass databases": "KeePass-Datenbanken",
 		"KeePass XML": "KeePass-XML",
@@ -146,8 +149,6 @@ OC.L10N.register(
 		"New KeePass database": "Neue KeePass-Datenbank",
 		"New master password": "Neues Master-Passwort",
 		"New subgroup": "Neue Untergruppe",
-		"KeeNext": "KeeNext",
-		"KeeNext settings": "Einstellungen für KeeNext",
 		"No entries in this group": "Keine Einträge in dieser Gruppe",
 		"No matching entries": "Keine passenden Einträge",
 		"No problems found": "Keine Probleme gefunden",
@@ -222,6 +223,8 @@ OC.L10N.register(
 		"The file is not a valid KeePass database": "Die Datei ist keine gültige KeePass-Datenbank",
 		"The file no longer exists": "Die Datei existiert nicht mehr",
 		"The QR code does not contain a TOTP setup.": "Der QR-Code enthält keine TOTP-Einrichtung.",
+		"This database asks for an unusually expensive key derivation": "Diese Datenbank verlangt eine ungewöhnlich aufwendige Schlüsselableitung",
+		"This database asks for an unusually expensive key derivation ({kdf}). Unlocking may take minutes or never finish. Unlock anyway only if you expect these settings.": "Diese Datenbank verlangt eine ungewöhnlich aufwendige Schlüsselableitung ({kdf}). Das Entsperren kann Minuten dauern oder nie fertig werden. Entsperre trotzdem nur, wenn du diese Einstellungen erwartest.",
 		"This database format is not supported": "Dieses Datenbankformat wird nicht unterstützt",
 		"This entry expired on {date}": "Dieser Eintrag ist am {date} abgelaufen",
 		"This is a Google Authenticator export, which is not supported. Use the QR code shown when setting up the account instead.": "Das ist ein Export aus dem Google Authenticator, der nicht unterstützt wird. Verwende stattdessen den QR-Code, der beim Einrichten des Kontos angezeigt wird.",
@@ -233,6 +236,7 @@ OC.L10N.register(
 		"TOTP copied": "TOTP kopiert",
 		"Unknown file type. Use .kdbx, .xml, .csv or .json.": "Unbekannter Dateityp. Verwende .kdbx, .xml, .csv oder .json.",
 		"Unlock": "Entsperren",
+		"Unlock anyway": "Trotzdem entsperren",
 		"Unlock {name}": "{name} entsperren",
 		"Unlocking…": "Wird entsperrt …",
 		"Unnamed group": "Unbenannte Gruppe",
@@ -267,7 +271,8 @@ OC.L10N.register(
 		"{field} copied": "{field} kopiert",
 		"{quality} ({bits} bits)": "{quality} ({bits} Bit)",
 		"{seconds} seconds remaining": "noch {seconds} Sekunden",
-		"{title} - Clone": "{title} – Klon"
+		"{title} - Clone": "{title} – Klon",
+		"{type}, {memory} MiB memory, {iterations} iterations": "{type}, {memory} MiB Speicher, {iterations} Iterationen"
 	},
 	"nplurals=2; plural=(n != 1);"
 );

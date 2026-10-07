@@ -37,6 +37,15 @@ export function seedDatabase(fixture: string, name: string): string {
 	return name
 }
 
+/** Writes `data` into the test folder under the given name; returns that name. */
+export function seedBytes(name: string, data: Uint8Array): string {
+	execFileSync('docker', ['exec', '-i', '-u', 'www-data', CONTAINER, 'sh', '-c', `cat > "${storageDir}/${name}"`], {
+		input: data,
+	})
+	occ('files:scan', '--path', `/${USER}/files/${DIR}`)
+	return name
+}
+
 /** Copies a file out of the admin's storage to a temporary local path. */
 export function fetchFromStorage(name: string): string {
 	const dir = mkdtempSync(join(tmpdir(), 'keenext-e2e-'))
@@ -73,10 +82,7 @@ export async function unlock(page: Page, password = 'test'): Promise<void> {
 export function editElsewhere(name: string, edit: (localPath: string) => void): void {
 	const local = fetchFromStorage(name)
 	edit(local)
-	execFileSync('docker', ['exec', '-i', '-u', 'www-data', CONTAINER, 'sh', '-c', `cat > "${storageDir}/${name}"`], {
-		input: readFileSync(local),
-	})
-	occ('files:scan', '--path', `/${USER}/files/${DIR}`)
+	seedBytes(name, readFileSync(local))
 }
 
 export function keepassxcAdd(path: string, entry: string, username: string): void {

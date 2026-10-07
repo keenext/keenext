@@ -1,6 +1,6 @@
 import type { Kdbx } from 'kdbxweb'
 import type { Raw } from 'vue'
-import type { CredentialsInput } from '@/core/database'
+import type { CredentialsInput, OpenOptions } from '@/core/database'
 import type { RecentFile } from '@/services/api'
 
 import { showError, showSuccess } from '@nextcloud/dialogs'
@@ -48,6 +48,7 @@ function describeError(error: unknown): string {
 			case 'invalid-key': return t('keenext', 'Wrong password or key file')
 			case 'corrupt': return t('keenext', 'The file is not a valid KeePass database')
 			case 'unsupported': return t('keenext', 'This database format is not supported')
+			case 'costly-kdf': return t('keenext', 'This database asks for an unusually expensive key derivation')
 		}
 	}
 	if (error instanceof StorageError) {
@@ -126,10 +127,10 @@ export const useVaultStore = defineStore('vault', () => {
 		activeId.value = id
 	}
 
-	async function unlock(id: string, input: UnlockInput): Promise<void> {
+	async function unlock(id: string, input: UnlockInput, options: OpenOptions = {}): Promise<void> {
 		const database = find(id)
 		const storage = new NextcloudFileStorage(database.fileId, database.path)
-		const session = await DatabaseSession.open(storage, createCredentials(input))
+		const session = await DatabaseSession.open(storage, createCredentials(input), options)
 		database.session = markRaw(session)
 		database.selectedGroup ??= session.db.getDefaultGroup().uuid.id
 		refresh(database)

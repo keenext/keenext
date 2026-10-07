@@ -3,7 +3,7 @@ import type { DatabaseStorage, StoredFile } from '@/core/session'
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { entryByTitle, newDatabase } from '../helpers/databases.ts'
-import { createCredentials, openDatabase, prepareCredentials, saveDatabase, setCredentials } from '@/core/database'
+import { CostlyKdfError, createCredentials, DEFAULT_KDF_LIMITS, openDatabase, prepareCredentials, saveDatabase, setCredentials } from '@/core/database'
 import { applyDraft, createEntry, draftFromEntry, emptyDraft, getField } from '@/core/entries'
 import { ConflictError, DatabaseSession } from '@/core/session'
 
@@ -85,6 +85,42 @@ describe('DatabaseSession', () => {
 		const stored = await openDatabase((await storage.read()).data, createCredentials({ password: 'test' }))
 		expect(entryByTitle(stored, 'Remote').customData?.get('KeePassXC-Browser Settings')?.value)
 			.toBe('{"Allow":["example.org"]}')
+	})
+
+	describe('key derivation of remote versions', () => {
+		const limits = { ...DEFAULT_KDF_LIMITS, aesRounds: 5000 }
+
+		async function setupKdbx3() {
+			const db = newDatabase()
+			db.setVersion(3)
+			db.header.keyEncryptionRounds = 1000
+			const storage = new MemoryStorage(await saveDatabase(db))
+			const session = await DatabaseSession.open(storage, createCredentials({ password: 'test' }), { kdfLimits: limits })
+			return { storage, session }
+		}
+
+		it('refuses a remote version that asks for more than was accepted', async () => {
+			const { storage, session } = await setupKdbx3()
+			await storage.editElsewhere((db) => {
+				db.header.keyEncryptionRounds = 10_000
+			})
+			createEntry(session.db, session.db.getDefaultGroup(), { ...emptyDraft(), title: 'Local' })
+			session.markChanged()
+			await expect(session.save()).rejects.toBeInstanceOf(CostlyKdfError)
+		})
+
+		it('accepts a remote version with the key derivation the local database uses', async () => {
+			const { storage, session } = await setupKdbx3()
+			session.db.header.keyEncryptionRounds = 10_000
+			session.markChanged()
+			await session.save()
+			await storage.editElsewhere((db) => {
+				createEntry(db, db.getDefaultGroup(), { ...emptyDraft(), title: 'Remote' })
+			})
+			createEntry(session.db, session.db.getDefaultGroup(), { ...emptyDraft(), title: 'Local' })
+			session.markChanged()
+			expect(await session.save()).toEqual({ pulled: true, pushed: true })
+		})
 	})
 
 	afterEach(() => {

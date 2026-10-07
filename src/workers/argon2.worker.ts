@@ -2,15 +2,14 @@ import type { Argon2Request } from '@/core/argon2'
 
 import { computeArgon2 } from '@/core/argon2'
 
-export type Argon2WorkerRequest = { id: number, request: Argon2Request }
-export type Argon2WorkerResponse = { id: number, hash: Uint8Array } | { id: number, error: string }
+export type Argon2WorkerResponse = { hash: Uint8Array } | { error: string }
 
-self.addEventListener('message', async (event: MessageEvent<Argon2WorkerRequest>) => {
-	const { id, request } = event.data
+// One derivation per worker; the page terminates the worker afterwards.
+self.addEventListener('message', async (event: MessageEvent<Argon2Request>) => {
 	try {
-		const hash = await computeArgon2(request)
-		self.postMessage({ id, hash } satisfies Argon2WorkerResponse, { transfer: [hash.buffer] })
+		const hash = await computeArgon2(event.data)
+		self.postMessage({ hash } satisfies Argon2WorkerResponse, { transfer: [hash.buffer] })
 	} catch (error) {
-		self.postMessage({ id, error: error instanceof Error ? error.message : String(error) } satisfies Argon2WorkerResponse)
+		self.postMessage({ error: error instanceof Error ? error.message : String(error) } satisfies Argon2WorkerResponse)
 	}
 })

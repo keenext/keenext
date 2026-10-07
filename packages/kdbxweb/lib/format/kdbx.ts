@@ -66,11 +66,12 @@ export class Kdbx {
     /**
      * Load a kdbx file
      * If there was an error loading file, throws an exception
+     * @param options.signal - aborting it stops the key derivation and rejects with its reason
      */
     static load(
         data: ArrayBuffer,
         credentials: KdbxCredentials,
-        options?: { preserveXml?: boolean }
+        options?: { preserveXml?: boolean; signal?: AbortSignal }
     ): Promise<Kdbx> {
         if (!(data instanceof ArrayBuffer)) {
             return Promise.reject(new KdbxError(ErrorCodes.InvalidArg, 'data'));
@@ -82,6 +83,7 @@ export class Kdbx {
         kdbx.credentials = credentials;
         const format = new KdbxFormat(kdbx);
         format.preserveXml = options?.preserveXml || false;
+        format.signal = options?.signal;
         return format.load(data);
     }
 

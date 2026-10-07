@@ -1225,29 +1225,50 @@ describe('Kdbx', () => {
         });
     });
 
-    describe('encryption IV length', () => {
-        // KDBX 3 header fields: 1-byte id, 2-byte size; 7 is EncryptionIV.
-        function replaceV3HeaderField(file: ArrayBuffer, fieldId: number, value: Uint8Array) {
-            const bytes = new Uint8Array(file);
-            const view = new DataView(file);
-            for (let pos = 12; ; ) {
-                const id = bytes[pos];
-                const size = view.getUint16(pos + 1, true);
-                if (id === fieldId) {
-                    const result = new Uint8Array(file.byteLength - size + value.length);
-                    result.set(bytes.subarray(0, pos + 1));
-                    new DataView(result.buffer).setUint16(pos + 1, value.length, true);
-                    result.set(value, pos + 3);
-                    result.set(bytes.subarray(pos + 3 + size), pos + 3 + value.length);
-                    return result.buffer;
-                }
-                if (id === 0) {
-                    throw new Error(`no header field ${fieldId}`);
-                }
-                pos += 3 + size;
+    // KDBX 3 header fields: 1-byte id, 2-byte size; 6 is TransformRounds, 7 EncryptionIV.
+    function replaceV3HeaderField(file: ArrayBuffer, fieldId: number, value: Uint8Array) {
+        const bytes = new Uint8Array(file);
+        const view = new DataView(file);
+        for (let pos = 12; ; ) {
+            const id = bytes[pos];
+            const size = view.getUint16(pos + 1, true);
+            if (id === fieldId) {
+                const result = new Uint8Array(file.byteLength - size + value.length);
+                result.set(bytes.subarray(0, pos + 1));
+                new DataView(result.buffer).setUint16(pos + 1, value.length, true);
+                result.set(value, pos + 3);
+                result.set(bytes.subarray(pos + 3 + size), pos + 3 + value.length);
+                return result.buffer;
             }
+            if (id === 0) {
+                throw new Error(`no header field ${fieldId}`);
+            }
+            pos += 3 + size;
         }
+    }
 
+    it('stops the key derivation when the signal is aborted', async () => {
+        const cred = new kdbxweb.Credentials(kdbxweb.ProtectedValue.fromString('test'));
+        const db = kdbxweb.Kdbx.create(cred, 'example');
+        db.setVersion(3);
+        db.header.keyEncryptionRounds = 1000;
+        const rounds = new DataView(new ArrayBuffer(8));
+        rounds.setUint32(0, 0xffffffff, true);
+        rounds.setUint32(4, 0x1fffff, true);
+        const file = replaceV3HeaderField(await db.save(), 6, new Uint8Array(rounds.buffer));
+
+        const controller = new AbortController();
+        const loading = kdbxweb.Kdbx.load(file, cred, { signal: controller.signal });
+        setTimeout(() => controller.abort(), 20);
+        try {
+            await loading;
+            throw new Error('We should not get here');
+        } catch (e) {
+            expect((e as Error).name).to.be('AbortError');
+        }
+    });
+
+    describe('encryption IV length', () => {
         async function createV3ChaCha20() {
             const cred = new kdbxweb.Credentials(kdbxweb.ProtectedValue.fromString('test'));
             const db = kdbxweb.Kdbx.create(cred, 'example');

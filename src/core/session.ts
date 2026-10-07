@@ -1,6 +1,7 @@
 import type { Kdbx, KdbxCredentials } from 'kdbxweb'
+import type { KdfLimits, OpenOptions } from './database.ts'
 
-import { openDatabase, saveDatabase } from './database.ts'
+import { DEFAULT_KDF_LIMITS, getKdf, kdfLimitsAllowing, openDatabase, saveDatabase } from './database.ts'
 
 export interface StoredFile {
 	data: ArrayBuffer
@@ -49,19 +50,21 @@ export class DatabaseSession {
 		readonly storage: DatabaseStorage,
 		public db: Kdbx,
 		private etag: string,
+		/** Accepted when opening; remote versions may also use the local database's own key derivation. */
+		private readonly kdfLimits: KdfLimits,
 	) {
 		this.storedCredentials = db.credentials
 	}
 
-	static async open(storage: DatabaseStorage, credentials: KdbxCredentials): Promise<DatabaseSession> {
+	static async open(storage: DatabaseStorage, credentials: KdbxCredentials, options: OpenOptions = {}): Promise<DatabaseSession> {
 		const file = await storage.read()
-		const db = await openDatabase(file.data, credentials)
-		return new DatabaseSession(storage, db, file.etag)
+		const db = await openDatabase(file.data, credentials, options)
+		return new DatabaseSession(storage, db, file.etag, options.kdfLimits ?? DEFAULT_KDF_LIMITS)
 	}
 
 	/** For a database created in memory and already written once. */
 	static fromCreated(storage: DatabaseStorage, db: Kdbx, etag: string): DatabaseSession {
-		return new DatabaseSession(storage, db, etag)
+		return new DatabaseSession(storage, db, etag, DEFAULT_KDF_LIMITS)
 	}
 
 	get dirty(): boolean {
@@ -131,7 +134,9 @@ export class DatabaseSession {
 	 * otherwise it is merged in and the result counts as a local change.
 	 */
 	private async integrate(remote: StoredFile): Promise<void> {
-		const remoteDb = await openDatabase(remote.data, this.storedCredentials)
+		const remoteDb = await openDatabase(remote.data, this.storedCredentials, {
+			kdfLimits: kdfLimitsAllowing(getKdf(this.db), this.kdfLimits),
+		})
 		if (this.dirty) {
 			this.db.merge(remoteDb)
 		} else {

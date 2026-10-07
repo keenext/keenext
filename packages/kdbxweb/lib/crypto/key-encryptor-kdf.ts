@@ -7,7 +7,11 @@ import { arrayToBuffer, bytesToBase64, zeroBuffer } from '../utils/byte-utils';
 import { Argon2Type } from './crypto-engine';
 import { Int64 } from '../utils/int64';
 
-export function encrypt(key: ArrayBuffer, kdfParams: VarDictionary): Promise<ArrayBuffer> {
+export function encrypt(
+    key: ArrayBuffer,
+    kdfParams: VarDictionary,
+    signal?: AbortSignal
+): Promise<ArrayBuffer> {
     const uuid = kdfParams.get('$UUID');
     if (!uuid || !(uuid instanceof ArrayBuffer)) {
         return Promise.reject(new KdbxError(ErrorCodes.FileCorrupt, 'no kdf uuid'));
@@ -15,11 +19,11 @@ export function encrypt(key: ArrayBuffer, kdfParams: VarDictionary): Promise<Arr
     const kdfUuid = bytesToBase64(uuid);
     switch (kdfUuid) {
         case KdfId.Argon2d:
-            return encryptArgon2(key, kdfParams, CryptoEngine.Argon2TypeArgon2d);
+            return encryptArgon2(key, kdfParams, CryptoEngine.Argon2TypeArgon2d, signal);
         case KdfId.Argon2id:
-            return encryptArgon2(key, kdfParams, CryptoEngine.Argon2TypeArgon2id);
+            return encryptArgon2(key, kdfParams, CryptoEngine.Argon2TypeArgon2id, signal);
         case KdfId.Aes:
-            return encryptAes(key, kdfParams);
+            return encryptAes(key, kdfParams, signal);
         default:
             return Promise.reject(new KdbxError(ErrorCodes.Unsupported, 'bad kdf'));
     }
@@ -28,7 +32,8 @@ export function encrypt(key: ArrayBuffer, kdfParams: VarDictionary): Promise<Arr
 function encryptArgon2(
     key: ArrayBuffer,
     kdfParams: VarDictionary,
-    argon2type: Argon2Type
+    argon2type: Argon2Type,
+    signal: AbortSignal | undefined
 ): Promise<ArrayBuffer> {
     const salt = kdfParams.get('S');
     if (!(salt instanceof ArrayBuffer) || salt.byteLength !== 32) {
@@ -73,11 +78,12 @@ function encryptArgon2(
         32,
         parallelism,
         argon2type,
-        version
+        version,
+        signal
     );
 }
 
-function encryptAes(key: ArrayBuffer, kdfParams: VarDictionary) {
+function encryptAes(key: ArrayBuffer, kdfParams: VarDictionary, signal: AbortSignal | undefined) {
     const salt = kdfParams.get('S');
     if (!(salt instanceof ArrayBuffer) || salt.byteLength !== 32) {
         return Promise.reject(new KdbxError(ErrorCodes.FileCorrupt, 'bad aes salt'));
@@ -88,7 +94,7 @@ function encryptAes(key: ArrayBuffer, kdfParams: VarDictionary) {
         return Promise.reject(new KdbxError(ErrorCodes.FileCorrupt, 'bad aes rounds'));
     }
 
-    return KeyEncryptorAes.encrypt(new Uint8Array(key), new Uint8Array(salt), rounds).then(
+    return KeyEncryptorAes.encrypt(new Uint8Array(key), new Uint8Array(salt), rounds, signal).then(
         (key) => {
             return CryptoEngine.sha256(arrayToBuffer(key)).then((hash) => {
                 zeroBuffer(key);

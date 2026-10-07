@@ -1,55 +1,57 @@
 import type { Argon2Compute } from '@/core/argon2'
-import type { Argon2WorkerRequest, Argon2WorkerResponse } from '@/workers/argon2.worker'
+import type { Argon2WorkerResponse } from '@/workers/argon2.worker'
 
 import { computeArgon2 } from '@/core/argon2'
 
 /**
- * Argon2 in a dedicated worker so unlocking does not freeze the page. Falls
- * back to the main thread if the worker cannot start (e.g. a stricter CSP).
+ * Argon2 in a worker so unlocking does not freeze the page. Each derivation gets
+ * its own worker: aborting terminates just that one, and its WebAssembly memory
+ * (as large as the file's Argon2 setting) is released afterwards. Falls back to
+ * the main thread once a worker cannot start (e.g. a stricter CSP).
  */
 export function createWorkerArgon2(): Argon2Compute {
-	let worker: Worker | null | undefined
-	let nextId = 0
-	const pending = new Map<number, { resolve: (hash: Uint8Array) => void, reject: (error: Error) => void }>()
+	let workersAvailable = true
 
-	function start(): Worker | null {
-		try {
-			const instance = new Worker(new URL('../workers/argon2.worker.ts', import.meta.url), { type: 'module' })
+	return (request, signal) => {
+		if (signal?.aborted) {
+			return Promise.reject(signal.reason)
+		}
+		let worker: Worker | undefined
+		if (workersAvailable) {
+			try {
+				worker = new Worker(new URL('../workers/argon2.worker.ts', import.meta.url), { type: 'module' })
+			} catch {
+				workersAvailable = false
+			}
+		}
+		if (!worker) {
+			return computeArgon2(request, signal)
+		}
+		const instance = worker
+		return new Promise<Uint8Array>((resolve, reject) => {
+			const abort = () => {
+				instance.terminate()
+				reject(signal!.reason)
+			}
+			signal?.addEventListener('abort', abort, { once: true })
+			const finish = () => {
+				instance.terminate()
+				signal?.removeEventListener('abort', abort)
+			}
 			instance.addEventListener('message', (event: MessageEvent<Argon2WorkerResponse>) => {
-				const job = pending.get(event.data.id)
-				pending.delete(event.data.id)
+				finish()
 				if ('hash' in event.data) {
-					job?.resolve(event.data.hash)
+					resolve(event.data.hash)
 				} else {
-					job?.reject(new Error(event.data.error))
+					reject(new Error(event.data.error))
 				}
 			})
 			instance.addEventListener('error', (event) => {
-				for (const job of pending.values()) {
-					job.reject(new Error(event.message || 'Argon2 worker failed'))
-				}
-				pending.clear()
-				worker = null
+				finish()
+				workersAvailable = false
+				reject(new Error(event.message || 'Argon2 worker failed'))
 			})
-			return instance
-		} catch {
-			return null
-		}
-	}
-
-	return (request) => {
-		if (worker === undefined) {
-			worker = start()
-		}
-		if (worker === null) {
-			return computeArgon2(request)
-		}
-		const id = nextId++
-		const message: Argon2WorkerRequest = { id, request }
-		const instance = worker
-		return new Promise<Uint8Array>((resolve, reject) => {
-			pending.set(id, { resolve, reject })
-			instance.postMessage(message)
+			instance.postMessage(request)
 		})
 	}
 }

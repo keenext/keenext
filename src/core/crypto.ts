@@ -8,7 +8,7 @@ import { computeArgon2 } from './argon2.ts'
  * implementation so key derivation does not freeze the UI.
  */
 export function installArgon2(compute: Argon2Compute = computeArgon2): void {
-	CryptoEngine.setArgon2Impl(async (password, salt, memory, iterations, length, parallelism, type, version) => {
+	CryptoEngine.setArgon2Impl(async (password, salt, memory, iterations, length, parallelism, type, version, signal) => {
 		const hash = await compute({
 			password: new Uint8Array(password),
 			salt: new Uint8Array(salt),
@@ -18,7 +18,7 @@ export function installArgon2(compute: Argon2Compute = computeArgon2): void {
 			parallelism,
 			type,
 			version,
-		})
+		}, signal)
 		return hash.buffer.slice(hash.byteOffset, hash.byteOffset + hash.byteLength) as ArrayBuffer
 	})
 }

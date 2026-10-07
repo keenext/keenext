@@ -8,25 +8,30 @@ describe('KeyEncryptorKdf', () => {
     );
     const exp = '5d2a000401200200130000000000000000000000000000000000000000000000';
 
-    before(() => {
-        CryptoEngine.setArgon2Impl(
-            (password, salt, memory, iterations, length, parallelism, type, version) => {
-                const res = new ArrayBuffer(32);
-                const view = new DataView(res);
-                view.setUint8(0, new Uint8Array(password)[0]);
-                view.setUint8(1, new Uint8Array(salt)[0]);
-                view.setInt16(2, memory);
-                view.setInt8(4, iterations);
-                view.setInt8(5, length);
-                view.setInt8(6, parallelism);
-                view.setInt8(7, type);
-                view.setInt8(8, version);
-                return Promise.resolve(res);
-            }
-        );
-    });
+    const fakeArgon2: CryptoEngine.Argon2Fn = (
+        password,
+        salt,
+        memory,
+        iterations,
+        length,
+        parallelism,
+        type,
+        version
+    ) => {
+        const res = new ArrayBuffer(32);
+        const view = new DataView(res);
+        view.setUint8(0, new Uint8Array(password)[0]);
+        view.setUint8(1, new Uint8Array(salt)[0]);
+        view.setInt16(2, memory);
+        view.setInt8(4, iterations);
+        view.setInt8(5, length);
+        view.setInt8(6, parallelism);
+        view.setInt8(7, type);
+        view.setInt8(8, version);
+        return Promise.resolve(res);
+    };
 
-    it('calls argon2 function', () => {
+    function argon2Params() {
         const params = new VarDictionary();
         params.set('$UUID', ValueType.Bytes, ByteUtils.base64ToBytes(Consts.KdfId.Argon2));
         const saltArr = new Uint8Array(32);
@@ -37,9 +42,41 @@ describe('KeyEncryptorKdf', () => {
         params.set('I', ValueType.UInt64, new Int64(1));
         params.set('M', ValueType.UInt64, new Int64(1024 * 4));
         params.set('V', ValueType.UInt32, 0x13);
-        return KeyEncryptorKdf.encrypt(data, params).then((res) => {
+        return params;
+    }
+
+    before(() => {
+        CryptoEngine.setArgon2Impl(fakeArgon2);
+    });
+
+    it('calls argon2 function', () => {
+        return KeyEncryptorKdf.encrypt(data, argon2Params()).then((res) => {
             expect(ByteUtils.bytesToHex(res)).to.be(exp);
         });
+    });
+
+    it('passes the abort signal to argon2 and does not call it once aborted', async () => {
+        const signals: (AbortSignal | undefined)[] = [];
+        CryptoEngine.setArgon2Impl((...args) => {
+            signals.push(args[8]);
+            return fakeArgon2(...args);
+        });
+        try {
+            const controller = new AbortController();
+            await KeyEncryptorKdf.encrypt(data, argon2Params(), controller.signal);
+            expect(signals).to.eql([controller.signal]);
+
+            controller.abort();
+            try {
+                await KeyEncryptorKdf.encrypt(data, argon2Params(), controller.signal);
+                throw new Error('We should not get here');
+            } catch (e) {
+                expect((e as Error).name).to.be('AbortError');
+            }
+            expect(signals.length).to.be(1);
+        } finally {
+            CryptoEngine.setArgon2Impl(fakeArgon2);
+        }
     });
 
     it('throws error for no uuid', () => {
