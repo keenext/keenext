@@ -1216,11 +1216,26 @@ describe('Kdbx', () => {
             expect(`${loaded.versionMajor}.${loaded.versionMinor}`).to.be('4.0');
         });
 
-        it('keeps KDBX 3.1', async () => {
+        it('saves KDBX 3.1 with group tags as 4.1 and keeps the AES-KDF rounds', async () => {
+            const db = kdbxweb.Kdbx.create(cred(), 'example');
+            db.setVersion(3);
+            db.header.keyEncryptionRounds = 1234;
+            db.createGroup(db.getDefaultGroup(), 'tagged').tags = ['t'];
+            const loaded = await kdbxweb.Kdbx.load(await db.save(), cred());
+            expect(`${loaded.versionMajor}.${loaded.versionMinor}`).to.be('4.1');
+            const params = loaded.header.kdfParameters!;
+            expect(kdbxweb.ByteUtils.bytesToBase64(params.get('$UUID') as ArrayBuffer)).to.be(
+                kdbxweb.Consts.KdfId.Aes
+            );
+            expect((params.get('R') as kdbxweb.Int64).value).to.be(1234);
+            expect(loaded.getDefaultGroup().groups[1].tags).to.eql(['t']);
+        });
+
+        it('keeps KDBX 3.1 when objects were only moved', async () => {
             const db = kdbxweb.Kdbx.create(cred(), 'example');
             db.setVersion(3);
             db.header.keyEncryptionRounds = 1000;
-            db.createGroup(db.getDefaultGroup(), 'tagged').tags = ['t'];
+            db.remove(db.createEntry(db.getDefaultGroup()));
             const loaded = await kdbxweb.Kdbx.load(await db.save(), cred());
             expect(`${loaded.versionMajor}.${loaded.versionMinor}`).to.be('3.1');
         });

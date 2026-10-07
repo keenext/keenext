@@ -104,21 +104,29 @@ export class KdbxFormat {
         return this.kdbx;
     }
 
-    /** KDBX 4.0 files become 4.1 when they hold values 4.0 cannot store, instead of losing them. */
-    private raiseMinorVersionIfNeeded(): void {
-        if (
-            this.kdbx.versionMajor === 4 &&
-            this.kdbx.versionMinor < 1 &&
-            this.kdbx.hasKdbx41Values()
-        ) {
+    /**
+     * Files become KDBX 4.1 when they hold values their version cannot store, instead of
+     * losing them. KDBX 3 keeps its AES-KDF and rounds. Leaving KDBX 3 locks out clients
+     * that only read KDBX 3, so a moved object (previous parent group) alone does not
+     * justify it.
+     */
+    private raiseVersionIfNeeded(): void {
+        if (this.kdbx.versionMajor === 4 && this.kdbx.versionMinor < 1) {
+            if (this.kdbx.hasKdbx41Values()) {
+                this.kdbx.header.versionMinor = 1;
+            }
+        } else if (this.kdbx.versionMajor === 3 && this.kdbx.hasKdbx41Values(true)) {
+            this.kdbx.header.upgradeToKdbx4KeepingAesKdf();
             this.kdbx.header.versionMinor = 1;
+            this.kdbx.meta.headerHash = undefined;
+            this.kdbx.meta.settingsChanged = new Date();
         }
     }
 
     async save(): Promise<ArrayBuffer> {
         await this.kdbx.credentials.ready;
         const stm = new BinaryStream();
-        this.raiseMinorVersionIfNeeded();
+        this.raiseVersionIfNeeded();
         this.kdbx.header.generateSalts();
         this.kdbx.header.write(stm);
         if (this.kdbx.versionMajor === 3) {
@@ -177,7 +185,7 @@ export class KdbxFormat {
 
     async saveXml(prettyPrint = false): Promise<string> {
         await this.kdbx.credentials.ready;
-        this.raiseMinorVersionIfNeeded();
+        this.raiseVersionIfNeeded();
         this.kdbx.header.generateSalts();
         this.ctx.exportXml = true;
         this.kdbx.buildXml(this.ctx);

@@ -644,6 +644,21 @@ export class KdbxHeader {
         this.createKdfParameters(kdf);
     }
 
+    /**
+     * KDBX 3 to 4 with the AES-KDF and its rounds kept, as KeePassXC does when a file
+     * needs KDBX 4; setVersion(4) switches to Argon2 with default parameters instead.
+     */
+    upgradeToKdbx4KeepingAesKdf(): void {
+        const rounds = this.keyEncryptionRounds ?? Defaults.KeyEncryptionRounds;
+        this.createKdfParameters(KdfId.Aes);
+        this.kdfParameters!.set(
+            'R',
+            ValueType.UInt64,
+            Int64.from(Math.min(rounds, Number.MAX_SAFE_INTEGER))
+        );
+        this.setVersion(4);
+    }
+
     static read(stm: BinaryStream, ctx: KdbxContext): KdbxHeader {
         const header = new KdbxHeader();
         header.readSignature(stm);

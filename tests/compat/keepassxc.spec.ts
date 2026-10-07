@@ -4,7 +4,7 @@ import { beforeAll, describe, expect, it } from 'vitest'
 import { entryByTitle, newDatabase } from '../helpers/databases.ts'
 import { exportXml, fixture, fixturesDir, hasKeepassxc, keepassxc, writeTemp } from '../helpers/keepassxc.ts'
 import { installArgon2 } from '@/core/crypto'
-import { applyDatabaseSettings, createCredentials, getDatabaseSettings, openDatabase, saveDatabase } from '@/core/database'
+import { applyDatabaseSettings, createCredentials, getDatabaseSettings, getKdf, openDatabase, saveDatabase } from '@/core/database'
 import { applyDraft, attachFile, createEntry, deleteEntry, draftFromEntry, emptyDraft, getField } from '@/core/entries'
 import { createGroup } from '@/core/groups'
 import { exportCsv, exportXml as exportKeePassXml, importDatabase, loadXmlDatabase, parseCsv } from '@/core/transfer'
@@ -124,6 +124,21 @@ describe.runIf(hasKeepassxc)('KDBX 4.1 values written here, read by KeePassXC', 
 		const xml = exportXml(writeTemp('kdbx41.kdbx', data), { password })
 		expect(xml).toContain('<Name>Tagged</Name><Notes/><Tags>work, shared</Tags>')
 		expect(xml).toContain('<QualityCheck>False</QualityCheck>')
+	})
+
+	it('raises KDBX 3.1 with group tags to 4.1 and keeps its AES-KDF rounds', async () => {
+		const auth = { password, keyFile: keyFilePath }
+		const db = await openDatabase(fixture('keepassxc-password-keyfile.kdbx'), createCredentials({ password, keyFile: fixture('keepassxc-keyfile.keyx') }))
+		const kdf = getKdf(db)
+		expect(kdf.type).toBe('aes')
+		createGroup(db, db.getDefaultGroup(), 'Tagged').tags = ['work']
+		const data = await saveDatabase(db)
+
+		const view = new DataView(data)
+		expect(`${view.getUint16(10, true)}.${view.getUint16(8, true)}`).toBe('4.1')
+		const path = writeTemp('upgraded.kdbx', data)
+		expect(keepassxc('db-info', path, auth)).toContain(`AES (${(kdf as { rounds: number }).rounds} `)
+		expect(exportXml(path, auth)).toContain('<Name>Tagged</Name><Notes/><Tags>work</Tags>')
 	})
 })
 
