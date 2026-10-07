@@ -19,20 +19,23 @@ export function getHmacKey(key: ArrayBuffer, blockIndex: Int64): Promise<ArrayBu
     });
 }
 
-function getBlockHmac(
+async function getBlockHmac(
     key: ArrayBuffer,
     blockIndex: number,
     blockLength: number,
     blockData: ArrayBuffer
 ): Promise<ArrayBuffer> {
-    return getHmacKey(key, new Int64(blockIndex)).then((blockKey) => {
+    const blockKey = await getHmacKey(key, new Int64(blockIndex));
+    try {
         const blockDataForHash = new Uint8Array(blockData.byteLength + 4 + 8);
         const blockDataForHashView = new DataView(blockDataForHash.buffer);
         blockDataForHash.set(new Uint8Array(blockData), 4 + 8);
         blockDataForHashView.setInt32(0, blockIndex, true);
         blockDataForHashView.setInt32(8, blockLength, true);
-        return CryptoEngine.hmacSha256(blockKey, blockDataForHash.buffer);
-    });
+        return await CryptoEngine.hmacSha256(blockKey, blockDataForHash.buffer);
+    } finally {
+        zeroBuffer(blockKey);
+    }
 }
 
 export function decrypt(data: ArrayBuffer, key: ArrayBuffer): Promise<ArrayBuffer> {

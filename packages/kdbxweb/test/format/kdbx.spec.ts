@@ -1,4 +1,5 @@
 import expect from 'expect.js';
+import { vi } from 'vitest';
 import * as kdbxweb from '../../lib';
 import { argon2 } from '../test-support/argon2';
 import { TestResources } from '../test-support/test-resources';
@@ -1246,6 +1247,39 @@ describe('Kdbx', () => {
             pos += 3 + size;
         }
     }
+
+    it('zeroes the derived keys when the key is wrong', async () => {
+        const right = new kdbxweb.Credentials(kdbxweb.ProtectedValue.fromString('right'));
+        const file = await kdbxweb.Kdbx.create(right, 'example').save();
+        const wrong = new kdbxweb.Credentials(kdbxweb.ProtectedValue.fromString('wrong'));
+        await wrong.ready;
+
+        // Loading KDBX 4 computes SHA-512 only for key material: the HMAC key and the header's HMAC key.
+        const sha512Results: ArrayBuffer[] = [];
+        const digest = crypto.subtle.digest.bind(crypto.subtle);
+        const spy = vi
+            .spyOn(crypto.subtle, 'digest')
+            .mockImplementation(async (algorithm: AlgorithmIdentifier, data: BufferSource) => {
+                const result = await digest(algorithm, data);
+                const name = typeof algorithm === 'string' ? algorithm : algorithm.name;
+                if (name === 'SHA-512') {
+                    sha512Results.push(result);
+                }
+                return result;
+            });
+        try {
+            await kdbxweb.Kdbx.load(file, wrong);
+            throw new Error('We should not get here');
+        } catch (e) {
+            expect((e as kdbxweb.KdbxError).code).to.be(kdbxweb.Consts.ErrorCodes.InvalidKey);
+        } finally {
+            spy.mockRestore();
+        }
+        expect(sha512Results.length).to.be(2);
+        for (const result of sha512Results) {
+            expect(new Uint8Array(result).every((byte) => byte === 0)).to.be(true);
+        }
+    });
 
     it('stops the key derivation when the signal is aborted', async () => {
         const cred = new kdbxweb.Credentials(kdbxweb.ProtectedValue.fromString('test'));

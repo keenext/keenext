@@ -219,7 +219,7 @@ describe('XmlUtils', () => {
 
         it('returns node protected value if any', () => {
             const xml = XmlUtils.parse('<item>text</item>');
-            xml.documentElement.protectedValue = ProtectedValue.fromString('pr');
+            XmlUtils.setNodeProtectedValue(xml.documentElement, ProtectedValue.fromString('pr'));
             const text = XmlUtils.getText(xml.documentElement);
             expect(text).to.be('pr');
         });
@@ -558,7 +558,7 @@ describe('XmlUtils', () => {
         it('returns node protected text', () => {
             const xml = XmlUtils.parse('<item>text</item>');
             const pv = ProtectedValue.fromString('pv');
-            xml.documentElement.protectedValue = pv;
+            XmlUtils.setNodeProtectedValue(xml.documentElement, pv);
             const res = XmlUtils.getProtectedText(xml.documentElement);
             expect(res).to.be(pv);
         });
@@ -588,14 +588,14 @@ describe('XmlUtils', () => {
             const pv = ProtectedValue.fromString('str');
             XmlUtils.setProtectedText(xml.documentElement, pv);
             expect(XmlUtils.serialize(xml)).to.be('<item Protected="True">text</item>');
-            expect(xml.documentElement.protectedValue).to.be(pv);
+            expect(XmlUtils.getNodeProtectedValue(xml.documentElement)).to.be(pv);
         });
 
         it('sets node protected text as text', () => {
             const xml = XmlUtils.parse('<item>text</item>');
             XmlUtils.setProtectedText(xml.documentElement, 'str');
             expect(XmlUtils.serialize(xml)).to.be('<item>str</item>');
-            expect(xml.documentElement.protectedValue).to.be(undefined);
+            expect(XmlUtils.getNodeProtectedValue(xml.documentElement)).to.be(undefined);
         });
     });
 
@@ -603,7 +603,7 @@ describe('XmlUtils', () => {
         it('returns node protected binary', () => {
             const xml = XmlUtils.parse('<item>YWJj</item>');
             const pv = ProtectedValue.fromString('pv');
-            xml.documentElement.protectedValue = pv;
+            XmlUtils.setNodeProtectedValue(xml.documentElement, pv);
             const res = XmlUtils.getProtectedBinary(xml.documentElement);
             expect(res).to.be(pv);
         });
@@ -641,28 +641,28 @@ describe('XmlUtils', () => {
             const pv = ProtectedValue.fromString('str');
             XmlUtils.setProtectedBinary(xml.documentElement, pv);
             expect(XmlUtils.serialize(xml)).to.be('<item Protected="True">text</item>');
-            expect(xml.documentElement.protectedValue).to.be(pv);
+            expect(XmlUtils.getNodeProtectedValue(xml.documentElement)).to.be(pv);
         });
 
         it('sets node protected binary as ref', () => {
             const xml = XmlUtils.parse('<item>text</item>');
             XmlUtils.setProtectedBinary(xml.documentElement, { ref: '123' });
             expect(XmlUtils.serialize(xml)).to.be('<item Ref="123">text</item>');
-            expect(xml.documentElement.protectedValue).to.be(undefined);
+            expect(XmlUtils.getNodeProtectedValue(xml.documentElement)).to.be(undefined);
         });
 
         it('sets node protected binary as text', () => {
             const xml = XmlUtils.parse('<item>text</item>');
             XmlUtils.setProtectedBinary(xml.documentElement, ByteUtils.base64ToBytes('YWJj'));
             expect(XmlUtils.serialize(xml)).to.be('<item>YWJj</item>');
-            expect(xml.documentElement.protectedValue).to.be(undefined);
+            expect(XmlUtils.getNodeProtectedValue(xml.documentElement)).to.be(undefined);
         });
 
         it('sets node protected binary as encoded text', () => {
             const xml = XmlUtils.parse('<item>text</item>');
             XmlUtils.setProtectedBinary(xml.documentElement, new TextEncoder().encode('abc'));
             expect(XmlUtils.serialize(xml)).to.be('<item>YWJj</item>');
-            expect(xml.documentElement.protectedValue).to.be(undefined);
+            expect(XmlUtils.getNodeProtectedValue(xml.documentElement)).to.be(undefined);
         });
     });
 
@@ -689,11 +689,11 @@ describe('XmlUtils', () => {
             const item1 = XmlUtils.getChildNode(xml.documentElement, 'item1');
             const item2 = XmlUtils.getChildNode(xml.documentElement, 'item2');
             const inner = XmlUtils.getChildNode(item1, 'inner');
-            expect(item1!.protectedValue).to.be(undefined);
-            expect(item2!.protectedValue).to.be.ok();
-            expect(inner!.protectedValue).to.be.ok();
-            expect(inner!.protectedValue!.getText()).to.be('032');
-            expect(item2!.protectedValue!.getText()).to.be('674');
+            expect(XmlUtils.getNodeProtectedValue(item1!)).to.be(undefined);
+            expect(XmlUtils.getNodeProtectedValue(item2!)).to.be.ok();
+            expect(XmlUtils.getNodeProtectedValue(inner!)).to.be.ok();
+            expect(XmlUtils.getNodeProtectedValue(inner!)!.getText()).to.be('032');
+            expect(XmlUtils.getNodeProtectedValue(item2!)!.getText()).to.be('674');
         });
 
         it('generates error for bad protected values', () => {
@@ -728,8 +728,8 @@ describe('XmlUtils', () => {
             const item1 = XmlUtils.getChildNode(xml.documentElement, 'item1');
             const item2 = XmlUtils.getChildNode(xml.documentElement, 'item2');
             const inner = XmlUtils.getChildNode(item1, 'inner');
-            inner!.protectedValue = ProtectedValue.fromString('123');
-            item2!.protectedValue = ProtectedValue.fromString('456');
+            XmlUtils.setNodeProtectedValue(inner!, ProtectedValue.fromString('123'));
+            XmlUtils.setNodeProtectedValue(item2!, ProtectedValue.fromString('456'));
             let count = 0;
 
             class TestPSG extends ProtectSaltGenerator {
@@ -744,8 +744,8 @@ describe('XmlUtils', () => {
             }
 
             XmlUtils.updateProtectedValuesSalt(xml.documentElement, new TestPSG());
-            expect(new Uint8Array(inner!.protectedValue.salt)).to.be.eql([1, 1, 1]);
-            expect(new Uint8Array(item2!.protectedValue.salt)).to.be.eql([2, 2, 2]);
+            expect(new Uint8Array(XmlUtils.getNodeProtectedValue(inner!)!.salt)).to.be.eql([1, 1, 1]);
+            expect(new Uint8Array(XmlUtils.getNodeProtectedValue(item2!)!.salt)).to.be.eql([2, 2, 2]);
         });
     });
 
@@ -758,8 +758,8 @@ describe('XmlUtils', () => {
             const item1 = XmlUtils.getChildNode(xml.documentElement, 'item1');
             const item2 = XmlUtils.getChildNode(xml.documentElement, 'item2');
             const inner = XmlUtils.getChildNode(item1, 'inner');
-            inner!.protectedValue = ProtectedValue.fromString('123');
-            item2!.protectedValue = ProtectedValue.fromString('456');
+            XmlUtils.setNodeProtectedValue(inner!, ProtectedValue.fromString('123'));
+            XmlUtils.setNodeProtectedValue(item2!, ProtectedValue.fromString('456'));
             XmlUtils.unprotectValues(xml.documentElement);
             expect(XmlUtils.serialize(inner as Document)).to.be(
                 '<inner ProtectInMemory="True">123</inner>'
@@ -780,10 +780,10 @@ describe('XmlUtils', () => {
             const item2 = XmlUtils.getChildNode(xml.documentElement, 'item2');
             const inner = XmlUtils.getChildNode(item1, 'inner');
             const salt = new ArrayBuffer(16);
-            inner!.protectedValue = ProtectedValue.fromString('123');
-            item2!.protectedValue = ProtectedValue.fromString('456');
-            inner!.protectedValue.setSalt(salt);
-            item2!.protectedValue.setSalt(salt);
+            XmlUtils.setNodeProtectedValue(inner!, ProtectedValue.fromString('123'));
+            XmlUtils.setNodeProtectedValue(item2!, ProtectedValue.fromString('456'));
+            XmlUtils.getNodeProtectedValue(inner!)!.setSalt(salt);
+            XmlUtils.getNodeProtectedValue(item2!)!.setSalt(salt);
             XmlUtils.protectUnprotectedValues(xml.documentElement);
             expect(XmlUtils.serialize(inner as Document)).to.be(
                 '<inner Protected="True">MTIz</inner>'
@@ -805,13 +805,13 @@ describe('XmlUtils', () => {
             const item2 = XmlUtils.getChildNode(xml.documentElement, 'item2');
             const inner = XmlUtils.getChildNode(item1, 'inner');
 
-            expect(item1!.protectedValue).to.be(undefined);
-            expect(item2!.protectedValue).to.be.ok();
-            expect(inner!.protectedValue).to.be.ok();
-            expect(inner!.protectedValue!.getText()).to.be('123');
-            expect(item2!.protectedValue!.getText()).to.be('456');
-            expect(inner!.textContent).to.be(inner!.protectedValue!.toString());
-            expect(item2!.textContent).to.be(item2!.protectedValue!.toString());
+            expect(XmlUtils.getNodeProtectedValue(item1!)).to.be(undefined);
+            expect(XmlUtils.getNodeProtectedValue(item2!)).to.be.ok();
+            expect(XmlUtils.getNodeProtectedValue(inner!)).to.be.ok();
+            expect(XmlUtils.getNodeProtectedValue(inner!)!.getText()).to.be('123');
+            expect(XmlUtils.getNodeProtectedValue(item2!)!.getText()).to.be('456');
+            expect(inner!.textContent).to.be(XmlUtils.getNodeProtectedValue(inner!)!.toString());
+            expect(item2!.textContent).to.be(XmlUtils.getNodeProtectedValue(item2!)!.toString());
             expect((inner as Element).getAttribute('Protected')).to.be.ok();
             expect((inner as Element).getAttribute('ProtectInMemory')).not.be.ok();
         });

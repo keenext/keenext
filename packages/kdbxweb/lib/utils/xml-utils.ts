@@ -15,10 +15,18 @@ const EpochSeconds = 62135596800;
 const LatestDateMs = Date.UTC(9999, 11, 31, 23, 59, 59);
 const TagsSplitRegex = /\s*[;,:]\s*/;
 
-declare global {
-    interface Node {
-        protectedValue: ProtectedValue | undefined;
-        lineNumber: number | undefined;
+// Values of nodes marked Protected="True", held beside the DOM rather than on its nodes.
+const protectedValues = new WeakMap<Node, ProtectedValue>();
+
+export function getNodeProtectedValue(node: Node): ProtectedValue | undefined {
+    return protectedValues.get(node);
+}
+
+export function setNodeProtectedValue(node: Node, value: ProtectedValue | undefined): void {
+    if (value) {
+        protectedValues.set(node, value);
+    } else {
+        protectedValues.delete(node);
     }
 }
 
@@ -148,7 +156,8 @@ export function getText(node: Node | null): string | undefined {
     if (!node?.childNodes) {
         return undefined;
     }
-    return node.protectedValue ? node.protectedValue.getText() : (node.textContent ?? undefined);
+    const protectedValue = protectedValues.get(node);
+    return protectedValue ? protectedValue.getText() : (node.textContent ?? undefined);
 }
 
 export function setText(node: Node, text: string | undefined): void {
@@ -270,12 +279,12 @@ export function setUuid(
 }
 
 export function getProtectedText(node: Node): ProtectedValue | string | undefined {
-    return (node.protectedValue || node.textContent) ?? undefined;
+    return (protectedValues.get(node) || node.textContent) ?? undefined;
 }
 
 export function setProtectedText(node: Node, text: ProtectedValue | string): void {
     if (text instanceof ProtectedValue) {
-        node.protectedValue = text;
+        protectedValues.set(node, text);
         (<Element>node).setAttribute(XmlNames.Attr.Protected, 'True');
     } else {
         setText(node, text);
@@ -283,8 +292,9 @@ export function setProtectedText(node: Node, text: ProtectedValue | string): voi
 }
 
 export function getProtectedBinary(node: Node): KdbxBinaryOrRef | undefined {
-    if (node.protectedValue) {
-        return node.protectedValue;
+    const protectedValue = protectedValues.get(node);
+    if (protectedValue) {
+        return protectedValue;
     }
     const text = node.textContent;
     const ref = (<Element>node).getAttribute(XmlNames.Attr.Ref);
@@ -304,7 +314,7 @@ export function getProtectedBinary(node: Node): KdbxBinaryOrRef | undefined {
 
 export function setProtectedBinary(node: Node, binary: KdbxBinaryOrRef): void {
     if (binary instanceof ProtectedValue) {
-        node.protectedValue = binary;
+        protectedValues.set(node, binary);
         (<Element>node).setAttribute(XmlNames.Attr.Protected, 'True');
     } else if (KdbxBinaries.isKdbxBinaryRef(binary)) {
         (<Element>node).setAttribute(XmlNames.Attr.Ref, binary.ref);
@@ -330,13 +340,13 @@ export function setProtectedValues(node: Node, protectSaltGenerator: ProtectSalt
                 const value = arrayToBuffer(base64ToBytes(node.textContent || ''));
                 if (value.byteLength) {
                     const salt = protectSaltGenerator.getSalt(value.byteLength);
-                    node.protectedValue = new ProtectedValue(value, salt);
+                    protectedValues.set(node, new ProtectedValue(value, salt));
                 }
             } catch (e) {
-                throw new KdbxError(
-                    ErrorCodes.FileCorrupt,
-                    `bad protected value at line ${node.lineNumber}: ${e}`
-                );
+                // Set by xmldom; browsers' DOMs have no line numbers.
+                const line = (node as { lineNumber?: number }).lineNumber;
+                const at = line === undefined ? '' : ` at line ${line}`;
+                throw new KdbxError(ErrorCodes.FileCorrupt, `bad protected value${at}: ${e}`);
             }
         }
     });
@@ -347,33 +357,33 @@ export function updateProtectedValuesSalt(
     protectSaltGenerator: ProtectSaltGenerator
 ): void {
     traverse(node, (node) => {
-        if (strToBoolean(node.getAttribute(XmlNames.Attr.Protected)) && node.protectedValue) {
-            const newSalt = protectSaltGenerator.getSalt(node.protectedValue.byteLength);
-            node.protectedValue.setSalt(newSalt);
-            node.textContent = node.protectedValue.toString();
+        const protectedValue = protectedValues.get(node);
+        if (strToBoolean(node.getAttribute(XmlNames.Attr.Protected)) && protectedValue) {
+            const newSalt = protectSaltGenerator.getSalt(protectedValue.byteLength);
+            protectedValue.setSalt(newSalt);
+            node.textContent = protectedValue.toString();
         }
     });
 }
 
 export function unprotectValues(node: Node): void {
     traverse(node, (node) => {
-        if (strToBoolean(node.getAttribute(XmlNames.Attr.Protected)) && node.protectedValue) {
+        const protectedValue = protectedValues.get(node);
+        if (strToBoolean(node.getAttribute(XmlNames.Attr.Protected)) && protectedValue) {
             node.removeAttribute(XmlNames.Attr.Protected);
             node.setAttribute(XmlNames.Attr.ProtectedInMemPlainXml, 'True');
-            node.textContent = node.protectedValue.getText();
+            node.textContent = protectedValue.getText();
         }
     });
 }
 
 export function protectUnprotectedValues(node: Node): void {
     traverse(node, (node) => {
-        if (
-            strToBoolean(node.getAttribute(XmlNames.Attr.ProtectedInMemPlainXml)) &&
-            node.protectedValue
-        ) {
+        const protectedValue = protectedValues.get(node);
+        if (strToBoolean(node.getAttribute(XmlNames.Attr.ProtectedInMemPlainXml)) && protectedValue) {
             node.removeAttribute(XmlNames.Attr.ProtectedInMemPlainXml);
             node.setAttribute(XmlNames.Attr.Protected, 'True');
-            node.textContent = node.protectedValue.toString();
+            node.textContent = protectedValue.toString();
         }
     });
 }
@@ -381,8 +391,9 @@ export function protectUnprotectedValues(node: Node): void {
 export function protectPlainValues(node: Node): void {
     traverse(node, (node) => {
         if (strToBoolean(node.getAttribute(XmlNames.Attr.ProtectedInMemPlainXml))) {
-            node.protectedValue = ProtectedValue.fromString(node.textContent || '');
-            node.textContent = node.protectedValue.toString();
+            const protectedValue = ProtectedValue.fromString(node.textContent || '');
+            protectedValues.set(node, protectedValue);
+            node.textContent = protectedValue.toString();
             node.removeAttribute(XmlNames.Attr.ProtectedInMemPlainXml);
             node.setAttribute(XmlNames.Attr.Protected, 'True');
         }
