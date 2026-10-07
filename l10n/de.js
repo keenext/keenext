@@ -98,6 +98,7 @@ OC.L10N.register(
 		"Icon {number}": "Icon {number}",
 		"Icons in this database": "Icons in dieser Datenbank",
 		"Import": "Importieren",
+		"Import anyway": "Trotzdem importieren",
 		"Import into {name}": "In {name} importieren",
 		"Import {name}": "Import {name}",
 		"_Imported {count} entry_::_Imported {count} entries_": [
@@ -224,7 +225,7 @@ OC.L10N.register(
 		"The file no longer exists": "Die Datei existiert nicht mehr",
 		"The QR code does not contain a TOTP setup.": "Der QR-Code enthält keine TOTP-Einrichtung.",
 		"This database asks for an unusually expensive key derivation": "Diese Datenbank verlangt eine ungewöhnlich aufwendige Schlüsselableitung",
-		"This database asks for an unusually expensive key derivation ({kdf}). Unlocking may take minutes or never finish. Unlock anyway only if you expect these settings.": "Diese Datenbank verlangt eine ungewöhnlich aufwendige Schlüsselableitung ({kdf}). Das Entsperren kann Minuten dauern oder nie fertig werden. Entsperre trotzdem nur, wenn du diese Einstellungen erwartest.",
+		"This database asks for an unusually expensive key derivation ({kdf}). Opening it may take minutes or never finish. Continue only if you expect these settings.": "Diese Datenbank verlangt eine ungewöhnlich aufwendige Schlüsselableitung ({kdf}). Das Öffnen kann Minuten dauern oder nie fertig werden. Fahre nur fort, wenn du diese Einstellungen erwartest.",
 		"This database format is not supported": "Dieses Datenbankformat wird nicht unterstützt",
 		"This entry expired on {date}": "Dieser Eintrag ist am {date} abgelaufen",
 		"This is a Google Authenticator export, which is not supported. Use the QR code shown when setting up the account instead.": "Das ist ein Export aus dem Google Authenticator, der nicht unterstützt wird. Verwende stattdessen den QR-Code, der beim Einrichten des Kontos angezeigt wird.",

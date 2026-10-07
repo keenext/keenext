@@ -48,7 +48,7 @@ The fork has no Node fallbacks: it needs WebCrypto and a global `DOMParser`/`XML
 
 A database may come from someone else (shared folder). Entry URLs become links only through `openableUrl()` (core/urls.ts), which allows web, mail and similar schemes and rejects `javascript:`, `data:`, `cmd://` and the like. Nothing is rendered with `v-html`. Placeholders (`{REF:…}`, `{S:…}`) are resolved with a depth limit.
 
-The key derivation settings come from the file and run before the key can be checked, so anyone who can write the file could make unlocking or a background sync run for hours. `openDatabase` (core/database.ts) reads them from the header first and throws `CostlyKdfError` above `DEFAULT_KDF_LIMITS` (AES-KDF rounds; Argon2 memory × iterations). The unlock view shows the settings and unlocks only after confirmation; the session then accepts remote versions up to what was confirmed or what the local database itself uses.
+The key derivation settings come from the file and run before the key can be checked, so anyone who can write the file could make unlocking or a background sync run for hours. `openDatabase` (core/database.ts) reads them from the header first and throws `CostlyKdfError` above `DEFAULT_KDF_LIMITS` (AES-KDF rounds; Argon2 memory × iterations). The unlock view and the import dialog show the settings (`CostlyKdfWarning`) and continue only after confirmation; the session then accepts remote versions up to what was confirmed or what the local database itself uses.
 
 ## Backend
 

@@ -57,27 +57,30 @@
 			<NcNoteCard v-if="error" type="error">
 				{{ error }}
 			</NcNoteCard>
+			<CostlyKdfWarning v-if="costlyKdf" :kdf="costlyKdf" />
 		</div>
 	</NcDialog>
 </template>
 
 <script setup lang="ts">
 import type { Kdbx } from 'kdbxweb'
+import type { Kdf } from '@/core/database'
 import type { ImportResult } from '@/core/transfer'
 import type { KeyFileChoice } from '@/services/keyFile'
 import type { OpenDatabase } from '@/stores/vault'
 
 import { mdiClose, mdiCloudOutline, mdiFileImportOutline, mdiUpload } from '@mdi/js'
 import { showSuccess } from '@nextcloud/dialogs'
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
 import NcPasswordField from '@nextcloud/vue/components/NcPasswordField'
+import CostlyKdfWarning from './CostlyKdfWarning.vue'
 import KeyFileChooser from './KeyFileChooser.vue'
 import { findGroup } from '@/composables/useDatabase'
-import { createCredentials, openDatabase } from '@/core/database'
+import { CostlyKdfError, createCredentials, kdfLimitsAllowing, openDatabase } from '@/core/database'
 import { isInRecycleBin, recycleBin } from '@/core/entries'
 import { importBitwarden, importCsv, importDatabase, loadXmlDatabase } from '@/core/transfer'
 import { n, t } from '@/l10n'
@@ -107,6 +110,15 @@ const password = ref('')
 const keyFile = ref<KeyFileChoice | null>(null)
 const busy = ref(false)
 const error = ref('')
+/** Set once the chosen file asked for more than the default limits; the next import accepts it. */
+const costlyKdf = ref<Kdf | null>(null)
+let controller: AbortController | null = null
+
+watch(source, () => {
+	costlyKdf.value = null
+})
+// Closing the dialog stops a key derivation that is still running.
+onBeforeUnmount(() => controller?.abort())
 
 const format = computed(() => {
 	const extension = /\.(\w+)$/.exec(source.value?.name ?? '')?.[1]?.toLowerCase()
@@ -160,12 +172,18 @@ async function run(): Promise<boolean> {
 	}
 	busy.value = true
 	error.value = ''
+	controller = new AbortController()
+	const { signal } = controller
 	try {
 		const data = source.value.data ?? await downloadFileById(source.value.fileId!)
 		const text = format.value === 'kdbx' ? '' : new TextDecoder().decode(data)
 		// Async parts first: vault.change runs the mutation synchronously.
 		const other = format.value === 'kdbx'
-			? await openDatabase(data, createCredentials({ password: password.value === '' && keyFile.value ? undefined : password.value, ...(await resolveKeyFile(keyFile.value)) }))
+			? await openDatabase(
+					data,
+					createCredentials({ password: password.value === '' && keyFile.value ? undefined : password.value, ...(await resolveKeyFile(keyFile.value)) }),
+					{ signal, kdfLimits: costlyKdf.value ? kdfLimitsAllowing(costlyKdf.value) : undefined },
+				)
 			: format.value === 'xml' ? await loadXmlDatabase(text) : undefined
 		const name = groupName.value
 		const result: ImportResult = vault.change(props.database.id, (db) => {
@@ -182,7 +200,11 @@ async function run(): Promise<boolean> {
 		emit('close')
 		return true
 	} catch (cause) {
-		error.value = vault.describeError(cause)
+		if (cause instanceof CostlyKdfError) {
+			costlyKdf.value = cause.kdf
+		} else if (!signal.aborted) {
+			error.value = vault.describeError(cause)
+		}
 		return false
 	} finally {
 		busy.value = false
@@ -192,7 +214,7 @@ async function run(): Promise<boolean> {
 const buttons = computed(() => [
 	{ label: t('keenext', 'Cancel'), callback: () => emit('close') },
 	{
-		label: busy.value ? t('keenext', 'Importing…') : t('keenext', 'Import'),
+		label: busy.value ? t('keenext', 'Importing…') : costlyKdf.value ? t('keenext', 'Import anyway') : t('keenext', 'Import'),
 		variant: 'primary' as const,
 		disabled: !source.value || !format.value || busy.value || !props.database.writable,
 		callback: async () => (await run()) || false,

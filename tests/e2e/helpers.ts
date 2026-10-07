@@ -2,6 +2,7 @@ import type { Page } from '@playwright/test'
 
 import { expect } from '@playwright/test'
 import { execFileSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -44,6 +45,38 @@ export function seedBytes(name: string, data: Uint8Array): string {
 	})
 	occ('files:scan', '--path', `/${USER}/files/${DIR}`)
 	return name
+}
+
+/**
+ * A fixture with Argon2 iterations raised in its header. The header's SHA-256 is
+ * updated, the HMAC is not: loading gets as far as the key derivation, which then
+ * runs (practically) forever.
+ */
+export function withArgon2Iterations(fixtureName: string, iterations: bigint): Buffer {
+	const file = Buffer.from(readFileSync(new URL(`../fixtures/${fixtureName}`, import.meta.url)))
+	// KDBX 4 header fields: 1-byte id, 4-byte size; 11 is KdfParameters, 0 ends the header.
+	for (let pos = 12; ;) {
+		const id = file[pos]
+		const start = pos + 5
+		const end = start + file.readUInt32LE(pos + 1)
+		if (id === 11) {
+			// VarDictionary: 2-byte version, then items of type, key length, key, value length, value
+			for (let item = start + 2; file[item] !== 0;) {
+				const keyLength = file.readInt32LE(item + 1)
+				const key = file.toString('utf8', item + 5, item + 5 + keyLength)
+				const valueStart = item + 5 + keyLength + 4
+				if (key === 'I') {
+					file.writeBigUInt64LE(iterations, valueStart)
+				}
+				item = valueStart + file.readInt32LE(item + 5 + keyLength)
+			}
+		}
+		if (id === 0) {
+			createHash('sha256').update(file.subarray(0, end)).digest().copy(file, end)
+			return file
+		}
+		pos = end
+	}
 }
 
 /** Copies a file out of the admin's storage to a temporary local path. */

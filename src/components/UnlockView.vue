@@ -21,9 +21,7 @@
 			<NcNoteCard v-if="error" type="error">
 				{{ error }}
 			</NcNoteCard>
-			<NcNoteCard v-if="costlyKdf" type="warning">
-				{{ t('keenext', 'This database asks for an unusually expensive key derivation ({kdf}). Unlocking may take minutes or never finish. Unlock anyway only if you expect these settings.', { kdf: describeKdf(costlyKdf) }) }}
-			</NcNoteCard>
+			<CostlyKdfWarning v-if="costlyKdf" :kdf="costlyKdf" />
 			<NcNoteCard v-if="!database.writable" type="info">
 				{{ t('keenext', 'You can only read this database; changes cannot be saved.') }}
 			</NcNoteCard>
@@ -65,6 +63,7 @@ import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
 import NcPasswordField from '@nextcloud/vue/components/NcPasswordField'
+import CostlyKdfWarning from './CostlyKdfWarning.vue'
 import KeyFileChooser from './KeyFileChooser.vue'
 import { CostlyKdfError, kdfLimitsAllowing } from '@/core/database'
 import { t } from '@/l10n'
@@ -115,17 +114,6 @@ async function submit(): Promise<void> {
 
 function cancel(): void {
 	controller?.abort()
-}
-
-function describeKdf(kdf: Kdf): string {
-	if (kdf.type === 'aes') {
-		return t('keenext', 'AES-KDF, {rounds} rounds', { rounds: kdf.rounds.toLocaleString() })
-	}
-	return t('keenext', '{type}, {memory} MiB memory, {iterations} iterations', {
-		type: kdf.type === 'argon2id' ? 'Argon2id' : 'Argon2d',
-		memory: Math.round(kdf.memory / 1024 ** 2).toLocaleString(),
-		iterations: kdf.iterations.toLocaleString(),
-	})
 }
 </script>
 
