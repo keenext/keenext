@@ -31,7 +31,7 @@
 					v-for="file in vault.recent"
 					:key="file.fileId"
 					:name="file.name"
-					:details="formatRelative(file.openedAt)"
+					:details="navigation.isMobile.value ? undefined : formatRelative(file.openedAt)"
 					@click="open(file.fileId)">
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiShieldKeyOutline" :size="32" />
@@ -64,6 +64,7 @@ import NcButton from '@nextcloud/vue/components/NcButton'
 import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcListItem from '@nextcloud/vue/components/NcListItem'
+import { useNavigation } from '@/composables/useNavigation'
 import { t } from '@/l10n'
 import { removeRecent } from '@/services/api'
 import { useVaultStore } from '@/stores/vault'
@@ -74,6 +75,7 @@ const emit = defineEmits<{
 }>()
 
 const vault = useVaultStore()
+const navigation = useNavigation()
 
 function formatRelative(seconds: number): string {
 	return formatRelativeTime(seconds * 1000)
@@ -107,5 +109,13 @@ async function remove(fileId: number): Promise<void> {
 .start__recent {
 	max-width: 700px;
 	margin: 0 auto;
+}
+
+.start__recent h3 {
+	margin: 24px 0 4px;
+	padding-inline: 8px;
+	color: var(--color-text-maxcontrast);
+	font-size: var(--font-size-small, 13px);
+	font-weight: normal;
 }
 </style>

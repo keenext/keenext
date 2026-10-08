@@ -138,7 +138,9 @@ function cancel(): void {
 
 .unlock__form h2 {
 	margin: 0;
+	font-size: 1.25rem;
 	text-align: center;
+	text-wrap: balance;
 	overflow-wrap: anywhere;
 }
 

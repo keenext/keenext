@@ -69,16 +69,22 @@ const displayed = computed(() => props.secret && !revealed.value && props.value 
 
 <style scoped>
 .field-row {
-	display: grid;
-	grid-template-columns: minmax(100px, 160px) 1fr;
-	gap: 8px;
-	align-items: center;
-	padding: 2px 0;
+	padding: 6px 0;
 	border-bottom: 1px solid var(--color-border);
 }
 
+.field-row:last-child {
+	border-bottom: 0;
+}
+
+/* Nextcloud styles bare dt/dd as a right-aligned label column; reset it for the stacked layout. */
 .field-row__label {
+	display: block;
+	width: auto;
+	padding: 0;
+	text-align: start;
 	color: var(--color-text-maxcontrast);
+	font-size: var(--font-size-small, 13px);
 	overflow-wrap: anywhere;
 }
 
@@ -88,6 +94,8 @@ const displayed = computed(() => props.secret && !revealed.value && props.value 
 	gap: 4px;
 	min-height: var(--default-clickable-area);
 	min-width: 0;
+	margin: 0;
+	padding: 0;
 }
 
 .field-row__text {

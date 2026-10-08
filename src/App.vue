@@ -20,6 +20,15 @@
 				:database="vault.active"
 				:creating="creatingEntry"
 				@done="creatingEntry = false" />
+			<NcEmptyContent
+				v-else
+				class="app-details-placeholder"
+				:name="t('keenext', 'Select an entry')"
+				:description="t('keenext', 'Choose an entry from the list to see its details.')">
+				<template #icon>
+					<NcIconSvgWrapper :path="mdiKeyOutline" />
+				</template>
+			</NcEmptyContent>
 		</NcAppContent>
 
 		<NcAppContent v-else-if="vault.active" :pageHeading="vault.active.name">
@@ -39,10 +48,13 @@
 </template>
 
 <script setup lang="ts">
+import { mdiKeyOutline } from '@mdi/js'
 import { showError } from '@nextcloud/dialogs'
 import { onMounted, ref, watch } from 'vue'
 import NcAppContent from '@nextcloud/vue/components/NcAppContent'
 import NcContent from '@nextcloud/vue/components/NcContent'
+import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
+import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import AppNavigation from './components/AppNavigation.vue'
 import EntryDetails from './components/EntryDetails.vue'
 import EntryList from './components/EntryList.vue'
@@ -119,3 +131,9 @@ onMounted(async () => {
 	}
 })
 </script>
+
+<style scoped>
+.app-details-placeholder {
+	height: 100%;
+}
+</style>

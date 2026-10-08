@@ -1,160 +1,162 @@
 <template>
 	<div class="entry-details">
-		<EntryEditor
-			v-if="creating || editing"
-			:database="database"
-			:entry="creating ? null : entry ?? null"
-			@saved="onSaved"
-			@cancel="onCancel" />
+		<div class="entry-details__body">
+			<EntryEditor
+				v-if="creating || editing"
+				:database="database"
+				:entry="creating ? null : entry ?? null"
+				@saved="onSaved"
+				@cancel="onCancel" />
 
-		<template v-else-if="entry && view">
-			<header class="entry-details__header">
-				<EntryIcon
-					class="entry-details__icon"
-					:db="view.db"
-					:icon="entry.icon"
-					:customIcon="entry.customIcon?.id ?? null"
-					:size="40" />
-				<div class="entry-details__heading">
-					<h2>{{ details.title || t('keenext', '(no title)') }}</h2>
-					<p class="entry-details__path">
-						{{ details.path }}
-					</p>
-				</div>
-				<NcButton v-if="database.writable" variant="primary" @click="editing = true">
-					<template #icon>
-						<NcIconSvgWrapper :path="mdiPencil" />
-					</template>
-					{{ t('keenext', 'Edit') }}
-				</NcButton>
-				<NcActions v-if="database.writable" :aria-label="t('keenext', 'More actions')">
-					<NcActionButton closeAfterClick @click="clone">
+			<template v-else-if="entry && view">
+				<header class="entry-details__header">
+					<EntryIcon
+						class="entry-details__icon"
+						:db="view.db"
+						:icon="entry.icon"
+						:customIcon="entry.customIcon?.id ?? null"
+						:size="40" />
+					<div class="entry-details__heading">
+						<h2>{{ details.title || t('keenext', '(no title)') }}</h2>
+						<p class="entry-details__path">
+							{{ details.path }}
+						</p>
+					</div>
+					<NcButton v-if="database.writable" variant="primary" @click="editing = true">
 						<template #icon>
-							<NcIconSvgWrapper :path="mdiContentDuplicate" />
+							<NcIconSvgWrapper :path="mdiPencil" />
 						</template>
-						{{ t('keenext', 'Clone entry') }}
-					</NcActionButton>
-					<NcActionButton closeAfterClick @click="moving = true">
-						<template #icon>
-							<NcIconSvgWrapper :path="mdiFolderMove" />
-						</template>
-						{{ t('keenext', 'Move to group') }}
-					</NcActionButton>
-					<NcActionButton closeAfterClick @click="remove">
-						<template #icon>
-							<NcIconSvgWrapper :path="mdiDelete" />
-						</template>
-						{{ details.inRecycleBin ? t('keenext', 'Delete permanently') : t('keenext', 'Delete') }}
-					</NcActionButton>
-				</NcActions>
-			</header>
-
-			<NcNoteCard v-if="details.expired" type="warning">
-				{{ t('keenext', 'This entry expired on {date}', { date: formatDate(details.expires) }) }}
-			</NcNoteCard>
-
-			<dl class="entry-details__fields">
-				<FieldRow :label="t('keenext', 'Username')" :value="details.username" @copy="copy(details.username, t('keenext', 'Username copied'))" />
-				<FieldRow
-					:label="t('keenext', 'Password')"
-					:value="details.password"
-					secret
-					@copy="copy(details.password, t('keenext', 'Password copied'))" />
-				<FieldRow
-					:label="t('keenext', 'URL')"
-					:value="details.url"
-					link
-					@copy="copy(details.url, t('keenext', 'URL copied'))" />
-				<TotpField
-					v-if="details.totp"
-					:config="details.totp"
-					:uri="details.totpUri"
-					@copy="(code) => copy(code, t('keenext', 'TOTP copied'))" />
-				<FieldRow
-					v-for="field in details.customFields"
-					:key="field.key"
-					:label="field.key"
-					:value="field.value"
-					:secret="field.protected"
-					:multiline="field.value.includes('\n')"
-					@copy="copy(field.value, t('keenext', '{field} copied', { field: field.key }))" />
-				<FieldRow
-					v-if="details.expires"
-					:label="t('keenext', 'Expires')"
-					:value="formatDate(details.expires)"
-					@copy="copy(formatDate(details.expires), t('keenext', 'Copied'))" />
-			</dl>
-
-			<div v-if="details.tags.length > 0" class="entry-details__tags">
-				<NcChip
-					v-for="tag in details.tags"
-					:key="tag"
-					:text="tag"
-					noClose />
-			</div>
-
-			<section v-if="details.notes" class="entry-details__section">
-				<h3>{{ t('keenext', 'Notes') }}</h3>
-				<p class="entry-details__notes">
-					{{ details.notes }}
-				</p>
-			</section>
-
-			<section v-if="details.attachments.length > 0" class="entry-details__section">
-				<h3>{{ t('keenext', 'Attachments') }}</h3>
-				<ul>
-					<li v-for="attachment in details.attachments" :key="attachment.name" class="entry-details__attachment">
-						<NcIconSvgWrapper :path="mdiPaperclip" :size="20" />
-						<span>{{ attachment.name }}</span>
-						<span class="entry-details__muted">{{ formatSize(attachment.size) }}</span>
-						<NcButton variant="tertiary" :aria-label="t('keenext', 'Download {name}', { name: attachment.name })" @click="download(attachment.name)">
-							<template #icon>
-								<NcIconSvgWrapper :path="mdiDownload" />
-							</template>
-						</NcButton>
-					</li>
-				</ul>
-			</section>
-
-			<section v-if="details.history.length > 0" class="entry-details__section">
-				<h3>
-					<NcButton variant="tertiary" :aria-expanded="showHistory" @click="showHistory = !showHistory">
-						<template #icon>
-							<NcIconSvgWrapper :path="mdiHistory" />
-						</template>
-						{{ t('keenext', 'History ({count})', { count: details.history.length }) }}
+						{{ t('keenext', 'Edit') }}
 					</NcButton>
-				</h3>
-				<ul v-if="showHistory">
-					<li v-for="state in details.history" :key="state.index" class="entry-details__history">
-						<NcButton variant="tertiary" @click="historyIndex = state.index">
-							{{ formatDate(state.modified) }}
+					<NcActions v-if="database.writable" :aria-label="t('keenext', 'More actions')">
+						<NcActionButton closeAfterClick @click="clone">
+							<template #icon>
+								<NcIconSvgWrapper :path="mdiContentDuplicate" />
+							</template>
+							{{ t('keenext', 'Clone entry') }}
+						</NcActionButton>
+						<NcActionButton closeAfterClick @click="moving = true">
+							<template #icon>
+								<NcIconSvgWrapper :path="mdiFolderMove" />
+							</template>
+							{{ t('keenext', 'Move to group') }}
+						</NcActionButton>
+						<NcActionButton closeAfterClick @click="remove">
+							<template #icon>
+								<NcIconSvgWrapper :path="mdiDelete" />
+							</template>
+							{{ details.inRecycleBin ? t('keenext', 'Delete permanently') : t('keenext', 'Delete') }}
+						</NcActionButton>
+					</NcActions>
+				</header>
+
+				<NcNoteCard v-if="details.expired" type="warning">
+					{{ t('keenext', 'This entry expired on {date}', { date: formatDate(details.expires) }) }}
+				</NcNoteCard>
+
+				<dl class="entry-details__fields">
+					<FieldRow :label="t('keenext', 'Username')" :value="details.username" @copy="copy(details.username, t('keenext', 'Username copied'))" />
+					<FieldRow
+						:label="t('keenext', 'Password')"
+						:value="details.password"
+						secret
+						@copy="copy(details.password, t('keenext', 'Password copied'))" />
+					<FieldRow
+						:label="t('keenext', 'URL')"
+						:value="details.url"
+						link
+						@copy="copy(details.url, t('keenext', 'URL copied'))" />
+					<TotpField
+						v-if="details.totp"
+						:config="details.totp"
+						:uri="details.totpUri"
+						@copy="(code) => copy(code, t('keenext', 'TOTP copied'))" />
+					<FieldRow
+						v-for="field in details.customFields"
+						:key="field.key"
+						:label="field.key"
+						:value="field.value"
+						:secret="field.protected"
+						:multiline="field.value.includes('\n')"
+						@copy="copy(field.value, t('keenext', '{field} copied', { field: field.key }))" />
+					<FieldRow
+						v-if="details.expires"
+						:label="t('keenext', 'Expires')"
+						:value="formatDate(details.expires)"
+						@copy="copy(formatDate(details.expires), t('keenext', 'Copied'))" />
+				</dl>
+
+				<div v-if="details.tags.length > 0" class="entry-details__tags">
+					<NcChip
+						v-for="tag in details.tags"
+						:key="tag"
+						:text="tag"
+						noClose />
+				</div>
+
+				<section v-if="details.notes" class="entry-details__section">
+					<h3>{{ t('keenext', 'Notes') }}</h3>
+					<p class="entry-details__notes">
+						{{ details.notes }}
+					</p>
+				</section>
+
+				<section v-if="details.attachments.length > 0" class="entry-details__section">
+					<h3>{{ t('keenext', 'Attachments') }}</h3>
+					<ul>
+						<li v-for="attachment in details.attachments" :key="attachment.name" class="entry-details__attachment">
+							<NcIconSvgWrapper :path="mdiPaperclip" :size="20" />
+							<span class="entry-details__attachment-name">{{ attachment.name }}</span>
+							<span class="entry-details__muted">{{ formatSize(attachment.size) }}</span>
+							<NcButton variant="tertiary" :aria-label="t('keenext', 'Download {name}', { name: attachment.name })" @click="download(attachment.name)">
+								<template #icon>
+									<NcIconSvgWrapper :path="mdiDownload" />
+								</template>
+							</NcButton>
+						</li>
+					</ul>
+				</section>
+
+				<section v-if="details.history.length > 0" class="entry-details__section">
+					<h3>
+						<NcButton variant="tertiary" :aria-expanded="showHistory" @click="showHistory = !showHistory">
+							<template #icon>
+								<NcIconSvgWrapper :path="mdiHistory" />
+							</template>
+							{{ t('keenext', 'History ({count})', { count: details.history.length }) }}
 						</NcButton>
-						<span class="entry-details__muted">{{ state.summary }}</span>
-						<NcActions v-if="database.writable" :aria-label="t('keenext', 'History actions')">
-							<NcActionButton closeAfterClick @click="restore(state.index)">
-								<template #icon>
-									<NcIconSvgWrapper :path="mdiRestore" />
-								</template>
-								{{ t('keenext', 'Restore this version') }}
-							</NcActionButton>
-							<NcActionButton closeAfterClick @click="removeHistoryState(state.index)">
-								<template #icon>
-									<NcIconSvgWrapper :path="mdiDelete" />
-								</template>
-								{{ t('keenext', 'Delete this version') }}
-							</NcActionButton>
-						</NcActions>
-					</li>
-				</ul>
-			</section>
+					</h3>
+					<ul v-if="showHistory">
+						<li v-for="state in details.history" :key="state.index" class="entry-details__history">
+							<NcButton variant="tertiary" @click="historyIndex = state.index">
+								{{ formatDate(state.modified) }}
+							</NcButton>
+							<span class="entry-details__muted">{{ state.summary }}</span>
+							<NcActions v-if="database.writable" :aria-label="t('keenext', 'History actions')">
+								<NcActionButton closeAfterClick @click="restore(state.index)">
+									<template #icon>
+										<NcIconSvgWrapper :path="mdiRestore" />
+									</template>
+									{{ t('keenext', 'Restore this version') }}
+								</NcActionButton>
+								<NcActionButton closeAfterClick @click="removeHistoryState(state.index)">
+									<template #icon>
+										<NcIconSvgWrapper :path="mdiDelete" />
+									</template>
+									{{ t('keenext', 'Delete this version') }}
+								</NcActionButton>
+							</NcActions>
+						</li>
+					</ul>
+				</section>
 
-			<p class="entry-details__muted entry-details__times">
-				{{ t('keenext', 'Created {created}, modified {modified}', { created: formatDate(details.created), modified: formatDate(details.modified) }) }}
-			</p>
-		</template>
+				<p class="entry-details__muted entry-details__times">
+					{{ t('keenext', 'Created {created}, modified {modified}', { created: formatDate(details.created), modified: formatDate(details.modified) }) }}
+				</p>
+			</template>
 
-		<NcEmptyContent v-else :name="t('keenext', 'Entry not found')" />
+			<NcEmptyContent v-else :name="t('keenext', 'Entry not found')" />
+		</div>
 
 		<HistoryVersionDialog
 			v-if="historyIndex !== null && entry"
@@ -374,9 +376,26 @@ function removeHistoryState(index: number): void {
 </script>
 
 <style scoped>
+/* Scrolls itself: on narrow screens Nextcloud shows the details without a scrolling container. */
 .entry-details {
-	padding: 16px 24px;
-	max-width: 900px;
+	--entry-details-padding-x: 24px;
+	height: 100%;
+	overflow-y: auto;
+	padding: 16px var(--entry-details-padding-x);
+	box-sizing: border-box;
+}
+
+.entry-details__body {
+	max-width: 800px;
+}
+
+@media (max-width: 1024px) {
+	.entry-details {
+		--entry-details-padding-x: 16px;
+		/* The back button above takes one row of the pane. */
+		height: calc(100% - var(--default-clickable-area));
+		padding-block: 8px 24px;
+	}
 }
 
 .entry-details__header {
@@ -407,8 +426,28 @@ function removeHistoryState(index: number): void {
 	color: var(--color-text-maxcontrast);
 }
 
-.entry-details__fields {
-	margin-bottom: 16px;
+.entry-details__fields,
+.entry-details__section {
+	margin: 0 0 16px;
+	padding: 4px 12px;
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius-large);
+}
+
+.entry-details__section {
+	padding-block: 8px 12px;
+}
+
+.entry-details__section h3 {
+	margin: 0 0 4px;
+	color: var(--color-text-maxcontrast);
+	font-size: var(--font-size-small, 13px);
+	font-weight: normal;
+}
+
+.entry-details__section ul {
+	display: flex;
+	flex-direction: column;
 }
 
 .entry-details__tags {
@@ -418,11 +457,8 @@ function removeHistoryState(index: number): void {
 	margin-bottom: 16px;
 }
 
-.entry-details__section {
-	margin-bottom: 16px;
-}
-
 .entry-details__notes {
+	margin: 0;
 	white-space: pre-wrap;
 	overflow-wrap: anywhere;
 }
@@ -432,6 +468,12 @@ function removeHistoryState(index: number): void {
 	display: flex;
 	align-items: center;
 	gap: 8px;
+}
+
+.entry-details__attachment-name {
+	flex: 1;
+	min-width: 0;
+	overflow-wrap: anywhere;
 }
 
 .entry-details__times {

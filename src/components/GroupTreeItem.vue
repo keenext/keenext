@@ -98,6 +98,7 @@ import GroupDialog from './GroupDialog.vue'
 import MoveDialog from './MoveDialog.vue'
 import { findEntry, findGroup } from '@/composables/useDatabase'
 import { draggedType, ENTRY_TYPE, GROUP_TYPE, readDrop, startDrag } from '@/composables/useDragAndDrop'
+import { useNavigation } from '@/composables/useNavigation'
 import { moveEntry, recycleBin } from '@/core/entries'
 import { createGroup, deleteGroup, draftFromGroup, emptyRecycleBin, isDescendant, moveGroup, setExpanded, updateGroup } from '@/core/groups'
 import { t } from '@/l10n'
@@ -111,6 +112,7 @@ const props = defineProps<{
 }>()
 
 const vault = useVaultStore()
+const navigation = useNavigation()
 const dialog = ref<'create' | 'edit' | null>(null)
 const moving = ref(false)
 const dropTarget = ref(false)
@@ -133,6 +135,7 @@ const expanded = ref(props.group.expanded ?? true)
 
 function select(): void {
 	vault.select(props.database.id, { group: props.group.uuid.id, entry: null })
+	navigation.close()
 }
 
 function toggle(open: boolean): void {

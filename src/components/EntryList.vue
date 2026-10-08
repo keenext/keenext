@@ -26,7 +26,19 @@
 			</NcButton>
 		</div>
 
-		<p class="entry-list__heading">
+		<NcButton
+			v-if="navigation.isMobile.value && !searching"
+			class="entry-list__group"
+			variant="tertiary"
+			alignment="start-reverse"
+			:aria-label="t('keenext', 'Show groups')"
+			@click="navigation.open()">
+			<template #icon>
+				<NcIconSvgWrapper :path="mdiChevronDown" />
+			</template>
+			{{ heading }}
+		</NcButton>
+		<p v-else class="entry-list__heading">
 			{{ heading }}
 		</p>
 
@@ -99,7 +111,7 @@
 import type { KdbxEntry } from 'kdbxweb'
 import type { OpenDatabase } from '@/stores/vault'
 
-import { mdiAccount, mdiKey, mdiKeyOutline, mdiMagnify, mdiOpenInNew, mdiPlus } from '@mdi/js'
+import { mdiAccount, mdiChevronDown, mdiKey, mdiKeyOutline, mdiMagnify, mdiOpenInNew, mdiPlus } from '@mdi/js'
 import { showSuccess } from '@nextcloud/dialogs'
 import { computed, ref, watch } from 'vue'
 import NcActionButton from '@nextcloud/vue/components/NcActionButton'
@@ -112,6 +124,7 @@ import NcTextField from '@nextcloud/vue/components/NcTextField'
 import EntryIcon from './EntryIcon.vue'
 import { findEntry, findGroup, useDatabaseView } from '@/composables/useDatabase'
 import { ENTRY_TYPE, startDrag } from '@/composables/useDragAndDrop'
+import { useNavigation } from '@/composables/useNavigation'
 import { getField, isExpired, isInRecycleBin, StandardField } from '@/core/entries'
 import { resolvedField } from '@/core/placeholders'
 import { searchEntries } from '@/core/search'
@@ -132,6 +145,8 @@ const emit = defineEmits<{
 const settingsStore = useSettingsStore()
 const vault = useVaultStore()
 const view = useDatabaseView(() => props.database)
+const navigation = useNavigation()
+const searching = computed(() => props.database.query.trim() !== '')
 
 const group = computed(() => view.value ? findGroup(view.value.db, props.database.selectedGroup) ?? view.value.db.getDefaultGroup() : undefined)
 
@@ -214,6 +229,12 @@ async function copy(id: string, field: string): Promise<void> {
 .entry-list__heading {
 	padding: 8px 16px 4px;
 	color: var(--color-text-maxcontrast);
+	font-weight: bold;
+}
+
+.entry-list__group {
+	align-self: flex-start;
+	margin: 4px 8px 0;
 	font-weight: bold;
 }
 

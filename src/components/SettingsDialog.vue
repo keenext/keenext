@@ -34,7 +34,7 @@
 				@update:modelValue="(value) => updateLater({ syncIntervalSeconds: toInt(value) })" />
 		</NcAppSettingsSection>
 
-		<NcAppSettingsSection id="shortcuts" :name="t('keenext', 'Keyboard shortcuts')">
+		<NcAppSettingsSection v-if="!isMobile" id="shortcuts" :name="t('keenext', 'Keyboard shortcuts')">
 			<dl class="shortcuts">
 				<dt><kbd>Ctrl</kbd> + <kbd>S</kbd></dt>
 				<dd>{{ t('keenext', 'Save database') }}</dd>
@@ -58,6 +58,7 @@ import NcAppSettingsDialog from '@nextcloud/vue/components/NcAppSettingsDialog'
 import NcAppSettingsSection from '@nextcloud/vue/components/NcAppSettingsSection'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
+import { useNavigation } from '@/composables/useNavigation'
 import { t } from '@/l10n'
 import { useSettingsStore } from '@/stores/settings'
 
@@ -69,6 +70,7 @@ const emit = defineEmits<{
 	'update:open': [value: boolean]
 }>()
 
+const { isMobile } = useNavigation()
 const settingsStore = useSettingsStore()
 const { settings } = storeToRefs(settingsStore)
 

@@ -11,13 +11,13 @@
 			</NcButton>
 		</div>
 		<div v-else class="key-file__buttons">
-			<NcButton @click="chooseFromCloud">
+			<NcButton wide @click="chooseFromCloud">
 				<template #icon>
 					<NcIconSvgWrapper :path="mdiCloudOutline" />
 				</template>
 				{{ t('keenext', 'Key file from Nextcloud') }}
 			</NcButton>
-			<NcButton @click="input?.click()">
+			<NcButton wide @click="input?.click()">
 				<template #icon>
 					<NcIconSvgWrapper :path="mdiUpload" />
 				</template>

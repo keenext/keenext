@@ -89,18 +89,20 @@ const formatted = computed(() => props.config.encoder === 'steam' || code.value.
 .totp {
 	display: flex;
 	align-items: center;
-	gap: 8px;
+	gap: 12px;
 }
 
 .totp__code {
 	font-family: var(--font-face-monospace, monospace);
-	font-size: 1.3em;
-	letter-spacing: 1px;
+	font-size: 1.5em;
+	letter-spacing: 2px;
+	white-space: nowrap;
 }
 
 .totp__progress {
-	width: 80px;
-	flex-shrink: 0;
+	flex: 1;
+	min-width: 32px;
+	max-width: 120px;
 }
 
 .totp__qr {
@@ -114,5 +116,6 @@ const formatted = computed(() => props.config.encoder === 'steam' || code.value.
 .totp__remaining {
 	color: var(--color-text-maxcontrast);
 	min-width: 3ch;
+	white-space: nowrap;
 }
 </style>

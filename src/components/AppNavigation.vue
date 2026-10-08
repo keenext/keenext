@@ -10,7 +10,7 @@
 				:active="database.id === vault.activeId && !database.session"
 				:allowCollapse="database.session !== null"
 				:open="database.id === vault.activeId"
-				@click="vault.activeId = database.id">
+				@click="selectDatabase(database.id)">
 				<template #icon>
 					<NcLoadingIcon v-if="database.saving" :size="20" />
 					<NcIconSvgWrapper v-else :path="database.session ? mdiShieldKeyOutline : mdiLock" />
@@ -75,17 +75,17 @@
 
 		<template #footer>
 			<ul class="app-navigation-footer">
-				<NcAppNavigationItem :name="t('keenext', 'Open database')" @click="emit('openDatabase')">
+				<NcAppNavigationItem :name="t('keenext', 'Open database')" @click="closeThen(() => emit('openDatabase'))">
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiFolderOpenOutline" />
 					</template>
 				</NcAppNavigationItem>
-				<NcAppNavigationItem :name="t('keenext', 'New database')" @click="emit('newDatabase')">
+				<NcAppNavigationItem :name="t('keenext', 'New database')" @click="closeThen(() => emit('newDatabase'))">
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiPlus" />
 					</template>
 				</NcAppNavigationItem>
-				<NcAppNavigationItem :name="t('keenext', 'Settings')" @click="emit('openSettings')">
+				<NcAppNavigationItem :name="t('keenext', 'Settings')" @click="closeThen(() => emit('openSettings'))">
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiCog" />
 					</template>
@@ -129,6 +129,7 @@ import ExportDialog from './ExportDialog.vue'
 import GroupTreeItem from './GroupTreeItem.vue'
 import ImportDialog from './ImportDialog.vue'
 import ReportDialog from './ReportDialog.vue'
+import { useNavigation } from '@/composables/useNavigation'
 import { t } from '@/l10n'
 import { useVaultStore } from '@/stores/vault'
 
@@ -139,10 +140,24 @@ const emit = defineEmits<{
 }>()
 
 const vault = useVaultStore()
+const navigation = useNavigation()
 const databaseSettings = ref<string | null>(null)
 const report = ref<string | null>(null)
 const importInto = ref<string | null>(null)
 const exportFrom = ref<string | null>(null)
+
+function selectDatabase(id: string): void {
+	vault.activeId = id
+	// A locked database has no groups to pick from, so the unlock form should be visible.
+	if (!vault.databases.find((database) => database.id === id)?.session) {
+		navigation.close()
+	}
+}
+
+function closeThen(action: () => void): void {
+	navigation.close()
+	action()
+}
 
 /** Reads the revision so the tree re-renders when a sync replaces the database instance. */
 function rootGroup(database: OpenDatabase): KdbxGroup {
