@@ -9,8 +9,13 @@
 					:title="t('keenext', 'Choose icon')"
 					@click="iconOpen = true">
 					<template #icon>
+						<img
+							v-if="pendingIcon && draft.customIcon === pendingIcon.id"
+							:src="pendingIcon.url"
+							alt=""
+							class="entry-editor__pending-icon">
 						<EntryIcon
-							v-if="view"
+							v-else-if="view"
 							:db="view.db"
 							:icon="draft.icon"
 							:customIcon="draft.customIcon" />
@@ -32,7 +37,19 @@
 				</NcButton>
 			</div>
 			<StrengthMeter v-if="draft.password" :password="draft.password" />
-			<NcTextField v-model="draft.url" :label="t('keenext', 'URL')" type="url" />
+			<div class="entry-editor__url">
+				<NcTextField v-model="draft.url" :label="t('keenext', 'URL')" type="url" />
+				<NcButton
+					:aria-label="t('keenext', 'Download favicon')"
+					:title="t('keenext', 'Download favicon (your Nextcloud server fetches it from the website)')"
+					:disabled="!draft.url.trim() || faviconBusy"
+					@click="downloadFaviconForUrl">
+					<template #icon>
+						<NcLoadingIcon v-if="faviconBusy" :size="20" />
+						<NcIconSvgWrapper v-else :path="mdiImageSearchOutline" />
+					</template>
+				</NcButton>
+			</div>
 		</section>
 
 		<section class="entry-editor__card">
@@ -193,12 +210,14 @@ import type { KdbxEntry } from 'kdbxweb'
 import type { EntryDraft } from '@/core/entries'
 import type { OpenDatabase } from '@/stores/vault'
 
-import { mdiCheck, mdiDelete, mdiDiceMultiple, mdiLock, mdiLockOpenVariant, mdiPaperclip, mdiPlus, mdiTimerOutline } from '@mdi/js'
-import { computed, markRaw, reactive, ref, toRaw } from 'vue'
+import { mdiCheck, mdiDelete, mdiDiceMultiple, mdiImageSearchOutline, mdiLock, mdiLockOpenVariant, mdiPaperclip, mdiPlus, mdiTimerOutline } from '@mdi/js'
+import { showError, showSuccess } from '@nextcloud/dialogs'
+import { computed, markRaw, onBeforeUnmount, reactive, ref, toRaw } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
 import NcDateTimePickerNative from '@nextcloud/vue/components/NcDateTimePickerNative'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcPasswordField from '@nextcloud/vue/components/NcPasswordField'
 import NcSelect from '@nextcloud/vue/components/NcSelect'
 import NcTextArea from '@nextcloud/vue/components/NcTextArea'
@@ -210,8 +229,10 @@ import StrengthMeter from './StrengthMeter.vue'
 import TotpSetupDialog from './TotpSetupDialog.vue'
 import { findEntry, findGroup, useDatabaseView } from '@/composables/useDatabase'
 import { applyDraft, attachFile, createEntry, draftFromEntry, emptyDraft, isStandardField } from '@/core/entries'
+import { iconFor, storeIcon } from '@/core/favicons'
 import { OTP_FIELD } from '@/core/totp'
 import { t } from '@/l10n'
+import { downloadFavicon } from '@/services/favicon'
 import { useVaultStore } from '@/stores/vault'
 
 const props = defineProps<{
@@ -270,6 +291,39 @@ const fieldErrors = computed(() => {
 
 const valid = computed(() => Object.keys(fieldErrors.value).length === 0)
 
+/** A downloaded icon is only written to the database when the entry is saved. */
+const pendingIcon = ref<{ id: string, data: Uint8Array, url: string } | null>(null)
+const faviconBusy = ref(false)
+
+onBeforeUnmount(() => {
+	if (pendingIcon.value) {
+		URL.revokeObjectURL(pendingIcon.value.url)
+	}
+})
+
+async function downloadFaviconForUrl(): Promise<void> {
+	const db = view.value?.db
+	if (!db) {
+		return
+	}
+	faviconBusy.value = true
+	try {
+		const icon = iconFor(db, await downloadFavicon(draft.url.trim()))
+		if (pendingIcon.value) {
+			URL.revokeObjectURL(pendingIcon.value.url)
+		}
+		pendingIcon.value = db.meta.customIcons.has(icon.id)
+			? null
+			: { ...icon, url: URL.createObjectURL(new Blob([icon.data as Uint8Array<ArrayBuffer>], { type: 'image/png' })) }
+		draft.customIcon = icon.id
+		showSuccess(t('keenext', 'Favicon downloaded'))
+	} catch {
+		showError(t('keenext', 'Could not find a favicon for this address'))
+	} finally {
+		faviconBusy.value = false
+	}
+}
+
 function selectIcon(value: { icon: number, customIcon: string | null }): void {
 	draft.icon = value.icon
 	draft.customIcon = value.customIcon
@@ -320,6 +374,9 @@ function save(): void {
 	const values = plainDraft()
 	const id = props.entry?.uuid.id
 	const saved = vault.change(props.database.id, (db) => {
+		if (pendingIcon.value && values.customIcon === pendingIcon.value.id) {
+			storeIcon(db, pendingIcon.value)
+		}
 		const existing = id ? findEntry(db, id) : undefined
 		if (existing) {
 			applyDraft(db, existing, values)
@@ -354,13 +411,13 @@ function save(): void {
 
 .entry-editor__card h3 {
 	margin: 0;
-	color: var(--color-text-maxcontrast);
-	font-size: var(--font-size-small, 13px);
-	font-weight: normal;
+	font-size: 1em;
+	font-weight: bold;
 }
 
 .entry-editor__title,
 .entry-editor__password,
+.entry-editor__url,
 .entry-editor__row,
 .entry-editor__attachment {
 	display: flex;
@@ -373,13 +430,19 @@ function save(): void {
 }
 
 .entry-editor__title > :last-child,
-.entry-editor__password > :first-child {
+.entry-editor__password > :first-child,
+.entry-editor__url > :first-child {
 	flex: 1;
 	min-width: 0;
 }
 
 .entry-editor__row {
 	flex-wrap: wrap;
+}
+
+.entry-editor__pending-icon {
+	width: 24px;
+	height: 24px;
 }
 
 .entry-editor__custom-field {

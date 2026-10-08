@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace OCA\KeeNext\Controller;
 
 use OCA\KeeNext\AppInfo\Application;
+use OCA\KeeNext\Service\FaviconService;
 use OCA\KeeNext\Service\FileResolver;
 use OCA\KeeNext\Service\RecentFilesService;
 use OCA\KeeNext\Service\SettingsService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\Attribute\UserRateLimit;
 use OCP\AppFramework\Http\DataResponse;
+use OCP\AppFramework\OCS\OCSBadRequestException;
 use OCP\AppFramework\OCS\OCSNotFoundException;
 use OCP\AppFramework\OCSController;
 use OCP\Files\NotFoundException;
@@ -20,7 +23,9 @@ use OCP\IUserSession;
 
 /**
  * Metadata only. Database contents never pass through here; the client reads
- * and writes the encrypted files over WebDAV.
+ * and writes the encrypted files over WebDAV. The favicon lookup is the one
+ * route that contacts another server, and it only sees the address the user
+ * asked about.
  */
 final class ApiController extends OCSController {
 	public function __construct(
@@ -29,6 +34,7 @@ final class ApiController extends OCSController {
 		private FileResolver $fileResolver,
 		private RecentFilesService $recentFiles,
 		private SettingsService $settings,
+		private FaviconService $favicons,
 	) {
 		parent::__construct(Application::APP_ID, $request);
 	}
@@ -102,5 +108,25 @@ final class ApiController extends OCSController {
 	#[ApiRoute(verb: 'PUT', url: '/api/v1/settings')]
 	public function updateSettings(array $settings): DataResponse {
 		return new DataResponse($this->settings->update($this->userId(), $settings));
+	}
+
+	/**
+	 * Icon of the website at $url, as base64 data.
+	 *
+	 * @param string $url address stored in an entry
+	 */
+	#[NoAdminRequired]
+	#[UserRateLimit(limit: 60, period: 60)]
+	#[ApiRoute(verb: 'GET', url: '/api/v1/favicon')]
+	public function favicon(string $url): DataResponse {
+		try {
+			$icon = $this->favicons->find($url);
+		} catch (\InvalidArgumentException) {
+			throw new OCSBadRequestException('Not an http(s) address');
+		}
+		if ($icon === null) {
+			throw new OCSNotFoundException('No icon found');
+		}
+		return new DataResponse($icon);
 	}
 }

@@ -5,46 +5,52 @@
 		showNavigation
 		@update:open="(value) => emit('update:open', value)">
 		<NcAppSettingsSection id="security" :name="t('keenext', 'Security')">
-			<NcTextField
-				:modelValue="String(settings.lockAfterMinutes)"
-				type="number"
-				:label="t('keenext', 'Lock databases after inactivity (minutes, 0 = never)')"
-				@update:modelValue="(value) => updateLater({ lockAfterMinutes: toInt(value) })" />
-			<NcCheckboxRadioSwitch :modelValue="settings.lockOnHide" @update:modelValue="(value: boolean) => update({ lockOnHide: value })">
-				{{ t('keenext', 'Lock databases when the tab is hidden') }}
-			</NcCheckboxRadioSwitch>
-			<NcTextField
-				:modelValue="String(settings.clipboardClearSeconds)"
-				type="number"
-				:label="t('keenext', 'Clear clipboard after (seconds, 0 = never)')"
-				@update:modelValue="(value) => updateLater({ clipboardClearSeconds: toInt(value) })" />
-			<NcCheckboxRadioSwitch :modelValue="settings.rememberKeyFile" @update:modelValue="(value: boolean) => update({ rememberKeyFile: value })">
-				{{ t('keenext', 'Remember which key file belongs to a database') }}
-			</NcCheckboxRadioSwitch>
+			<div class="settings-group">
+				<NcTextField
+					:modelValue="String(settings.lockAfterMinutes)"
+					type="number"
+					:label="t('keenext', 'Lock databases after inactivity (minutes, 0 = never)')"
+					@update:modelValue="(value) => updateLater({ lockAfterMinutes: toInt(value) })" />
+				<NcCheckboxRadioSwitch :modelValue="settings.lockOnHide" @update:modelValue="(value: boolean) => update({ lockOnHide: value })">
+					{{ t('keenext', 'Lock databases when the tab is hidden') }}
+				</NcCheckboxRadioSwitch>
+				<NcTextField
+					:modelValue="String(settings.clipboardClearSeconds)"
+					type="number"
+					:label="t('keenext', 'Clear clipboard after (seconds, 0 = never)')"
+					@update:modelValue="(value) => updateLater({ clipboardClearSeconds: toInt(value) })" />
+				<NcCheckboxRadioSwitch :modelValue="settings.rememberKeyFile" @update:modelValue="(value: boolean) => update({ rememberKeyFile: value })">
+					{{ t('keenext', 'Remember which key file belongs to a database') }}
+				</NcCheckboxRadioSwitch>
+			</div>
 		</NcAppSettingsSection>
 
 		<NcAppSettingsSection id="saving" :name="t('keenext', 'Saving')">
-			<NcCheckboxRadioSwitch :modelValue="settings.autosave" @update:modelValue="(value: boolean) => update({ autosave: value })">
-				{{ t('keenext', 'Save automatically after every change') }}
-			</NcCheckboxRadioSwitch>
-			<NcTextField
-				:modelValue="String(settings.syncIntervalSeconds)"
-				type="number"
-				:label="t('keenext', 'Check for changes made elsewhere every (seconds, 0 = never)')"
-				@update:modelValue="(value) => updateLater({ syncIntervalSeconds: toInt(value) })" />
+			<div class="settings-group">
+				<NcCheckboxRadioSwitch :modelValue="settings.autosave" @update:modelValue="(value: boolean) => update({ autosave: value })">
+					{{ t('keenext', 'Save automatically after every change') }}
+				</NcCheckboxRadioSwitch>
+				<NcTextField
+					:modelValue="String(settings.syncIntervalSeconds)"
+					type="number"
+					:label="t('keenext', 'Check for changes made elsewhere every (seconds, 0 = never)')"
+					@update:modelValue="(value) => updateLater({ syncIntervalSeconds: toInt(value) })" />
+			</div>
 		</NcAppSettingsSection>
 
 		<NcAppSettingsSection v-if="!isMobile" id="shortcuts" :name="t('keenext', 'Keyboard shortcuts')">
-			<dl class="shortcuts">
-				<dt><kbd>Ctrl</kbd> + <kbd>S</kbd></dt>
-				<dd>{{ t('keenext', 'Save database') }}</dd>
-				<dt><kbd>Ctrl</kbd> + <kbd>L</kbd></dt>
-				<dd>{{ t('keenext', 'Lock all databases') }}</dd>
-				<dt><kbd>Ctrl</kbd> + <kbd>N</kbd></dt>
-				<dd>{{ t('keenext', 'New entry') }}</dd>
-				<dt><kbd>Ctrl</kbd> + <kbd>F</kbd></dt>
-				<dd>{{ t('keenext', 'Search') }}</dd>
-			</dl>
+			<div class="settings-group">
+				<dl class="shortcuts">
+					<dt><kbd>Ctrl</kbd> + <kbd>S</kbd></dt>
+					<dd>{{ t('keenext', 'Save database') }}</dd>
+					<dt><kbd>Ctrl</kbd> + <kbd>L</kbd></dt>
+					<dd>{{ t('keenext', 'Lock all databases') }}</dd>
+					<dt><kbd>Ctrl</kbd> + <kbd>N</kbd></dt>
+					<dd>{{ t('keenext', 'New entry') }}</dd>
+					<dt><kbd>Ctrl</kbd> + <kbd>F</kbd></dt>
+					<dd>{{ t('keenext', 'Search') }}</dd>
+				</dl>
+			</div>
 		</NcAppSettingsSection>
 	</NcAppSettingsDialog>
 </template>
@@ -104,9 +110,29 @@ function updateLater(changes: Partial<Settings>): void {
 </script>
 
 <style scoped>
+.settings-group {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	max-width: 32rem;
+	padding-top: 8px;
+}
+
+/* Nextcloud styles bare dt/dd as a right-aligned label column with padding. */
 .shortcuts {
 	display: grid;
 	grid-template-columns: max-content 1fr;
-	gap: 4px 16px;
+	align-items: center;
+	gap: 8px 24px;
+	margin: 0;
+	padding-inline: 12px;
+}
+
+.shortcuts dt,
+.shortcuts dd {
+	width: auto;
+	margin: 0;
+	padding: 0;
+	text-align: start;
 }
 </style>

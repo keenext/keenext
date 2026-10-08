@@ -21,6 +21,19 @@
 						<p class="entry-details__path">
 							{{ details.path }}
 						</p>
+						<div v-if="details.tags.length > 0 || details.expires" class="entry-details__chips">
+							<NcChip
+								v-for="tag in details.tags"
+								:key="tag"
+								:text="tag"
+								noClose />
+							<NcChip
+								v-if="details.expires"
+								:text="`${t('keenext', 'Expires')}: ${formatDay(details.expires)}`"
+								:iconPath="mdiClockOutline"
+								:variant="details.expired ? 'error' : 'tertiary'"
+								noClose />
+						</div>
 					</div>
 					<NcButton v-if="database.writable" variant="primary" @click="editing = true">
 						<template #icon>
@@ -54,79 +67,85 @@
 					{{ t('keenext', 'This entry expired on {date}', { date: formatDate(details.expires) }) }}
 				</NcNoteCard>
 
-				<dl class="entry-details__fields">
-					<FieldRow :label="t('keenext', 'Username')" :value="details.username" @copy="copy(details.username, t('keenext', 'Username copied'))" />
-					<FieldRow
-						:label="t('keenext', 'Password')"
-						:value="details.password"
-						secret
-						@copy="copy(details.password, t('keenext', 'Password copied'))" />
-					<FieldRow
-						:label="t('keenext', 'URL')"
-						:value="details.url"
-						link
-						@copy="copy(details.url, t('keenext', 'URL copied'))" />
-					<TotpField
-						v-if="details.totp"
-						:config="details.totp"
-						:uri="details.totpUri"
-						@copy="(code) => copy(code, t('keenext', 'TOTP copied'))" />
-					<FieldRow
-						v-for="field in details.customFields"
-						:key="field.key"
-						:label="field.key"
-						:value="field.value"
-						:secret="field.protected"
-						:multiline="field.value.includes('\n')"
-						@copy="copy(field.value, t('keenext', '{field} copied', { field: field.key }))" />
-					<FieldRow
-						v-if="details.expires"
-						:label="t('keenext', 'Expires')"
-						:value="formatDate(details.expires)"
-						@copy="copy(formatDate(details.expires), t('keenext', 'Copied'))" />
-				</dl>
+				<div class="entry-details__grid">
+					<div class="entry-details__column">
+						<dl class="entry-details__card">
+							<FieldRow :label="t('keenext', 'Username')" :value="details.username" @copy="copy(details.username, t('keenext', 'Username copied'))" />
+							<FieldRow
+								:label="t('keenext', 'Password')"
+								:value="details.password"
+								secret
+								@copy="copy(details.password, t('keenext', 'Password copied'))" />
+							<FieldRow
+								:label="t('keenext', 'URL')"
+								:value="details.url"
+								link
+								@copy="copy(details.url, t('keenext', 'URL copied'))" />
+						</dl>
 
-				<div v-if="details.tags.length > 0" class="entry-details__tags">
-					<NcChip
-						v-for="tag in details.tags"
-						:key="tag"
-						:text="tag"
-						noClose />
+						<dl v-if="details.totp" class="entry-details__card entry-details__card--totp">
+							<TotpField
+								:config="details.totp"
+								:uri="details.totpUri"
+								@copy="(code) => copy(code, t('keenext', 'TOTP copied'))" />
+						</dl>
+
+						<section v-if="details.customFields.length > 0" class="entry-details__card">
+							<h3>{{ t('keenext', 'Additional attributes') }}</h3>
+							<dl>
+								<FieldRow
+									v-for="field in details.customFields"
+									:key="field.key"
+									:label="field.key"
+									:value="field.value"
+									:secret="field.protected"
+									:multiline="field.value.includes('\n')"
+									@copy="copy(field.value, t('keenext', '{field} copied', { field: field.key }))" />
+							</dl>
+						</section>
+					</div>
+
+					<div v-if="details.notes || details.attachments.length > 0" class="entry-details__column">
+						<section v-if="details.notes" class="entry-details__card">
+							<h3>{{ t('keenext', 'Notes') }}</h3>
+							<p class="entry-details__notes">
+								{{ details.notes }}
+							</p>
+						</section>
+
+						<section v-if="details.attachments.length > 0" class="entry-details__card">
+							<h3>{{ t('keenext', 'Attachments') }}</h3>
+							<ul>
+								<li v-for="attachment in details.attachments" :key="attachment.name" class="entry-details__attachment">
+									<NcIconSvgWrapper :path="mdiPaperclip" :size="20" />
+									<span class="entry-details__attachment-name">{{ attachment.name }}</span>
+									<span class="entry-details__muted">{{ formatSize(attachment.size) }}</span>
+									<NcButton variant="tertiary" :aria-label="t('keenext', 'Download {name}', { name: attachment.name })" @click="download(attachment.name)">
+										<template #icon>
+											<NcIconSvgWrapper :path="mdiDownload" />
+										</template>
+									</NcButton>
+								</li>
+							</ul>
+						</section>
+					</div>
 				</div>
 
-				<section v-if="details.notes" class="entry-details__section">
-					<h3>{{ t('keenext', 'Notes') }}</h3>
-					<p class="entry-details__notes">
-						{{ details.notes }}
+				<footer class="entry-details__meta">
+					<p>
+						{{ t('keenext', 'Created {created}, modified {modified}', { created: formatDate(details.created), modified: formatDate(details.modified) }) }}
 					</p>
-				</section>
-
-				<section v-if="details.attachments.length > 0" class="entry-details__section">
-					<h3>{{ t('keenext', 'Attachments') }}</h3>
-					<ul>
-						<li v-for="attachment in details.attachments" :key="attachment.name" class="entry-details__attachment">
-							<NcIconSvgWrapper :path="mdiPaperclip" :size="20" />
-							<span class="entry-details__attachment-name">{{ attachment.name }}</span>
-							<span class="entry-details__muted">{{ formatSize(attachment.size) }}</span>
-							<NcButton variant="tertiary" :aria-label="t('keenext', 'Download {name}', { name: attachment.name })" @click="download(attachment.name)">
-								<template #icon>
-									<NcIconSvgWrapper :path="mdiDownload" />
-								</template>
-							</NcButton>
-						</li>
-					</ul>
-				</section>
-
-				<section v-if="details.history.length > 0" class="entry-details__section">
-					<h3>
-						<NcButton variant="tertiary" :aria-expanded="showHistory" @click="showHistory = !showHistory">
-							<template #icon>
-								<NcIconSvgWrapper :path="mdiHistory" />
-							</template>
-							{{ t('keenext', 'History ({count})', { count: details.history.length }) }}
-						</NcButton>
-					</h3>
-					<ul v-if="showHistory">
+					<NcButton
+						v-if="details.history.length > 0"
+						variant="tertiary"
+						:aria-expanded="showHistory"
+						@click="showHistory = !showHistory">
+						<template #icon>
+							<NcIconSvgWrapper :path="mdiHistory" />
+						</template>
+						{{ t('keenext', 'History ({count})', { count: details.history.length }) }}
+					</NcButton>
+					<ul v-if="showHistory" class="entry-details__history-list">
 						<li v-for="state in details.history" :key="state.index" class="entry-details__history">
 							<NcButton variant="tertiary" @click="historyIndex = state.index">
 								{{ formatDate(state.modified) }}
@@ -148,11 +167,7 @@
 							</NcActions>
 						</li>
 					</ul>
-				</section>
-
-				<p class="entry-details__muted entry-details__times">
-					{{ t('keenext', 'Created {created}, modified {modified}', { created: formatDate(details.created), modified: formatDate(details.modified) }) }}
-				</p>
+				</footer>
 			</template>
 
 			<NcEmptyContent v-else :name="t('keenext', 'Entry not found')" />
@@ -177,7 +192,7 @@
 <script setup lang="ts">
 import type { OpenDatabase } from '@/stores/vault'
 
-import { mdiContentDuplicate, mdiDelete, mdiDownload, mdiFolderMove, mdiHistory, mdiPaperclip, mdiPencil, mdiRestore } from '@mdi/js'
+import { mdiClockOutline, mdiContentDuplicate, mdiDelete, mdiDownload, mdiFolderMove, mdiHistory, mdiPaperclip, mdiPencil, mdiRestore } from '@mdi/js'
 import { showConfirmation, showSuccess } from '@nextcloud/dialogs'
 import { formatFileSize } from '@nextcloud/files'
 import { computed, ref } from 'vue'
@@ -271,6 +286,10 @@ const details = computed(() => {
 
 function formatDate(date: Date | null | undefined): string {
 	return date ? date.toLocaleString() : ''
+}
+
+function formatDay(date: Date | null | undefined): string {
+	return date ? date.toLocaleDateString() : ''
 }
 
 function formatSize(bytes: number): string {
@@ -386,7 +405,7 @@ function removeHistoryState(index: number): void {
 }
 
 .entry-details__body {
-	max-width: 800px;
+	max-width: 1200px;
 }
 
 @media (max-width: 1024px) {
@@ -400,7 +419,7 @@ function removeHistoryState(index: number): void {
 
 .entry-details__header {
 	display: flex;
-	align-items: center;
+	align-items: flex-start;
 	gap: 12px;
 	margin-bottom: 16px;
 }
@@ -426,35 +445,62 @@ function removeHistoryState(index: number): void {
 	color: var(--color-text-maxcontrast);
 }
 
-.entry-details__fields,
-.entry-details__section {
-	margin: 0 0 16px;
-	padding: 4px 12px;
+.entry-details__path {
+	margin: 0;
+}
+
+.entry-details__chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin-top: 8px;
+}
+
+/* One column on narrow panes, two where the pane has room for both. */
+.entry-details__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
+	gap: 16px;
+	align-items: start;
+}
+
+.entry-details__column {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	min-width: 0;
+}
+
+.entry-details__card {
+	margin: 0;
+	padding: 4px 16px;
 	border: 1px solid var(--color-border);
 	border-radius: var(--border-radius-large);
 }
 
-.entry-details__section {
-	padding-block: 8px 12px;
+section.entry-details__card {
+	padding-block: 12px;
 }
 
-.entry-details__section h3 {
+.entry-details__card--totp {
+	border-color: transparent;
+	background: var(--color-primary-element-light);
+}
+
+.entry-details__card h3 {
 	margin: 0 0 4px;
-	color: var(--color-text-maxcontrast);
-	font-size: var(--font-size-small, 13px);
-	font-weight: normal;
+	font-size: 1em;
+	font-weight: bold;
 }
 
-.entry-details__section ul {
+.entry-details__card dl {
+	margin: 0;
+	padding: 0;
+}
+
+.entry-details__card ul {
 	display: flex;
 	flex-direction: column;
-}
-
-.entry-details__tags {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 4px;
-	margin-bottom: 16px;
 }
 
 .entry-details__notes {
@@ -476,8 +522,24 @@ function removeHistoryState(index: number): void {
 	overflow-wrap: anywhere;
 }
 
-.entry-details__times {
+.entry-details__meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 4px 16px;
 	margin-top: 24px;
-	font-size: 0.9em;
+	padding-top: 8px;
+	border-top: 1px solid var(--color-border);
+	color: var(--color-text-maxcontrast);
+	font-size: var(--font-size-small, 13px);
+}
+
+.entry-details__meta p {
+	margin: 0;
+}
+
+.entry-details__history-list {
+	flex-basis: 100%;
 }
 </style>

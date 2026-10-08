@@ -35,7 +35,7 @@
 | Tags | ✅ | |
 | Expiry | ✅ | Expired entries are struck through. |
 | History | ✅ | List, view an old version with changed fields marked, restore, delete. |
-| Standard and custom icons | ◐ | Shown and selectable. Uploading new custom icons and favicon download missing. |
+| Standard and custom icons | ◐ | Shown and selectable. Favicons are downloaded per entry (the Nextcloud server fetches them from the entry's website). Uploading other custom icons is missing. |
 | Foreground/background colour | ◐ | Kept in the file; not shown or editable. |
 | TOTP | ✅ | KeePassXC `otp`, legacy `TOTP Seed`/`TOTP Settings`, KeePass `TimeOtp-*`; SHA-1/256/512, Steam. Setup dialog reads QR codes from images or pasted screenshots; entries show their QR code for authenticator apps. Camera scanning missing. |
 | Placeholders | ◐ | `{REF:…}`, `{S:…}`, `{TITLE}` etc. Date, environment and other placeholders are not resolved. |

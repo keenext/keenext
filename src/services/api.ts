@@ -64,3 +64,14 @@ export function removeRecent(fileId: number): Promise<RecentFile[]> {
 export function saveSettings(settings: Partial<Settings>): Promise<Settings> {
 	return ocs(axios.put(url('settings'), { settings }, { headers: ocsHeaders }))
 }
+
+export interface FaviconResponse {
+	mime: string
+	/** Base64. */
+	data: string
+}
+
+/** Asks the server to fetch the icon of a website; rejects with a 404 if it has none. */
+export function getFavicon(address: string): Promise<FaviconResponse> {
+	return ocs(axios.get(url('favicon'), { params: { url: address }, headers: ocsHeaders }))
+}
