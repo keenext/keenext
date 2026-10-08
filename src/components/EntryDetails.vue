@@ -48,6 +48,12 @@
 							</template>
 							{{ t('keenext', 'Clone entry') }}
 						</NcActionButton>
+						<NcActionButton :disabled="!details.url || faviconBusy" closeAfterClick @click="downloadFaviconForEntry">
+							<template #icon>
+								<NcIconSvgWrapper :path="mdiImageSearchOutline" />
+							</template>
+							{{ t('keenext', 'Download favicon') }}
+						</NcActionButton>
 						<NcActionButton closeAfterClick @click="moving = true">
 							<template #icon>
 								<NcIconSvgWrapper :path="mdiFolderMove" />
@@ -192,8 +198,8 @@
 <script setup lang="ts">
 import type { OpenDatabase } from '@/stores/vault'
 
-import { mdiClockOutline, mdiContentDuplicate, mdiDelete, mdiDownload, mdiFolderMove, mdiHistory, mdiPaperclip, mdiPencil, mdiRestore } from '@mdi/js'
-import { showConfirmation, showSuccess } from '@nextcloud/dialogs'
+import { mdiClockOutline, mdiContentDuplicate, mdiDelete, mdiDownload, mdiFolderMove, mdiHistory, mdiImageSearchOutline, mdiPaperclip, mdiPencil, mdiRestore } from '@mdi/js'
+import { showConfirmation, showError, showSuccess } from '@nextcloud/dialogs'
 import { formatFileSize } from '@nextcloud/files'
 import { computed, ref } from 'vue'
 import NcActionButton from '@nextcloud/vue/components/NcActionButton'
@@ -211,6 +217,7 @@ import MoveDialog from './MoveDialog.vue'
 import TotpField from './TotpField.vue'
 import { findEntry, findGroup, useDatabaseView } from '@/composables/useDatabase'
 import {
+	applyDraft,
 	attachmentData,
 	createEntry,
 	deleteEntry,
@@ -224,11 +231,13 @@ import {
 	restoreHistory,
 	StandardField,
 } from '@/core/entries'
+import { iconFor, storeIcon } from '@/core/favicons'
 import { resolvedField, resolvePlaceholders } from '@/core/placeholders'
 import { entryOtpUri, readTotp } from '@/core/totp'
 import { t } from '@/l10n'
 import { copySecret } from '@/services/clipboard'
 import { downloadBlob } from '@/services/download'
+import { downloadFavicon } from '@/services/favicon'
 import { useSettingsStore } from '@/stores/settings'
 import { useVaultStore } from '@/stores/vault'
 
@@ -307,6 +316,28 @@ function download(name: string): void {
 		return
 	}
 	downloadBlob(name, attachmentData(attachment) as Uint8Array<ArrayBuffer>)
+}
+
+const faviconBusy = ref(false)
+
+async function downloadFaviconForEntry(): Promise<void> {
+	const id = entry.value!.uuid.id
+	faviconBusy.value = true
+	try {
+		const icon = iconFor(view.value!.db, await downloadFavicon(details.value.url))
+		vault.change(props.database.id, (db) => {
+			const current = findEntry(db, id)
+			if (current) {
+				storeIcon(db, icon)
+				applyDraft(db, current, { ...draftFromEntry(current), customIcon: icon.id })
+			}
+		})
+		showSuccess(t('keenext', 'Favicon downloaded'))
+	} catch {
+		showError(t('keenext', 'Could not find a favicon for this address'))
+	} finally {
+		faviconBusy.value = false
+	}
 }
 
 function onSaved(id: string): void {

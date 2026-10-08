@@ -30,6 +30,28 @@ test('downloads the favicon of an entry\'s website and saves it as custom icon',
 	await expect.poll(() => attempt(() => String(customIcons())), { timeout: 20_000 }).toBe(String(before + 1))
 })
 
+test('downloads the favicon from the entry\'s actions menu without editing', async ({ page }) => {
+	occ('config:system:set', 'allow_local_remote_servers', '--type=boolean', '--value=true')
+	const name = seedDatabase('keepassxc-password.kdbx', `e2e-favicon-menu-${Date.now()}.kdbx`)
+	const customIcons = () => keepassxcExport(fetchFromStorage(name)).match(/<Icon>/g)?.length ?? 0
+	const before = customIcons()
+
+	await openInFiles(page, name)
+	await unlock(page)
+	await page.getByRole('link', { name: 'Internet', exact: true }).click()
+	await page.locator('.entry-list').getByText('GitHub API (reference)', { exact: true }).click()
+	await page.getByRole('button', { name: 'Edit', exact: true }).click()
+	await page.getByLabel('URL', { exact: true }).fill('http://localhost/login')
+	await page.getByRole('button', { name: 'Save', exact: true }).click()
+	await expect(page.getByRole('button', { name: 'Edit', exact: true })).toBeVisible()
+
+	await page.getByRole('button', { name: 'More actions' }).click()
+	await page.getByRole('menuitem', { name: 'Download favicon' }).click()
+	await expect(page.getByText('Favicon downloaded', { exact: true })).toBeVisible()
+
+	await expect.poll(() => attempt(() => String(customIcons())), { timeout: 20_000 }).toBe(String(before + 1))
+})
+
 test('says so when the website has no icon', async ({ page }) => {
 	const name = seedDatabase('keepassxc-password.kdbx', `e2e-nofavicon-${Date.now()}.kdbx`)
 	await openInFiles(page, name)
