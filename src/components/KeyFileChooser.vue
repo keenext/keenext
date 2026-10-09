@@ -4,11 +4,7 @@
 			<NcIconSvgWrapper :path="mdiFileKey" :size="20" />
 			<span class="key-file__name" :title="modelValue.path ?? modelValue.name">{{ modelValue.name }}</span>
 			<span class="key-file__source">{{ modelValue.fileId !== undefined ? t('keenext', 'from Nextcloud') : t('keenext', 'from this device') }}</span>
-			<NcButton variant="tertiary" :aria-label="t('keenext', 'Remove key file')" @click="emit('update:modelValue', null)">
-				<template #icon>
-					<NcIconSvgWrapper :path="mdiClose" />
-				</template>
-			</NcButton>
+			<IconButton :label="t('keenext', 'Remove key file')" :path="mdiClose" @click="emit('update:modelValue', null)" />
 		</div>
 		<div v-else class="key-file__buttons">
 			<NcButton wide @click="chooseFromCloud">
@@ -39,6 +35,7 @@ import { mdiClose, mdiCloudOutline, mdiFileKey, mdiUpload } from '@mdi/js'
 import { ref } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
+import IconButton from './IconButton.vue'
 import { t } from '@/l10n'
 import { pickKeyFile } from '@/services/filePicker'
 

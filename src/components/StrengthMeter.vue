@@ -1,17 +1,21 @@
 <template>
-	<div class="strength" :class="`strength--${strength.level}`">
-		<NcProgressBar
-			class="strength__bar"
-			:value="Math.min(100, strength.bits)"
-			:color="color"
-			:aria-label="label" />
-		<span class="strength__label">{{ label }}</span>
+	<div
+		class="strength"
+		:class="`strength--${strength.level}`"
+		role="img"
+		:aria-label="summary">
+		<div class="strength__segments" aria-hidden="true">
+			<i v-for="segment in 4" :key="segment" :class="{ 'strength__segment--on': segment <= filled }" />
+		</div>
+		<div class="strength__text" aria-hidden="true">
+			<b>{{ name }}</b>
+			<span>{{ t('keenext', '{bits} bits', { bits: strength.bits }) }}</span>
+		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import NcProgressBar from '@nextcloud/vue/components/NcProgressBar'
 import { estimateStrength } from '@/core/generator'
 import { t } from '@/l10n'
 
@@ -21,39 +25,65 @@ const props = defineProps<{
 
 const strength = computed(() => estimateStrength(props.password))
 
-const color = computed(() => ({
-	poor: 'var(--color-error)',
-	weak: 'var(--color-warning)',
-	good: 'var(--color-success)',
-	excellent: 'var(--color-success)',
+const filled = computed(() => ({ poor: 1, weak: 2, good: 3, excellent: 4 })[strength.value.level])
+
+const name = computed(() => ({
+	poor: t('keenext', 'Poor'),
+	weak: t('keenext', 'Weak'),
+	good: t('keenext', 'Good'),
+	excellent: t('keenext', 'Excellent'),
 })[strength.value.level])
 
-const label = computed(() => {
-	const names = {
-		poor: t('keenext', 'Poor'),
-		weak: t('keenext', 'Weak'),
-		good: t('keenext', 'Good'),
-		excellent: t('keenext', 'Excellent'),
-	}
-	return t('keenext', '{quality} ({bits} bits)', { quality: names[strength.value.level], bits: strength.value.bits })
-})
+const summary = computed(() => t('keenext', '{quality} ({bits} bits)', { quality: name.value, bits: strength.value.bits }))
 </script>
 
 <style scoped>
+/* The -text colours are the ones Nextcloud keeps readable on the page background; the plain ones are pale fills.
+   The level is told by the word and the number of segments; the colour only backs it up. */
 .strength {
+	--strength-color: var(--color-error-text);
+	--strength-text: var(--color-error-text);
+	display: grid;
+	gap: 4px;
+}
+
+.strength--weak {
+	/* Nextcloud has no amber that is both strong enough as a fill and readable on both themes. */
+	--strength-color: #c77d00;
+	--strength-text: var(--color-warning-text);
+}
+
+.strength--good,
+.strength--excellent {
+	--strength-color: var(--color-success-text);
+	--strength-text: var(--color-success-text);
+}
+
+.strength__segments {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 4px;
+}
+
+.strength__segments i {
+	height: 6px;
+	border-radius: 3px;
+	background: var(--color-background-darker);
+}
+
+.strength__segments .strength__segment--on {
+	background: var(--strength-color);
+}
+
+.strength__text {
 	display: flex;
-	align-items: center;
+	justify-content: space-between;
 	gap: 8px;
-}
-
-.strength__bar {
-	flex: 1;
-	min-width: 80px;
-}
-
-.strength__label {
+	font-size: var(--font-size-small, 13px);
 	color: var(--color-text-maxcontrast);
-	white-space: nowrap;
-	font-size: 0.9em;
+}
+
+.strength__text b {
+	color: var(--strength-text);
 }
 </style>

@@ -32,11 +32,7 @@
 				<NcIconSvgWrapper :path="mdiFileImportOutline" :size="20" />
 				<strong>{{ source.name }}</strong>
 				<span class="import__muted">{{ formatLabel }}</span>
-				<NcButton variant="tertiary" :aria-label="t('keenext', 'Choose another file')" @click="source = null">
-					<template #icon>
-						<NcIconSvgWrapper :path="mdiClose" />
-					</template>
-				</NcButton>
+				<IconButton :label="t('keenext', 'Choose another file')" :path="mdiClose" @click="source = null" />
 			</div>
 
 			<template v-if="format === 'kdbx'">
@@ -78,6 +74,7 @@ import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
 import NcPasswordField from '@nextcloud/vue/components/NcPasswordField'
 import CostlyKdfWarning from './CostlyKdfWarning.vue'
+import IconButton from './IconButton.vue'
 import KeyFileChooser from './KeyFileChooser.vue'
 import { findGroup } from '@/composables/useDatabase'
 import { CostlyKdfError, createCredentials, kdfLimitsAllowing, openDatabase } from '@/core/database'

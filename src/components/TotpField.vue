@@ -9,15 +9,7 @@
 			<span class="totp__remaining">{{ remaining }}s</span>
 		</span>
 		<template v-if="uri" #actions>
-			<NcButton
-				variant="tertiary"
-				:aria-label="t('keenext', 'Show QR code')"
-				:title="t('keenext', 'Show QR code')"
-				@click="qrOpen = true">
-				<template #icon>
-					<NcIconSvgWrapper :path="mdiQrcode" />
-				</template>
-			</NcButton>
+			<IconButton :label="t('keenext', 'Show QR code')" :path="mdiQrcode" @click="qrOpen = true" />
 		</template>
 	</FieldRow>
 	<NcDialog
@@ -37,11 +29,10 @@ import type { TotpConfig } from '@/core/totp'
 
 import { mdiQrcode } from '@mdi/js'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import NcButton from '@nextcloud/vue/components/NcButton'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
-import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcProgressBar from '@nextcloud/vue/components/NcProgressBar'
 import FieldRow from './FieldRow.vue'
+import IconButton from './IconButton.vue'
 import QrCode from './QrCode.vue'
 import { totpCode, totpRemaining } from '@/core/totp'
 import { t } from '@/l10n'

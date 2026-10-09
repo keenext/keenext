@@ -16,26 +16,17 @@
 			<span v-else class="field-row__text" :class="[{ 'field-row__text--secret': secret && !revealed, 'field-row__text--multiline': multiline }]">{{ displayed }}</span>
 			<span class="field-row__actions">
 				<slot name="actions" />
-				<NcButton
+				<IconButton
 					v-if="secret && value"
-					variant="tertiary"
-					:aria-label="revealed ? t('keenext', 'Hide') : t('keenext', 'Show')"
-					:title="revealed ? t('keenext', 'Hide') : t('keenext', 'Show')"
-					@click="revealed = !revealed">
-					<template #icon>
-						<NcIconSvgWrapper :path="revealed ? mdiEyeOff : mdiEye" />
-					</template>
-				</NcButton>
-				<NcButton
+					:label="revealed ? t('keenext', 'Hide') : t('keenext', 'Show')"
+					:path="revealed ? mdiEyeOff : mdiEye"
+					@click="revealed = !revealed" />
+				<IconButton
 					v-if="value"
-					variant="tertiary"
-					:aria-label="t('keenext', 'Copy {field}', { field: label })"
+					:label="t('keenext', 'Copy {field}', { field: label })"
 					:title="t('keenext', 'Copy')"
-					@click="emit('copy')">
-					<template #icon>
-						<NcIconSvgWrapper :path="mdiContentCopy" />
-					</template>
-				</NcButton>
+					:path="mdiContentCopy"
+					@click="emit('copy')" />
 			</span>
 		</dd>
 	</div>
@@ -44,8 +35,7 @@
 <script setup lang="ts">
 import { mdiContentCopy, mdiEye, mdiEyeOff } from '@mdi/js'
 import { computed, ref } from 'vue'
-import NcButton from '@nextcloud/vue/components/NcButton'
-import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
+import IconButton from './IconButton.vue'
 import { openableUrl } from '@/core/urls'
 import { t } from '@/l10n'
 

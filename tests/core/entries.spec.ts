@@ -6,6 +6,7 @@ import {
 	applyDraft,
 	attachFile,
 	attachmentData,
+	changedFields,
 	createEntry,
 	deleteEntry,
 	draftFromEntry,
@@ -167,5 +168,19 @@ describe('drafts across database instances', () => {
 
 		const attachment = draftFromEntry(entryByTitle(reopened, 'GitHub')).attachments.find((candidate) => candidate.name === 'new.txt')!
 		expect(new TextDecoder().decode(attachmentData(attachment))).toBe('only in the old instance')
+	})
+})
+
+describe('changedFields', () => {
+	it('lists what differs between two states, standard fields and attributes apart', () => {
+		const db = newDatabase()
+		const entry = createEntry(db, db.getDefaultGroup(), { ...emptyDraft(), title: 'Site', password: 'one', customFields: [{ key: 'PIN', value: '1', protected: true }] })
+		const before = draftFromEntry(entry)
+
+		applyDraft(db, entry, { ...before, password: 'two', url: 'https://site.example', customFields: [{ key: 'PIN', value: '1', protected: true }, { key: 'Pet', value: 'cat', protected: false }] })
+		const after = draftFromEntry(entry)
+
+		expect(changedFields(before, after)).toEqual({ standard: ['password', 'url'], custom: ['Pet'] })
+		expect(changedFields(after, after)).toEqual({ standard: [], custom: [] })
 	})
 })

@@ -41,7 +41,7 @@
 						</template>
 						{{ t('keenext', 'Edit') }}
 					</NcButton>
-					<NcActions v-if="database.writable" :aria-label="t('keenext', 'More actions')">
+					<NcActions v-if="database.writable" variant="secondary" :aria-label="t('keenext', 'More actions')">
 						<NcActionButton closeAfterClick @click="clone">
 							<template #icon>
 								<NcIconSvgWrapper :path="mdiContentDuplicate" />
@@ -69,111 +69,132 @@
 					</NcActions>
 				</header>
 
+				<NcRadioGroup
+					v-model="tab"
+					class="entry-details__tabs"
+					:label="t('keenext', 'Entry')"
+					hideLabel>
+					<NcRadioGroupButton value="details" :label="t('keenext', 'Details')" />
+					<NcRadioGroupButton v-if="details.history.length > 0" value="history" :label="t('keenext', 'History ({count})', { count: details.history.length })" />
+					<NcRadioGroupButton value="info" :label="t('keenext', 'Info')" />
+				</NcRadioGroup>
+
 				<NcNoteCard v-if="details.expired" type="warning">
 					{{ t('keenext', 'This entry expired on {date}', { date: formatDate(details.expires) }) }}
 				</NcNoteCard>
 
-				<div class="entry-details__grid">
-					<div class="entry-details__column">
-						<dl class="entry-details__card">
-							<FieldRow :label="t('keenext', 'Username')" :value="details.username" @copy="copy(details.username, t('keenext', 'Username copied'))" />
+				<div v-if="tab === 'details'" class="entry-details__column">
+					<dl class="entry-details__card">
+						<FieldRow :label="t('keenext', 'Username')" :value="details.username" @copy="copy(details.username, t('keenext', 'Username copied'))" />
+						<FieldRow
+							:label="t('keenext', 'Password')"
+							:value="details.password"
+							secret
+							@copy="copy(details.password, t('keenext', 'Password copied'))" />
+						<FieldRow
+							:label="t('keenext', 'URL')"
+							:value="details.url"
+							link
+							@copy="copy(details.url, t('keenext', 'URL copied'))" />
+					</dl>
+
+					<dl v-if="details.totp" class="entry-details__card entry-details__card--totp">
+						<TotpField
+							:config="details.totp"
+							:uri="details.totpUri"
+							@copy="(code) => copy(code, t('keenext', 'TOTP copied'))" />
+					</dl>
+
+					<section v-if="details.customFields.length > 0" class="entry-details__card">
+						<h3>{{ t('keenext', 'Additional attributes') }}</h3>
+						<dl>
 							<FieldRow
-								:label="t('keenext', 'Password')"
-								:value="details.password"
-								secret
-								@copy="copy(details.password, t('keenext', 'Password copied'))" />
-							<FieldRow
-								:label="t('keenext', 'URL')"
-								:value="details.url"
-								link
-								@copy="copy(details.url, t('keenext', 'URL copied'))" />
+								v-for="field in details.customFields"
+								:key="field.key"
+								:label="field.key"
+								:value="field.value"
+								:secret="field.protected"
+								:multiline="field.value.includes('\n')"
+								@copy="copy(field.value, t('keenext', '{field} copied', { field: field.key }))" />
 						</dl>
+					</section>
 
-						<dl v-if="details.totp" class="entry-details__card entry-details__card--totp">
-							<TotpField
-								:config="details.totp"
-								:uri="details.totpUri"
-								@copy="(code) => copy(code, t('keenext', 'TOTP copied'))" />
-						</dl>
+					<section v-if="details.notes" class="entry-details__card">
+						<h3>{{ t('keenext', 'Notes') }}</h3>
+						<p class="entry-details__notes">
+							{{ details.notes }}
+						</p>
+					</section>
 
-						<section v-if="details.customFields.length > 0" class="entry-details__card">
-							<h3>{{ t('keenext', 'Additional attributes') }}</h3>
-							<dl>
-								<FieldRow
-									v-for="field in details.customFields"
-									:key="field.key"
-									:label="field.key"
-									:value="field.value"
-									:secret="field.protected"
-									:multiline="field.value.includes('\n')"
-									@copy="copy(field.value, t('keenext', '{field} copied', { field: field.key }))" />
-							</dl>
-						</section>
-					</div>
-
-					<div v-if="details.notes || details.attachments.length > 0" class="entry-details__column">
-						<section v-if="details.notes" class="entry-details__card">
-							<h3>{{ t('keenext', 'Notes') }}</h3>
-							<p class="entry-details__notes">
-								{{ details.notes }}
-							</p>
-						</section>
-
-						<section v-if="details.attachments.length > 0" class="entry-details__card">
-							<h3>{{ t('keenext', 'Attachments') }}</h3>
-							<ul>
-								<li v-for="attachment in details.attachments" :key="attachment.name" class="entry-details__attachment">
-									<NcIconSvgWrapper :path="mdiPaperclip" :size="20" />
-									<span class="entry-details__attachment-name">{{ attachment.name }}</span>
-									<span class="entry-details__muted">{{ formatSize(attachment.size) }}</span>
-									<NcButton variant="tertiary" :aria-label="t('keenext', 'Download {name}', { name: attachment.name })" @click="download(attachment.name)">
-										<template #icon>
-											<NcIconSvgWrapper :path="mdiDownload" />
-										</template>
-									</NcButton>
-								</li>
-							</ul>
-						</section>
-					</div>
+					<section v-if="details.attachments.length > 0" class="entry-details__card">
+						<h3>{{ t('keenext', 'Attachments') }}</h3>
+						<ul>
+							<li v-for="attachment in details.attachments" :key="attachment.name" class="entry-details__attachment">
+								<NcIconSvgWrapper :path="mdiPaperclip" :size="20" />
+								<span class="entry-details__attachment-name">{{ attachment.name }}</span>
+								<span class="entry-details__muted">{{ formatSize(attachment.size) }}</span>
+								<IconButton :label="t('keenext', 'Download {name}', { name: attachment.name })" :path="mdiDownload" @click="download(attachment.name)" />
+							</li>
+						</ul>
+					</section>
 				</div>
 
-				<footer class="entry-details__meta">
-					<p>
-						{{ t('keenext', 'Created {created}, modified {modified}', { created: formatDate(details.created), modified: formatDate(details.modified) }) }}
+				<div v-else-if="tab === 'history'" class="entry-details__column">
+					<p class="entry-details__muted">
+						{{ t('keenext', 'Each version lists the fields that were changed in the next one.') }}
 					</p>
-					<NcButton
-						v-if="details.history.length > 0"
-						variant="tertiary"
-						:aria-expanded="showHistory"
-						@click="showHistory = !showHistory">
-						<template #icon>
-							<NcIconSvgWrapper :path="mdiHistory" />
-						</template>
-						{{ t('keenext', 'History ({count})', { count: details.history.length }) }}
-					</NcButton>
-					<ul v-if="showHistory" class="entry-details__history-list">
-						<li v-for="state in details.history" :key="state.index" class="entry-details__history">
-							<NcButton variant="tertiary" @click="historyIndex = state.index">
-								{{ formatDate(state.modified) }}
-							</NcButton>
-							<span class="entry-details__muted">{{ state.summary }}</span>
-							<NcActions v-if="database.writable" :aria-label="t('keenext', 'History actions')">
-								<NcActionButton closeAfterClick @click="restore(state.index)">
+					<ul class="entry-details__versions">
+						<li class="entry-details__card entry-details__version entry-details__version--current">
+							<div class="entry-details__version-main">
+								<strong>{{ t('keenext', 'Current version') }}</strong>
+								<span class="entry-details__muted">{{ formatDate(details.modified) }}</span>
+							</div>
+						</li>
+						<li v-for="state in details.history" :key="state.index" class="entry-details__card entry-details__version">
+							<div class="entry-details__version-main">
+								<strong>{{ formatDate(state.modified) }}</strong>
+								<span v-if="state.changes.length > 0" class="entry-details__chips">
+									<NcChip
+										v-for="change in state.changes"
+										:key="change"
+										:text="change"
+										noClose />
+								</span>
+							</div>
+							<div class="entry-details__version-actions">
+								<NcButton @click="historyIndex = state.index">
+									{{ t('keenext', 'View') }}
+								</NcButton>
+								<NcButton v-if="database.writable" @click="restore(state.index)">
 									<template #icon>
 										<NcIconSvgWrapper :path="mdiRestore" />
 									</template>
 									{{ t('keenext', 'Restore this version') }}
-								</NcActionButton>
-								<NcActionButton closeAfterClick @click="removeHistoryState(state.index)">
-									<template #icon>
-										<NcIconSvgWrapper :path="mdiDelete" />
-									</template>
-									{{ t('keenext', 'Delete this version') }}
-								</NcActionButton>
-							</NcActions>
+								</NcButton>
+								<IconButton
+									v-if="database.writable"
+									:label="t('keenext', 'Delete this version')"
+									:path="mdiDelete"
+									@click="removeHistoryState(state.index)" />
+							</div>
 						</li>
 					</ul>
-				</footer>
+				</div>
+
+				<dl v-else class="entry-details__card entry-details__info">
+					<div v-for="row in details.info" :key="row.label" class="entry-details__info-row">
+						<dt>{{ row.label }}</dt>
+						<dd>
+							<span>{{ row.value }}</span>
+							<IconButton
+								v-if="row.copy"
+								:label="t('keenext', 'Copy {field}', { field: row.label })"
+								:title="t('keenext', 'Copy')"
+								:path="mdiContentCopy"
+								@click="copy(row.value, t('keenext', 'Copied'))" />
+						</dd>
+					</div>
+				</dl>
 			</template>
 
 			<NcEmptyContent v-else :name="t('keenext', 'Entry not found')" />
@@ -196,9 +217,10 @@
 </template>
 
 <script setup lang="ts">
+import type { EntryChanges, StandardChange } from '@/core/entries'
 import type { OpenDatabase } from '@/stores/vault'
 
-import { mdiClockOutline, mdiContentDuplicate, mdiDelete, mdiDownload, mdiFolderMove, mdiHistory, mdiImageSearchOutline, mdiPaperclip, mdiPencil, mdiRestore } from '@mdi/js'
+import { mdiClockOutline, mdiContentCopy, mdiContentDuplicate, mdiDelete, mdiDownload, mdiFolderMove, mdiImageSearchOutline, mdiPaperclip, mdiPencil, mdiRestore } from '@mdi/js'
 import { showConfirmation, showError, showSuccess } from '@nextcloud/dialogs'
 import { formatFileSize } from '@nextcloud/files'
 import { computed, ref } from 'vue'
@@ -209,16 +231,20 @@ import NcChip from '@nextcloud/vue/components/NcChip'
 import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
+import NcRadioGroup from '@nextcloud/vue/components/NcRadioGroup'
+import NcRadioGroupButton from '@nextcloud/vue/components/NcRadioGroupButton'
 import EntryEditor from './EntryEditor.vue'
 import EntryIcon from './EntryIcon.vue'
 import FieldRow from './FieldRow.vue'
 import HistoryVersionDialog from './HistoryVersionDialog.vue'
+import IconButton from './IconButton.vue'
 import MoveDialog from './MoveDialog.vue'
 import TotpField from './TotpField.vue'
 import { findEntry, findGroup, useDatabaseView } from '@/composables/useDatabase'
 import {
 	applyDraft,
 	attachmentData,
+	changedFields,
 	createEntry,
 	deleteEntry,
 	deleteHistory,
@@ -255,7 +281,7 @@ const settingsStore = useSettingsStore()
 const view = useDatabaseView(() => props.database)
 const editing = ref(false)
 const moving = ref(false)
-const showHistory = ref(false)
+const tab = ref<'details' | 'history' | 'info'>('details')
 const historyIndex = ref<number | null>(null)
 
 const entry = computed(() => view.value ? findEntry(view.value.db, props.database.selectedEntry) : undefined)
@@ -285,13 +311,49 @@ const details = computed(() => {
 		expired: isExpired(current),
 		attachments: draft.attachments.map((attachment) => ({ name: attachment.name, size: attachmentData(attachment).byteLength })),
 		history: current.history
-			.map((state, index) => ({ index, modified: state.times.lastModTime, summary: getField(state, StandardField.Title) }))
+			.map((state, index) => ({
+				index,
+				modified: state.times.lastModTime,
+				changes: changeLabels(changedFields(draftFromEntry(state), draftFromEntry(current.history[index + 1] ?? current))),
+			}))
 			.reverse(),
-		created: current.times.creationTime,
 		modified: current.times.lastModTime,
+		info: [
+			{ label: t('keenext', 'Group'), value: entryPath(current).join(' › '), copy: false },
+			{ label: t('keenext', 'Created'), value: formatDate(current.times.creationTime), copy: false },
+			{ label: t('keenext', 'Modified'), value: formatDate(current.times.lastModTime), copy: false },
+			...(current.times.lastAccessTime ? [{ label: t('keenext', 'Last accessed'), value: formatDate(current.times.lastAccessTime), copy: false }] : []),
+			...(current.times.usageCount ? [{ label: t('keenext', 'Times opened'), value: String(current.times.usageCount), copy: false }] : []),
+			{ label: t('keenext', 'Expires'), value: draft.expires ? formatDate(draft.expires) : t('keenext', 'No expiry date'), copy: false },
+			{ label: t('keenext', 'Attachments'), value: draft.attachments.length > 0 ? `${draft.attachments.length} (${formatSize(draft.attachments.reduce((sum, attachment) => sum + attachmentData(attachment).byteLength, 0))})` : '0', copy: false },
+			{ label: t('keenext', 'Entry ID'), value: uuidHex(current.uuid.id), copy: true },
+		],
 		inRecycleBin: isInRecycleBin(db, current),
 	}
 })
+
+/** KeePass shows entry ids as 32 hex digits; kdbxweb keeps them base64. */
+function uuidHex(base64: string): string {
+	return [...atob(base64)].map((char) => char.charCodeAt(0).toString(16).padStart(2, '0')).join('')
+}
+
+/** Names of changed fields as shown on the history chips. */
+function changeLabels(changes: EntryChanges): string[] {
+	const names: Record<StandardChange, string> = {
+		title: t('keenext', 'Title'),
+		username: t('keenext', 'Username'),
+		password: t('keenext', 'Password'),
+		url: t('keenext', 'URL'),
+		notes: t('keenext', 'Notes'),
+		tags: t('keenext', 'Tags'),
+		expires: t('keenext', 'Expires'),
+		attachments: t('keenext', 'Attachments'),
+		icon: t('keenext', 'Icon'),
+	}
+	// The one-time password is stored in several attributes but is one thing to the user.
+	const custom = changes.custom.map((key) => hiddenFields.has(key) ? t('keenext', 'TOTP') : key)
+	return [...changes.standard.map((change) => names[change]), ...new Set(custom)]
+}
 
 function formatDate(date: Date | null | undefined): string {
 	return date ? date.toLocaleString() : ''
@@ -431,12 +493,16 @@ function removeHistoryState(index: number): void {
 	--entry-details-padding-x: 24px;
 	height: 100%;
 	overflow-y: auto;
-	padding: 16px var(--entry-details-padding-x);
+	padding: 0 var(--entry-details-padding-x);
 	box-sizing: border-box;
 }
 
+/* One column; on wide screens it stays readable in the middle instead of stretching. */
 .entry-details__body {
-	max-width: 1200px;
+	max-width: 760px;
+	margin-inline: auto;
+	/* Not on the scrolling pane: the editor's action bar sticks to the top edge of that pane. */
+	padding-block: 16px 24px;
 }
 
 @media (max-width: 1024px) {
@@ -444,6 +510,9 @@ function removeHistoryState(index: number): void {
 		--entry-details-padding-x: 16px;
 		/* The back button above takes one row of the pane. */
 		height: calc(100% - var(--default-clickable-area));
+	}
+
+	.entry-details__body {
 		padding-block: 8px 24px;
 	}
 }
@@ -487,12 +556,8 @@ function removeHistoryState(index: number): void {
 	margin-top: 8px;
 }
 
-/* One column on narrow panes, two where the pane has room for both. */
-.entry-details__grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
-	gap: 16px;
-	align-items: start;
+.entry-details__tabs {
+	margin-bottom: 16px;
 }
 
 .entry-details__column {
@@ -514,8 +579,7 @@ section.entry-details__card {
 }
 
 .entry-details__card--totp {
-	border-color: transparent;
-	background: var(--color-primary-element-light);
+	border-color: var(--color-primary-element);
 }
 
 .entry-details__card h3 {
@@ -540,8 +604,7 @@ section.entry-details__card {
 	overflow-wrap: anywhere;
 }
 
-.entry-details__attachment,
-.entry-details__history {
+.entry-details__attachment {
 	display: flex;
 	align-items: center;
 	gap: 8px;
@@ -553,24 +616,88 @@ section.entry-details__card {
 	overflow-wrap: anywhere;
 }
 
-.entry-details__meta {
+.entry-details__versions {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.entry-details__version {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
+	gap: 8px 16px;
+	padding-block: 12px;
+	list-style: none;
+}
+
+.entry-details__version--current {
+	border-color: var(--color-primary-element);
+}
+
+.entry-details__version-main {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 0;
+}
+
+.entry-details__version-main .entry-details__chips {
+	margin-top: 0;
+}
+
+.entry-details__version-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+/* Nextcloud styles bare dt/dd as a right-aligned label column with padding. */
+.entry-details__info {
+	padding-block: 8px;
+}
+
+.entry-details__info-row {
+	display: grid;
+	grid-template-columns: minmax(8rem, max-content) 1fr;
+	align-items: center;
 	gap: 4px 16px;
-	margin-top: 24px;
-	padding-top: 8px;
-	border-top: 1px solid var(--color-border);
+	padding-block: 6px;
+	border-bottom: 1px solid var(--color-border);
+}
+
+.entry-details__info-row:last-child {
+	border-bottom: 0;
+}
+
+.entry-details__info-row dt {
+	display: block;
+	width: auto;
+	padding: 0;
+	text-align: start;
 	color: var(--color-text-maxcontrast);
-	font-size: var(--font-size-small, 13px);
 }
 
-.entry-details__meta p {
+.entry-details__info-row dd {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: var(--default-clickable-area);
 	margin: 0;
+	padding: 0;
+	overflow-wrap: anywhere;
 }
 
-.entry-details__history-list {
-	flex-basis: 100%;
+.entry-details__info-row dd span {
+	flex: 1;
+	min-width: 0;
+}
+
+@media (max-width: 560px) {
+	.entry-details__info-row {
+		grid-template-columns: 1fr;
+	}
 }
 </style>

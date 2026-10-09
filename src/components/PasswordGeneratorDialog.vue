@@ -28,15 +28,7 @@
 
 			<div class="generator__preview">
 				<code class="generator__value">{{ value }}</code>
-				<NcButton
-					variant="tertiary"
-					:aria-label="t('keenext', 'Regenerate')"
-					:title="t('keenext', 'Regenerate')"
-					@click="regenerate">
-					<template #icon>
-						<NcIconSvgWrapper :path="mdiRefresh" />
-					</template>
-				</NcButton>
+				<IconButton :label="t('keenext', 'Regenerate')" :path="mdiRefresh" @click="regenerate" />
 			</div>
 			<StrengthMeter :password="value" />
 			<p v-if="error" class="generator__error">
@@ -97,12 +89,11 @@ import type { CharacterGroup, PassphraseOptions, PasswordOptions, WordCase } fro
 
 import { mdiRefresh } from '@mdi/js'
 import { computed, reactive, ref, watch } from 'vue'
-import NcButton from '@nextcloud/vue/components/NcButton'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
-import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcSelect from '@nextcloud/vue/components/NcSelect'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
+import IconButton from './IconButton.vue'
 import StrengthMeter from './StrengthMeter.vue'
 import {
 	DEFAULT_PASSPHRASE_OPTIONS,

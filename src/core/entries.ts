@@ -82,6 +82,45 @@ export function draftFromEntry(entry: KdbxEntry): EntryDraft {
 	}
 }
 
+export type StandardChange = 'title' | 'username' | 'password' | 'url' | 'notes' | 'tags' | 'expires' | 'attachments' | 'icon'
+
+export interface EntryChanges {
+	standard: StandardChange[]
+	/** Names of additional attributes that were added, removed or changed. */
+	custom: string[]
+}
+
+/** What differs between two states of an entry, for listing in its history. */
+export function changedFields(before: EntryDraft, after: EntryDraft): EntryChanges {
+	const standard: StandardChange[] = []
+	for (const key of ['title', 'username', 'password', 'url', 'notes'] as const) {
+		if (before[key] !== after[key]) {
+			standard.push(key)
+		}
+	}
+	if (before.tags.length !== after.tags.length || before.tags.some((tag, index) => tag !== after.tags[index])) {
+		standard.push('tags')
+	}
+	if ((before.expires?.getTime() ?? null) !== (after.expires?.getTime() ?? null)) {
+		standard.push('expires')
+	}
+	const attachmentKey = (draft: EntryDraft) => draft.attachments.map((attachment) => `${attachment.name}:${attachmentData(attachment).byteLength}`).join('\n')
+	if (attachmentKey(before) !== attachmentKey(after)) {
+		standard.push('attachments')
+	}
+	if (before.icon !== after.icon || before.customIcon !== after.customIcon) {
+		standard.push('icon')
+	}
+
+	const names = [...new Set([...before.customFields, ...after.customFields].map((field) => field.key))]
+	const custom = names.filter((name) => {
+		const old = before.customFields.find((field) => field.key === name)
+		const current = after.customFields.find((field) => field.key === name)
+		return old?.value !== current?.value || old?.protected !== current?.protected
+	})
+	return { standard, custom }
+}
+
 export function emptyDraft(defaultUser = ''): EntryDraft {
 	return {
 		title: '',
