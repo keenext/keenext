@@ -59,7 +59,7 @@ const displayed = computed(() => props.secret && !revealed.value && props.value 
 
 <style scoped>
 .field-row {
-	padding: 6px 0;
+	padding: 10px 0;
 	border-bottom: 1px solid var(--color-border);
 }
 
@@ -106,5 +106,6 @@ const displayed = computed(() => props.secret && !revealed.value && props.value 
 .field-row__actions {
 	display: flex;
 	flex-shrink: 0;
+	gap: 8px;
 }
 </style>

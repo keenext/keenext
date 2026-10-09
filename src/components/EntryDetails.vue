@@ -489,8 +489,12 @@ function removeHistoryState(index: number): void {
 
 <style scoped>
 /* Scrolls itself: on narrow screens Nextcloud shows the details without a scrolling container. */
+/* Spacing scale shared with the editor. NcTextField already adds 6px above each box for its label. */
 .entry-details {
-	--entry-details-padding-x: 24px;
+	--entry-details-padding-x: 32px;
+	--entry-gap: 20px;
+	--entry-card-padding: 20px;
+	--entry-field-gap: 18px;
 	height: 100%;
 	overflow-y: auto;
 	padding: 0 var(--entry-details-padding-x);
@@ -499,7 +503,7 @@ function removeHistoryState(index: number): void {
 
 /* One column; on wide screens it stays readable in the middle instead of stretching. */
 .entry-details__body {
-	max-width: 760px;
+	max-width: 900px;
 	margin-inline: auto;
 	/* Not on the scrolling pane: the editor's action bar sticks to the top edge of that pane. */
 	padding-block: 16px 24px;
@@ -508,6 +512,8 @@ function removeHistoryState(index: number): void {
 @media (max-width: 1024px) {
 	.entry-details {
 		--entry-details-padding-x: 16px;
+		--entry-gap: 16px;
+		--entry-card-padding: 16px;
 		/* The back button above takes one row of the pane. */
 		height: calc(100% - var(--default-clickable-area));
 	}
@@ -521,7 +527,7 @@ function removeHistoryState(index: number): void {
 	display: flex;
 	align-items: flex-start;
 	gap: 12px;
-	margin-bottom: 16px;
+	margin-bottom: var(--entry-gap);
 }
 
 .entry-details__icon {
@@ -557,25 +563,30 @@ function removeHistoryState(index: number): void {
 }
 
 .entry-details__tabs {
-	margin-bottom: 16px;
+	margin-bottom: var(--entry-gap);
 }
 
 .entry-details__column {
 	display: flex;
 	flex-direction: column;
-	gap: 16px;
+	gap: var(--entry-gap);
 	min-width: 0;
 }
 
 .entry-details__card {
 	margin: 0;
-	padding: 4px 16px;
+	padding: 8px var(--entry-card-padding);
 	border: 1px solid var(--color-border);
 	border-radius: var(--border-radius-large);
 }
 
 section.entry-details__card {
-	padding-block: 12px;
+	padding-block: 16px;
+}
+
+/* The rows inside bring their own vertical padding. */
+section.entry-details__card:has(> dl) {
+	padding-bottom: 6px;
 }
 
 .entry-details__card--totp {
@@ -583,7 +594,7 @@ section.entry-details__card {
 }
 
 .entry-details__card h3 {
-	margin: 0 0 4px;
+	margin: 0 0 8px;
 	font-size: 1em;
 	font-weight: bold;
 }

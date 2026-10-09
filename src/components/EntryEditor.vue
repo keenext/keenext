@@ -371,7 +371,7 @@ function save(): void {
 	container-type: inline-size;
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: var(--entry-gap, 20px);
 }
 
 /* Stays at the top of the scrolling pane so saving never needs a scroll. */
@@ -382,7 +382,7 @@ function save(): void {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	padding: 8px 0;
+	padding: 12px 0;
 	border-bottom: 1px solid var(--color-border);
 	background: var(--color-main-background);
 }
@@ -398,8 +398,8 @@ function save(): void {
 .entry-editor__card {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
-	padding: 12px;
+	gap: var(--entry-field-gap, 12px);
+	padding: var(--entry-card-padding, 20px);
 	border: 1px solid var(--color-border);
 	border-radius: var(--border-radius-large);
 }
@@ -409,6 +409,7 @@ function save(): void {
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 8px;
+	margin-bottom: 4px;
 }
 
 .entry-editor__head h3 {
@@ -423,7 +424,7 @@ function save(): void {
 .entry-editor__row {
 	display: flex;
 	align-items: flex-end;
-	gap: 8px;
+	gap: 12px;
 }
 
 .entry-editor__row > :first-child:not(.icon-button),
@@ -441,11 +442,17 @@ function save(): void {
 	display: grid;
 	grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto auto;
 	align-items: end;
-	gap: 8px;
+	gap: 12px;
 }
 
+/* One line like the name field next to it; grows when the value has several lines. */
 .entry-editor__custom-value--text :deep(.textarea__input) {
-	min-height: var(--default-clickable-area);
+	display: block;
+	field-sizing: content;
+	min-height: calc(var(--default-clickable-area) - 4px);
+	padding-block: 4px;
+	line-height: 22px;
+	box-sizing: border-box;
 }
 
 @container (max-width: 560px) {
