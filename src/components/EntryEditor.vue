@@ -13,7 +13,7 @@
 			</NcButton>
 		</header>
 
-		<section class="entry-editor__card">
+		<div class="entry-editor__group">
 			<div class="entry-editor__row">
 				<IconButton :label="t('keenext', 'Choose icon')" @click="iconOpen = true">
 					<img
@@ -27,20 +27,74 @@
 						:icon="draft.icon"
 						:customIcon="draft.customIcon" />
 				</IconButton>
-				<NcTextField v-model="draft.title" :label="t('keenext', 'Title')" autofocus />
+				<FormField v-slot="{ id }" :label="t('keenext', 'Title')">
+					<NcTextField
+						:id="id"
+						v-model="draft.title"
+						:label="t('keenext', 'Title')"
+						labelOutside
+						autofocus />
+				</FormField>
 			</div>
-			<NcTextField v-model="draft.username" :label="t('keenext', 'Username')" autocomplete="off" />
-			<div class="entry-editor__row">
-				<NcPasswordField
-					v-model="draft.password"
-					:label="t('keenext', 'Password')"
-					autocomplete="new-password"
-					:checkPasswordStrength="false" />
-				<IconButton :label="t('keenext', 'Generate password')" :path="mdiDiceMultiple" @click="generatorOpen = true" />
+			<FormField v-slot="{ id }" :label="t('keenext', 'Tags')">
+				<NcSelect
+					v-model="draft.tags"
+					:inputId="id"
+					:options="knownTags"
+					:inputLabel="t('keenext', 'Tags')"
+					labelOutside
+					multiple
+					taggable
+					keepOpen />
+			</FormField>
+			<div class="entry-editor__expiry">
+				<NcCheckboxRadioSwitch :modelValue="draft.expires !== null" @update:modelValue="toggleExpiry">
+					{{ t('keenext', 'Expires') }}
+				</NcCheckboxRadioSwitch>
+				<FormField v-if="draft.expires !== null" v-slot="{ id }" :label="t('keenext', 'Expiry date')">
+					<NcDateTimePickerNative
+						:id="id"
+						v-model="draft.expires"
+						type="datetime-local"
+						:label="t('keenext', 'Expiry date')"
+						hideLabel />
+				</FormField>
 			</div>
-			<StrengthMeter v-if="draft.password" :password="draft.password" />
+		</div>
+
+		<NcFormGroup :label="t('keenext', 'Sign-in')">
+			<FormField v-slot="{ id }" :label="t('keenext', 'Username')">
+				<NcTextField
+					:id="id"
+					v-model="draft.username"
+					:label="t('keenext', 'Username')"
+					labelOutside
+					autocomplete="off" />
+			</FormField>
+			<div class="entry-editor__password">
+				<div class="entry-editor__row">
+					<FormField v-slot="{ id }" :label="t('keenext', 'Password')">
+						<NcPasswordField
+							:id="id"
+							v-model="draft.password"
+							:label="t('keenext', 'Password')"
+							labelOutside
+							autocomplete="new-password"
+							:checkPasswordStrength="false" />
+					</FormField>
+					<IconButton :label="t('keenext', 'Generate password')" :path="mdiDiceMultiple" @click="generatorOpen = true" />
+				</div>
+				<StrengthMeter v-if="draft.password" :password="draft.password" />
+			</div>
 			<div class="entry-editor__row">
-				<NcTextField v-model="draft.url" :label="t('keenext', 'URL')" type="url" />
+				<FormField v-slot="{ id }" :label="t('keenext', 'URL')">
+					<NcTextField
+						:id="id"
+						v-model="draft.url"
+						:label="t('keenext', 'URL')"
+						labelOutside
+						type="url" />
+				</FormField>
 				<IconButton
 					:label="t('keenext', 'Download favicon')"
 					:title="t('keenext', 'Download favicon (your Nextcloud server fetches it from the website)')"
@@ -50,78 +104,73 @@
 					<NcIconSvgWrapper v-else :path="mdiImageSearchOutline" />
 				</IconButton>
 			</div>
-		</section>
+			<div class="form-field">
+				<span class="entry-editor__label">{{ t('keenext', 'TOTP') }}</span>
+				<div>
+					<NcButton @click="totpOpen = true">
+						<template #icon>
+							<NcIconSvgWrapper :path="mdiTimerOutline" />
+						</template>
+						{{ hasTotp ? t('keenext', 'Change TOTP') : t('keenext', 'Set up TOTP') }}
+					</NcButton>
+				</div>
+			</div>
+		</NcFormGroup>
 
-		<section class="entry-editor__card">
-			<NcSelect
-				v-model="draft.tags"
-				:options="knownTags"
-				:inputLabel="t('keenext', 'Tags')"
-				multiple
-				taggable
-				keepOpen />
-		</section>
-
-		<section class="entry-editor__card">
-			<NcCheckboxRadioSwitch :modelValue="draft.expires !== null" @update:modelValue="toggleExpiry">
-				{{ t('keenext', 'Expires') }}
-			</NcCheckboxRadioSwitch>
-			<NcDateTimePickerNative
-				v-if="draft.expires !== null"
-				v-model="draft.expires"
-				type="datetime-local"
-				:label="t('keenext', 'Expiry date')" />
-		</section>
-
-		<section class="entry-editor__card">
+		<NcFormGroup :label="t('keenext', 'Notes')">
 			<NcTextArea
 				v-model="draft.notes"
 				:label="t('keenext', 'Notes')"
+				labelOutside
 				resize="vertical"
 				rows="4" />
-		</section>
+		</NcFormGroup>
 
-		<section class="entry-editor__card">
-			<div class="entry-editor__head">
-				<h3>{{ t('keenext', 'Additional attributes') }}</h3>
-				<NcButton @click="draft.customFields.push({ key: '', value: '', protected: false })">
-					<template #icon>
-						<NcIconSvgWrapper :path="mdiPlus" />
-					</template>
-					{{ t('keenext', 'Add attribute') }}
-				</NcButton>
-				<NcButton @click="totpOpen = true">
-					<template #icon>
-						<NcIconSvgWrapper :path="mdiTimerOutline" />
-					</template>
-					{{ hasTotp ? t('keenext', 'Change TOTP') : t('keenext', 'Set up TOTP') }}
-				</NcButton>
-			</div>
+		<NcFormGroup>
+			<template #label>
+				<span class="entry-editor__head">
+					<span>{{ t('keenext', 'Additional attributes') }}</span>
+					<NcButton @click="draft.customFields.push({ key: '', value: '', protected: false })">
+						<template #icon>
+							<NcIconSvgWrapper :path="mdiPlus" />
+						</template>
+						{{ t('keenext', 'Add attribute') }}
+					</NcButton>
+				</span>
+			</template>
 			<!-- The otp field is edited through the TOTP dialog. -->
 			<div
 				v-for="(field, index) in draft.customFields"
 				v-show="field.key !== OTP_FIELD"
 				:key="index"
 				class="entry-editor__custom-field">
-				<NcTextField
-					v-model="field.key"
-					class="entry-editor__custom-name"
-					:label="t('keenext', 'Name')"
-					:error="fieldErrors[index] !== undefined"
-					:helperText="fieldErrors[index]" />
-				<NcPasswordField
-					v-if="field.protected"
-					v-model="field.value"
-					class="entry-editor__custom-value"
-					:label="t('keenext', 'Value')"
-					:checkPasswordStrength="false" />
-				<NcTextArea
-					v-else
-					v-model="field.value"
-					class="entry-editor__custom-value entry-editor__custom-value--text"
-					:label="t('keenext', 'Value')"
-					resize="vertical"
-					rows="1" />
+				<FormField v-slot="{ id }" class="entry-editor__custom-name" :label="t('keenext', 'Name')">
+					<NcTextField
+						:id="id"
+						v-model="field.key"
+						:label="t('keenext', 'Name')"
+						labelOutside
+						:error="fieldErrors[index] !== undefined"
+						:helperText="fieldErrors[index]" />
+				</FormField>
+				<FormField v-slot="{ id }" class="entry-editor__custom-value" :label="t('keenext', 'Value')">
+					<NcPasswordField
+						v-if="field.protected"
+						:id="id"
+						v-model="field.value"
+						:label="t('keenext', 'Value')"
+						labelOutside
+						:checkPasswordStrength="false" />
+					<NcTextArea
+						v-else
+						:id="id"
+						v-model="field.value"
+						class="entry-editor__custom-text"
+						:label="t('keenext', 'Value')"
+						labelOutside
+						resize="vertical"
+						rows="1" />
+				</FormField>
 				<IconButton
 					:label="t('keenext', 'Protect value')"
 					:title="t('keenext', 'Protect value (hide and encrypt in memory)')"
@@ -130,18 +179,20 @@
 					@click="field.protected = !field.protected" />
 				<IconButton :label="t('keenext', 'Remove attribute')" :path="mdiDelete" @click="draft.customFields.splice(index, 1)" />
 			</div>
-		</section>
+		</NcFormGroup>
 
-		<section class="entry-editor__card">
-			<div class="entry-editor__head">
-				<h3>{{ t('keenext', 'Attachments') }}</h3>
-				<NcButton @click="fileInput?.click()">
-					<template #icon>
-						<NcIconSvgWrapper :path="mdiPaperclip" />
-					</template>
-					{{ t('keenext', 'Add attachment') }}
-				</NcButton>
-			</div>
+		<NcFormGroup>
+			<template #label>
+				<span class="entry-editor__head">
+					<span>{{ t('keenext', 'Attachments') }}</span>
+					<NcButton @click="fileInput?.click()">
+						<template #icon>
+							<NcIconSvgWrapper :path="mdiPaperclip" />
+						</template>
+						{{ t('keenext', 'Add attachment') }}
+					</NcButton>
+				</span>
+			</template>
 			<ul v-if="draft.attachments.length > 0">
 				<li v-for="(attachment, index) in draft.attachments" :key="attachment.name" class="entry-editor__attachment">
 					<NcIconSvgWrapper :path="mdiPaperclip" :size="20" />
@@ -155,7 +206,7 @@
 				multiple
 				hidden
 				@change="addAttachments">
-		</section>
+		</NcFormGroup>
 
 		<IconPickerDialog
 			v-if="iconOpen"
@@ -189,6 +240,7 @@ import { computed, markRaw, onBeforeUnmount, reactive, ref, toRaw } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
 import NcDateTimePickerNative from '@nextcloud/vue/components/NcDateTimePickerNative'
+import NcFormGroup from '@nextcloud/vue/components/NcFormGroup'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcPasswordField from '@nextcloud/vue/components/NcPasswordField'
@@ -196,6 +248,7 @@ import NcSelect from '@nextcloud/vue/components/NcSelect'
 import NcTextArea from '@nextcloud/vue/components/NcTextArea'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
 import EntryIcon from './EntryIcon.vue'
+import FormField from './FormField.vue'
 import IconButton from './IconButton.vue'
 import IconPickerDialog from './IconPickerDialog.vue'
 import PasswordGeneratorDialog from './PasswordGeneratorDialog.vue'
@@ -371,7 +424,7 @@ function save(): void {
 	container-type: inline-size;
 	display: flex;
 	flex-direction: column;
-	gap: var(--entry-gap, 20px);
+	gap: 32px;
 }
 
 /* Stays at the top of the scrolling pane so saving never needs a scroll. */
@@ -395,42 +448,69 @@ function save(): void {
 	overflow-wrap: anywhere;
 }
 
-.entry-editor__card {
+.entry-editor__group {
 	display: flex;
 	flex-direction: column;
-	gap: var(--entry-field-gap, 12px);
-	padding: var(--entry-card-padding, 20px);
-	border: 1px solid var(--color-border);
-	border-radius: var(--border-radius-large);
+	gap: 16px;
+}
+
+/* NcFormGroup spaces its children by 2 grid units; fields with a label above need more. */
+.entry-editor :deep(fieldset) {
+	--form-group-content-gap: 16px;
+	--form-element-label-offset: 0px;
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
 }
 
 .entry-editor__head {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
+	justify-content: space-between;
 	gap: 8px;
-	margin-bottom: 4px;
 }
 
-.entry-editor__head h3 {
-	flex: 1;
-	min-width: 8ch;
-	margin: 0;
-	font-size: 1em;
-	font-weight: bold;
+.entry-editor__label {
+	font-weight: 500;
 }
 
-/* Fields keep room for their floating label above the box, so buttons line up with the bottom edge. */
+/* A legend shrinks to its text; the add buttons must reach the right edge. */
+.entry-editor :deep(legend) {
+	width: 100%;
+	padding: 0;
+}
+
+.form-field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.entry-editor__password {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+/* Fields carry their label above the box, so their bottom edges are what buttons line up with. */
 .entry-editor__row {
 	display: flex;
 	align-items: flex-end;
 	gap: 12px;
 }
 
-.entry-editor__row > :first-child:not(.icon-button),
-.entry-editor__row > :nth-child(2):not(.icon-button) {
+.entry-editor__row > .form-field {
 	flex: 1;
 	min-width: 0;
+}
+
+.entry-editor__expiry {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 12px 24px;
 }
 
 .entry-editor__pending-icon {
@@ -445,8 +525,13 @@ function save(): void {
 	gap: 12px;
 }
 
-/* One line like the name field next to it; grows when the value has several lines. */
-.entry-editor__custom-value--text :deep(.textarea__input) {
+/* One line like the name field next to it; grows when the value has several lines. The textarea
+   reserves 6px above itself for a floating label, which would push its own label up. */
+.entry-editor .entry-editor__custom-text {
+	margin-block-start: 0;
+}
+
+.entry-editor__custom-text :deep(.textarea__input) {
 	display: block;
 	field-sizing: content;
 	min-height: calc(var(--default-clickable-area) - 4px);
@@ -456,13 +541,9 @@ function save(): void {
 }
 
 @container (max-width: 560px) {
-	.entry-editor__head h3 {
-		flex-basis: 100%;
-	}
-
 	.entry-editor__custom-field {
 		grid-template-columns: minmax(0, 1fr) auto auto;
-		padding-bottom: 8px;
+		padding-bottom: 16px;
 		border-bottom: 1px solid var(--color-border);
 	}
 

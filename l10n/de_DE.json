@@ -227,6 +227,7 @@
 		"Show all {count} entries": "Alle {count} Einträge anzeigen",
 		"Show groups": "Gruppen anzeigen",
 		"Show QR code": "QR-Code anzeigen",
+		"Sign-in": "Zugangsdaten",
 		"Standard icons": "Standard-Icons",
 		"Steam Guard codes": "Steam-Guard-Codes",
 		"Supported: KeePass databases (.kdbx, merged if it is another copy of this database), KeePass XML, CSV (KeePassXC, Bitwarden, browsers and others) and unencrypted Bitwarden JSON.": "Unterstützt: KeePass-Datenbanken (.kdbx; eine andere Kopie dieser Datenbank wird zusammengeführt), KeePass-XML, CSV (KeePassXC, Bitwarden, Browser und andere) und unverschlüsseltes Bitwarden-JSON.",

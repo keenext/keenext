@@ -84,28 +84,36 @@
 				</NcNoteCard>
 
 				<div v-if="tab === 'details'" class="entry-details__column">
-					<dl class="entry-details__card">
-						<FieldRow :label="t('keenext', 'Username')" :value="details.username" @copy="copy(details.username, t('keenext', 'Username copied'))" />
-						<FieldRow
-							:label="t('keenext', 'Password')"
-							:value="details.password"
-							secret
-							@copy="copy(details.password, t('keenext', 'Password copied'))" />
-						<FieldRow
-							:label="t('keenext', 'URL')"
-							:value="details.url"
-							link
-							@copy="copy(details.url, t('keenext', 'URL copied'))" />
-					</dl>
+					<section class="entry-details__group">
+						<h3>{{ t('keenext', 'Sign-in') }}</h3>
+						<dl>
+							<FieldRow :label="t('keenext', 'Username')" :value="details.username" @copy="copy(details.username, t('keenext', 'Username copied'))" />
+							<FieldRow
+								:label="t('keenext', 'Password')"
+								:value="details.password"
+								secret
+								@copy="copy(details.password, t('keenext', 'Password copied'))" />
+							<FieldRow
+								:label="t('keenext', 'URL')"
+								:value="details.url"
+								link
+								@copy="copy(details.url, t('keenext', 'URL copied'))" />
+							<TotpField
+								v-if="details.totp"
+								:config="details.totp"
+								:uri="details.totpUri"
+								@copy="(code) => copy(code, t('keenext', 'TOTP copied'))" />
+						</dl>
+					</section>
 
-					<dl v-if="details.totp" class="entry-details__card entry-details__card--totp">
-						<TotpField
-							:config="details.totp"
-							:uri="details.totpUri"
-							@copy="(code) => copy(code, t('keenext', 'TOTP copied'))" />
-					</dl>
+					<section v-if="details.notes" class="entry-details__group">
+						<h3>{{ t('keenext', 'Notes') }}</h3>
+						<p class="entry-details__notes">
+							{{ details.notes }}
+						</p>
+					</section>
 
-					<section v-if="details.customFields.length > 0" class="entry-details__card">
+					<section v-if="details.customFields.length > 0" class="entry-details__group">
 						<h3>{{ t('keenext', 'Additional attributes') }}</h3>
 						<dl>
 							<FieldRow
@@ -119,14 +127,7 @@
 						</dl>
 					</section>
 
-					<section v-if="details.notes" class="entry-details__card">
-						<h3>{{ t('keenext', 'Notes') }}</h3>
-						<p class="entry-details__notes">
-							{{ details.notes }}
-						</p>
-					</section>
-
-					<section v-if="details.attachments.length > 0" class="entry-details__card">
+					<section v-if="details.attachments.length > 0" class="entry-details__group">
 						<h3>{{ t('keenext', 'Attachments') }}</h3>
 						<ul>
 							<li v-for="attachment in details.attachments" :key="attachment.name" class="entry-details__attachment">
@@ -181,7 +182,7 @@
 					</ul>
 				</div>
 
-				<dl v-else class="entry-details__card entry-details__info">
+				<dl v-else class="entry-details__info">
 					<div v-for="row in details.info" :key="row.label" class="entry-details__info-row">
 						<dt>{{ row.label }}</dt>
 						<dd>
@@ -569,7 +570,7 @@ function removeHistoryState(index: number): void {
 .entry-details__column {
 	display: flex;
 	flex-direction: column;
-	gap: var(--entry-gap);
+	gap: 32px;
 	min-width: 0;
 }
 
@@ -580,33 +581,31 @@ function removeHistoryState(index: number): void {
 	border-radius: var(--border-radius-large);
 }
 
-section.entry-details__card {
-	padding-block: 16px;
+/* A group is a bold heading over its rows, divided by hairlines, like the groups of the editor. */
+.entry-details__group {
+	min-width: 0;
 }
 
-/* The rows inside bring their own vertical padding. */
-section.entry-details__card:has(> dl) {
-	padding-bottom: 6px;
-}
-
-.entry-details__card--totp {
-	border-color: var(--color-primary-element);
-}
-
-.entry-details__card h3 {
+.entry-details__group h3 {
 	margin: 0 0 8px;
 	font-size: 1em;
 	font-weight: bold;
 }
 
-.entry-details__card dl {
+.entry-details__group dl {
 	margin: 0;
 	padding: 0;
+	border-top: 1px solid var(--color-border);
 }
 
-.entry-details__card ul {
+.entry-details__group ul {
 	display: flex;
 	flex-direction: column;
+}
+
+/* The one-time password row comes from a component with several roots, which the scoped styles do not reach. */
+.entry-details__group dl :deep(.field-row:last-child) {
+	border-bottom: 1px solid var(--color-border);
 }
 
 .entry-details__notes {
@@ -667,7 +666,9 @@ section.entry-details__card:has(> dl) {
 
 /* Nextcloud styles bare dt/dd as a right-aligned label column with padding. */
 .entry-details__info {
-	padding-block: 8px;
+	margin: 0;
+	padding: 0;
+	border-top: 1px solid var(--color-border);
 }
 
 .entry-details__info-row {
@@ -677,10 +678,6 @@ section.entry-details__card:has(> dl) {
 	gap: 4px 16px;
 	padding-block: 6px;
 	border-bottom: 1px solid var(--color-border);
-}
-
-.entry-details__info-row:last-child {
-	border-bottom: 0;
 }
 
 .entry-details__info-row dt {
