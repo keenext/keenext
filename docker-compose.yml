@@ -18,6 +18,7 @@ services:
       - .:/var/www/html/custom_apps/keenext:ro
       - ./tests/fixtures:/fixtures:ro
       - ./docker/hooks:/docker-entrypoint-hooks.d:ro
+      - ./docker/apache-dev.conf:/etc/apache2/conf-enabled/keenext-dev.conf:ro
 
 volumes:
   nextcloud:

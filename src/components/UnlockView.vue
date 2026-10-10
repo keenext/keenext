@@ -7,11 +7,10 @@
 				{{ database.path }}
 			</p>
 
-			<NcPasswordField
+			<PasswordInput
 				ref="passwordField"
 				v-model="password"
 				:label="t('keenext', 'Password')"
-				:checkPasswordStrength="false"
 				:disabled="busy"
 				autocomplete="current-password"
 				autofocus />
@@ -62,9 +61,9 @@ import NcButton from '@nextcloud/vue/components/NcButton'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
-import NcPasswordField from '@nextcloud/vue/components/NcPasswordField'
 import CostlyKdfWarning from './CostlyKdfWarning.vue'
 import KeyFileChooser from './KeyFileChooser.vue'
+import PasswordInput from './PasswordInput.vue'
 import { CostlyKdfError, kdfLimitsAllowing } from '@/core/database'
 import { t } from '@/l10n'
 import { resolveKeyFile } from '@/services/keyFile'

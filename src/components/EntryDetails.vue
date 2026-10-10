@@ -85,7 +85,6 @@
 
 				<div v-if="tab === 'details'" class="entry-details__column">
 					<section class="entry-details__group">
-						<h3>{{ t('keenext', 'Sign-in') }}</h3>
 						<dl>
 							<FieldRow :label="t('keenext', 'Username')" :value="details.username" @copy="copy(details.username, t('keenext', 'Username copied'))" />
 							<FieldRow
@@ -103,14 +102,13 @@
 								:config="details.totp"
 								:uri="details.totpUri"
 								@copy="(code) => copy(code, t('keenext', 'TOTP copied'))" />
+							<FieldRow
+								v-if="details.notes"
+								:label="t('keenext', 'Notes')"
+								:value="details.notes"
+								multiline
+								@copy="copy(details.notes, t('keenext', 'Copied'))" />
 						</dl>
-					</section>
-
-					<section v-if="details.notes" class="entry-details__group">
-						<h3>{{ t('keenext', 'Notes') }}</h3>
-						<p class="entry-details__notes">
-							{{ details.notes }}
-						</p>
 					</section>
 
 					<section v-if="details.customFields.length > 0" class="entry-details__group">
@@ -145,13 +143,13 @@
 						{{ t('keenext', 'Each version lists the fields that were changed in the next one.') }}
 					</p>
 					<ul class="entry-details__versions">
-						<li class="entry-details__card entry-details__version entry-details__version--current">
+						<li class="entry-details__version entry-details__version--current">
 							<div class="entry-details__version-main">
 								<strong>{{ t('keenext', 'Current version') }}</strong>
 								<span class="entry-details__muted">{{ formatDate(details.modified) }}</span>
 							</div>
 						</li>
-						<li v-for="state in details.history" :key="state.index" class="entry-details__card entry-details__version">
+						<li v-for="state in details.history" :key="state.index" class="entry-details__version">
 							<div class="entry-details__version-main">
 								<strong>{{ formatDate(state.modified) }}</strong>
 								<span v-if="state.changes.length > 0" class="entry-details__chips">
@@ -574,13 +572,6 @@ function removeHistoryState(index: number): void {
 	min-width: 0;
 }
 
-.entry-details__card {
-	margin: 0;
-	padding: 8px var(--entry-card-padding);
-	border: 1px solid var(--color-border);
-	border-radius: var(--border-radius-large);
-}
-
 /* A group is a bold heading over its rows, divided by hairlines, like the groups of the editor. */
 .entry-details__group {
 	min-width: 0;
@@ -608,12 +599,6 @@ function removeHistoryState(index: number): void {
 	border-bottom: 1px solid var(--color-border);
 }
 
-.entry-details__notes {
-	margin: 0;
-	white-space: pre-wrap;
-	overflow-wrap: anywhere;
-}
-
 .entry-details__attachment {
 	display: flex;
 	align-items: center;
@@ -627,9 +612,10 @@ function removeHistoryState(index: number): void {
 }
 
 .entry-details__versions {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
+	margin: 0;
+	padding: 0;
+	border-top: 1px solid var(--color-border);
+	list-style: none;
 }
 
 .entry-details__version {
@@ -639,11 +625,11 @@ function removeHistoryState(index: number): void {
 	justify-content: space-between;
 	gap: 8px 16px;
 	padding-block: 12px;
-	list-style: none;
+	border-bottom: 1px solid var(--color-border);
 }
 
-.entry-details__version--current {
-	border-color: var(--color-primary-element);
+.entry-details__version--current strong {
+	color: var(--color-primary-element-text, var(--color-primary-element));
 }
 
 .entry-details__version-main {

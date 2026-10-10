@@ -80,7 +80,13 @@ const buttons = computed(() => [
 
 <style scoped>
 .icon-picker__heading {
-	margin: 8px 0;
+	margin: 16px 0 8px;
+	font-size: 1em;
+	font-weight: bold;
+}
+
+.icon-picker__heading:first-child {
+	margin-top: 0;
 }
 
 .icon-picker__grid {

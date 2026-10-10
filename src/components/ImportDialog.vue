@@ -36,11 +36,7 @@
 			</div>
 
 			<template v-if="format === 'kdbx'">
-				<NcPasswordField
-					v-model="password"
-					:label="t('keenext', 'Password of the database to import')"
-					:checkPasswordStrength="false"
-					autocomplete="off" />
+				<PasswordInput v-model="password" :label="t('keenext', 'Password of the database to import')" autocomplete="off" />
 				<KeyFileChooser v-model="keyFile" />
 			</template>
 
@@ -72,10 +68,10 @@ import NcButton from '@nextcloud/vue/components/NcButton'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
-import NcPasswordField from '@nextcloud/vue/components/NcPasswordField'
 import CostlyKdfWarning from './CostlyKdfWarning.vue'
 import IconButton from './IconButton.vue'
 import KeyFileChooser from './KeyFileChooser.vue'
+import PasswordInput from './PasswordInput.vue'
 import { findGroup } from '@/composables/useDatabase'
 import { CostlyKdfError, createCredentials, kdfLimitsAllowing, openDatabase } from '@/core/database'
 import { isInRecycleBin, recycleBin } from '@/core/entries'

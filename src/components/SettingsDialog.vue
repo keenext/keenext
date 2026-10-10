@@ -6,7 +6,7 @@
 		@update:open="(value) => emit('update:open', value)">
 		<NcAppSettingsSection id="security" :name="t('keenext', 'Security')">
 			<div class="settings-group">
-				<NcTextField
+				<TextInput
 					:modelValue="String(settings.lockAfterMinutes)"
 					type="number"
 					:label="t('keenext', 'Lock databases after inactivity (minutes, 0 = never)')"
@@ -14,7 +14,7 @@
 				<NcCheckboxRadioSwitch :modelValue="settings.lockOnHide" @update:modelValue="(value: boolean) => update({ lockOnHide: value })">
 					{{ t('keenext', 'Lock databases when the tab is hidden') }}
 				</NcCheckboxRadioSwitch>
-				<NcTextField
+				<TextInput
 					:modelValue="String(settings.clipboardClearSeconds)"
 					type="number"
 					:label="t('keenext', 'Clear clipboard after (seconds, 0 = never)')"
@@ -30,7 +30,7 @@
 				<NcCheckboxRadioSwitch :modelValue="settings.autosave" @update:modelValue="(value: boolean) => update({ autosave: value })">
 					{{ t('keenext', 'Save automatically after every change') }}
 				</NcCheckboxRadioSwitch>
-				<NcTextField
+				<TextInput
 					:modelValue="String(settings.syncIntervalSeconds)"
 					type="number"
 					:label="t('keenext', 'Check for changes made elsewhere every (seconds, 0 = never)')"
@@ -63,7 +63,7 @@ import { storeToRefs } from 'pinia'
 import NcAppSettingsDialog from '@nextcloud/vue/components/NcAppSettingsDialog'
 import NcAppSettingsSection from '@nextcloud/vue/components/NcAppSettingsSection'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
-import NcTextField from '@nextcloud/vue/components/NcTextField'
+import TextInput from './TextInput.vue'
 import { useNavigation } from '@/composables/useNavigation'
 import { t } from '@/l10n'
 import { useSettingsStore } from '@/stores/settings'

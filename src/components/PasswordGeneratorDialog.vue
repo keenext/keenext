@@ -59,8 +59,8 @@
 				<NcCheckboxRadioSwitch v-model="passwordOptions.everyGroup">
 					{{ t('keenext', 'Pick characters from every group') }}
 				</NcCheckboxRadioSwitch>
-				<NcTextField v-model="passwordOptions.include" :label="t('keenext', 'Also use these characters')" />
-				<NcTextField v-model="passwordOptions.exclude" :label="t('keenext', 'Do not use these characters')" />
+				<TextInput v-model="passwordOptions.include" :label="t('keenext', 'Also use these characters')" />
+				<TextInput v-model="passwordOptions.exclude" :label="t('keenext', 'Do not use these characters')" />
 			</template>
 
 			<template v-else>
@@ -72,13 +72,17 @@
 						min="3"
 						max="20">
 				</label>
-				<NcTextField v-model="passphraseOptions.separator" :label="t('keenext', 'Word separator')" />
-				<NcSelect
-					v-model="passphraseOptions.wordCase"
-					:options="['lower', 'upper', 'title', 'mixed']"
-					:getOptionLabel="(option: string) => caseLabels[option as WordCase]"
-					:inputLabel="t('keenext', 'Word case')"
-					:clearable="false" />
+				<TextInput v-model="passphraseOptions.separator" :label="t('keenext', 'Word separator')" />
+				<FormField v-slot="{ id }" :label="t('keenext', 'Word case')">
+					<NcSelect
+						v-model="passphraseOptions.wordCase"
+						:inputId="id"
+						:options="['lower', 'upper', 'title', 'mixed']"
+						:getOptionLabel="(option: string) => caseLabels[option as WordCase]"
+						:inputLabel="t('keenext', 'Word case')"
+						labelOutside
+						:clearable="false" />
+				</FormField>
 			</template>
 		</div>
 	</NcDialog>
@@ -92,9 +96,10 @@ import { computed, reactive, ref, watch } from 'vue'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
 import NcSelect from '@nextcloud/vue/components/NcSelect'
-import NcTextField from '@nextcloud/vue/components/NcTextField'
+import FormField from './FormField.vue'
 import IconButton from './IconButton.vue'
 import StrengthMeter from './StrengthMeter.vue'
+import TextInput from './TextInput.vue'
 import {
 	DEFAULT_PASSPHRASE_OPTIONS,
 	DEFAULT_PASSWORD_OPTIONS,

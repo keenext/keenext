@@ -24,7 +24,7 @@
 			<NcNoteCard v-if="qrError" type="warning">
 				{{ qrError }}
 			</NcNoteCard>
-			<NcTextField
+			<TextInput
 				v-model="secretOrUri"
 				:label="t('keenext', 'Secret key or otpauth:// link')"
 				:error="secretOrUri !== '' && !config"
@@ -34,18 +34,21 @@
 					{{ t('keenext', 'Steam Guard codes') }}
 				</NcCheckboxRadioSwitch>
 				<div class="totp-setup__row">
-					<NcTextField v-model="period" :label="t('keenext', 'Period (seconds)')" type="number" />
-					<NcTextField
+					<TextInput v-model="period" :label="t('keenext', 'Period (seconds)')" type="number" />
+					<TextInput
 						v-if="!steam"
 						v-model="digits"
 						:label="t('keenext', 'Digits')"
 						type="number" />
-					<NcSelect
-						v-if="!steam"
-						v-model="algorithm"
-						:options="['SHA-1', 'SHA-256', 'SHA-512']"
-						:inputLabel="t('keenext', 'Algorithm')"
-						:clearable="false" />
+					<FormField v-if="!steam" v-slot="{ id }" :label="t('keenext', 'Algorithm')">
+						<NcSelect
+							v-model="algorithm"
+							:inputId="id"
+							:options="['SHA-1', 'SHA-256', 'SHA-512']"
+							:inputLabel="t('keenext', 'Algorithm')"
+							labelOutside
+							:clearable="false" />
+					</FormField>
 				</div>
 			</template>
 			<TotpField v-if="config" :config="config" @copy="() => undefined" />
@@ -64,7 +67,8 @@ import NcDialog from '@nextcloud/vue/components/NcDialog'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
 import NcSelect from '@nextcloud/vue/components/NcSelect'
-import NcTextField from '@nextcloud/vue/components/NcTextField'
+import FormField from './FormField.vue'
+import TextInput from './TextInput.vue'
 import TotpField from './TotpField.vue'
 import { base32Decode, buildOtpUri, parseOtpUri } from '@/core/totp'
 import { t } from '@/l10n'
@@ -178,6 +182,11 @@ const buttons = computed(() => [
 
 .totp-setup__row {
 	display: flex;
-	gap: 8px;
+	align-items: flex-end;
+	gap: 12px;
+}
+
+.totp-setup__row > * {
+	min-width: 0;
 }
 </style>

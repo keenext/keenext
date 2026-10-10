@@ -166,7 +166,13 @@ const buttons = computed(() => [
 }
 
 .report__section {
-	margin-bottom: 16px;
+	margin-bottom: 24px;
+}
+
+.report__section h3 {
+	margin: 0 0 8px;
+	font-size: 1em;
+	font-weight: bold;
 }
 
 .report__muted {

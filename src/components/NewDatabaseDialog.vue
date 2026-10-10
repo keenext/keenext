@@ -6,24 +6,19 @@
 		@submit="submit"
 		@update:open="(open) => open || emit('close')">
 		<div class="new-database">
-			<NcTextField v-model="name" :label="t('keenext', 'File name')" autofocus />
+			<TextInput v-model="name" :label="t('keenext', 'File name')" autofocus />
 			<div class="new-database__folder">
 				<span>{{ t('keenext', 'Folder: {folder}', { folder }) }}</span>
 				<NcButton variant="tertiary" @click="chooseFolder">
 					{{ t('keenext', 'Change') }}
 				</NcButton>
 			</div>
-			<NcPasswordField
-				v-model="password"
-				:label="t('keenext', 'Master password')"
-				autocomplete="new-password"
-				:checkPasswordStrength="false" />
+			<PasswordInput v-model="password" :label="t('keenext', 'Master password')" autocomplete="new-password" />
 			<StrengthMeter v-if="password" :password="password" />
-			<NcPasswordField
+			<PasswordInput
 				v-model="repeat"
 				:label="t('keenext', 'Repeat master password')"
 				autocomplete="new-password"
-				:checkPasswordStrength="false"
 				:error="repeat !== '' && repeat !== password"
 				:helperText="repeat !== '' && repeat !== password ? t('keenext', 'Passwords do not match') : ''" />
 			<KeyFileChooser v-model="keyFile" :startAt="folder" />
@@ -44,10 +39,10 @@ import { computed, ref } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
-import NcPasswordField from '@nextcloud/vue/components/NcPasswordField'
-import NcTextField from '@nextcloud/vue/components/NcTextField'
 import KeyFileChooser from './KeyFileChooser.vue'
+import PasswordInput from './PasswordInput.vue'
 import StrengthMeter from './StrengthMeter.vue'
+import TextInput from './TextInput.vue'
 import { t } from '@/l10n'
 import { pickFolder } from '@/services/filePicker'
 import { resolveKeyFile } from '@/services/keyFile'

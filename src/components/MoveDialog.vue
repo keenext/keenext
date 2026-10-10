@@ -3,12 +3,16 @@
 		:name="t('keenext', 'Move to group')"
 		:buttons="buttons"
 		@update:open="(open) => open || emit('close')">
-		<NcSelect
-			v-model="selected"
-			:options="options"
-			:inputLabel="t('keenext', 'Group')"
-			:clearable="false"
-			label="label" />
+		<FormField v-slot="{ id }" :label="t('keenext', 'Group')">
+			<NcSelect
+				v-model="selected"
+				:inputId="id"
+				:options="options"
+				:inputLabel="t('keenext', 'Group')"
+				labelOutside
+				:clearable="false"
+				label="label" />
+		</FormField>
 	</NcDialog>
 </template>
 
@@ -19,6 +23,7 @@ import type { OpenDatabase } from '@/stores/vault'
 import { computed, shallowRef } from 'vue'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
 import NcSelect from '@nextcloud/vue/components/NcSelect'
+import FormField from './FormField.vue'
 import { useDatabaseView } from '@/composables/useDatabase'
 import { isInRecycleBin, recycleBin } from '@/core/entries'
 import { t } from '@/l10n'

@@ -5,29 +5,23 @@
 		isForm
 		@submit="submit"
 		@update:open="(open) => open || emit('close')">
-		<div class="group-dialog__name">
-			<NcButton
-				:aria-label="t('keenext', 'Choose icon')"
-				:title="t('keenext', 'Choose icon')"
-				@click="iconOpen = true">
-				<template #icon>
+		<div class="group-dialog">
+			<div class="group-dialog__name">
+				<IconButton :label="t('keenext', 'Choose icon')" @click="iconOpen = true">
 					<EntryIcon
 						v-if="database.session"
 						:db="database.session.db"
 						:icon="draft.icon"
 						:customIcon="draft.customIcon" />
-				</template>
-			</NcButton>
-			<NcTextField
-				v-model="draft.name"
-				:label="t('keenext', 'Name')"
-				required
-				autofocus />
+				</IconButton>
+				<TextInput
+					v-model="draft.name"
+					:label="t('keenext', 'Name')"
+					required
+					autofocus />
+			</div>
+			<TextAreaInput v-model="draft.notes" :label="t('keenext', 'Notes')" resize="vertical" />
 		</div>
-		<NcTextArea
-			v-model="draft.notes"
-			:label="t('keenext', 'Notes')"
-			resize="vertical" />
 
 		<IconPickerDialog
 			v-if="iconOpen"
@@ -44,12 +38,12 @@ import type { GroupDraft } from '@/core/groups'
 import type { OpenDatabase } from '@/stores/vault'
 
 import { computed, reactive, ref } from 'vue'
-import NcButton from '@nextcloud/vue/components/NcButton'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
-import NcTextArea from '@nextcloud/vue/components/NcTextArea'
-import NcTextField from '@nextcloud/vue/components/NcTextField'
 import EntryIcon from './EntryIcon.vue'
+import IconButton from './IconButton.vue'
 import IconPickerDialog from './IconPickerDialog.vue'
+import TextAreaInput from './TextAreaInput.vue'
+import TextInput from './TextInput.vue'
 import { t } from '@/l10n'
 
 const props = defineProps<{

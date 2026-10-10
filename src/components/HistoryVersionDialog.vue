@@ -91,6 +91,16 @@ const buttons = computed(() => [
 	margin-bottom: 8px;
 }
 
+dl {
+	margin: 0;
+	padding: 0;
+	border-top: 1px solid var(--color-border);
+}
+
+dl :deep(.field-row:last-child) {
+	border-bottom: 1px solid var(--color-border);
+}
+
 .history-version__changed :deep(.field-row__label) {
 	color: var(--color-warning-text);
 	font-weight: bold;
