@@ -14,7 +14,7 @@ appstore: build
 	rm -rf $(package) $(package).tar.gz
 	mkdir -p $(package)
 	cp -r appinfo css img js l10n lib templates $(package)/
-	cp README.md $(package)/
+	cp LICENSE README.md $(package)/
 	find $(package)/js -name '*.map' -delete
 	tar -czf $(package).tar.gz -C $(build_dir) $(app_name)
 
