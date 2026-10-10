@@ -1,10 +1,12 @@
 <template>
-	<NcFormGroup class="form-section" :label="label">
-		<template v-if="$slots.label" #label>
-			<slot name="label" />
-		</template>
-		<slot />
-	</NcFormGroup>
+	<div :class="{ 'form-section--framed': framed }">
+		<NcFormGroup class="form-section" :label="label">
+			<template v-if="$slots.label" #label>
+				<slot name="label" />
+			</template>
+			<slot />
+		</NcFormGroup>
+	</div>
 </template>
 
 <script setup lang="ts">
@@ -17,10 +19,18 @@ import NcFormGroup from '@nextcloud/vue/components/NcFormGroup'
  */
 defineProps<{
 	label?: string
+	/** Draw the group as a card. The frame is a wrapper because a fieldset would put its legend on the border. */
+	framed?: boolean
 }>()
 </script>
 
 <style scoped>
+.form-section--framed {
+	padding: var(--entry-card-padding, 20px);
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius-large);
+}
+
 .form-section {
 	--form-group-content-gap: 16px;
 	--form-element-label-offset: 0px;

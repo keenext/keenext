@@ -13,7 +13,7 @@
 			</NcButton>
 		</header>
 
-		<div class="entry-editor__group">
+		<FormSection framed :label="t('keenext', 'Entry')">
 			<div class="entry-editor__row">
 				<IconButton :label="t('keenext', 'Choose icon')" @click="iconOpen = true">
 					<img
@@ -63,7 +63,10 @@
 				:label="t('keenext', 'Notes')"
 				resize="vertical"
 				rows="4" />
-			<FormField v-slot="{ id }" :label="t('keenext', 'Tags')">
+		</FormSection>
+
+		<FormSection framed :label="t('keenext', 'Tags')">
+			<FormField v-slot="{ id }" :label="t('keenext', 'Tags')" hideLabel>
 				<NcSelect
 					v-model="draft.tags"
 					:inputId="id"
@@ -74,11 +77,21 @@
 					taggable
 					keepOpen />
 			</FormField>
+		</FormSection>
+
+		<FormSection framed :label="t('keenext', 'Expires')">
 			<div class="entry-editor__expiry">
-				<NcCheckboxRadioSwitch :modelValue="draft.expires !== null" @update:modelValue="toggleExpiry">
-					{{ t('keenext', 'Expires') }}
-				</NcCheckboxRadioSwitch>
-				<FormField v-if="draft.expires !== null" v-slot="{ id }" :label="t('keenext', 'Expiry date')">
+				<NcCheckboxRadioSwitch
+					type="switch"
+					:modelValue="draft.expires !== null"
+					:aria-label="t('keenext', 'Expires')"
+					@update:modelValue="toggleExpiry" />
+				<span v-if="draft.expires === null" class="entry-editor__muted">{{ t('keenext', 'No expiry date') }}</span>
+				<FormField
+					v-else
+					v-slot="{ id }"
+					:label="t('keenext', 'Expiry date')"
+					hideLabel>
 					<NcDateTimePickerNative
 						:id="id"
 						v-model="draft.expires"
@@ -87,9 +100,9 @@
 						hideLabel />
 				</FormField>
 			</div>
-		</div>
+		</FormSection>
 
-		<FormSection>
+		<FormSection framed>
 			<template #label>
 				<span class="entry-editor__head">
 					<span>{{ t('keenext', 'Additional attributes') }}</span>
@@ -135,7 +148,7 @@
 			</div>
 		</FormSection>
 
-		<FormSection>
+		<FormSection framed>
 			<template #label>
 				<span class="entry-editor__head">
 					<span>{{ t('keenext', 'Attachments') }}</span>
@@ -378,7 +391,7 @@ function save(): void {
 	container-type: inline-size;
 	display: flex;
 	flex-direction: column;
-	gap: 32px;
+	gap: var(--entry-gap, 20px);
 }
 
 /* Stays at the top of the scrolling pane so saving never needs a scroll. */
@@ -400,12 +413,6 @@ function save(): void {
 	margin: 0;
 	font-size: 1.25rem;
 	overflow-wrap: anywhere;
-}
-
-.entry-editor__group {
-	display: flex;
-	flex-direction: column;
-	gap: 16px;
 }
 
 .entry-editor__head {
@@ -447,8 +454,17 @@ function save(): void {
 .entry-editor__expiry {
 	display: flex;
 	flex-wrap: wrap;
-	align-items: flex-end;
+	align-items: center;
 	gap: 12px 24px;
+}
+
+.entry-editor__muted {
+	color: var(--color-text-maxcontrast);
+}
+
+/* The switch carries its own padding; pull it back so it lines up with the heading. */
+.entry-editor__expiry :deep(.checkbox-radio-switch) {
+	margin-inline-start: calc(-1 * var(--default-grid-baseline, 4px));
 }
 
 .entry-editor__pending-icon {

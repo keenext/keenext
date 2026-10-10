@@ -85,6 +85,7 @@
 
 				<div v-if="tab === 'details'" class="entry-details__column">
 					<section class="entry-details__group">
+						<h3>{{ t('keenext', 'Entry') }}</h3>
 						<dl>
 							<FieldRow :label="t('keenext', 'Username')" :value="details.username" @copy="copy(details.username, t('keenext', 'Username copied'))" />
 							<FieldRow
@@ -139,61 +140,67 @@
 				</div>
 
 				<div v-else-if="tab === 'history'" class="entry-details__column">
-					<p class="entry-details__muted">
-						{{ t('keenext', 'Each version lists the fields that were changed in the next one.') }}
-					</p>
-					<ul class="entry-details__versions">
-						<li class="entry-details__version entry-details__version--current">
-							<div class="entry-details__version-main">
-								<strong>{{ t('keenext', 'Current version') }}</strong>
-								<span class="entry-details__muted">{{ formatDate(details.modified) }}</span>
-							</div>
-						</li>
-						<li v-for="state in details.history" :key="state.index" class="entry-details__version">
-							<div class="entry-details__version-main">
-								<strong>{{ formatDate(state.modified) }}</strong>
-								<span v-if="state.changes.length > 0" class="entry-details__chips">
-									<NcChip
-										v-for="change in state.changes"
-										:key="change"
-										:text="change"
-										noClose />
-								</span>
-							</div>
-							<div class="entry-details__version-actions">
-								<NcButton @click="historyIndex = state.index">
-									{{ t('keenext', 'View') }}
-								</NcButton>
-								<NcButton v-if="database.writable" @click="restore(state.index)">
-									<template #icon>
-										<NcIconSvgWrapper :path="mdiRestore" />
-									</template>
-									{{ t('keenext', 'Restore this version') }}
-								</NcButton>
-								<IconButton
-									v-if="database.writable"
-									:label="t('keenext', 'Delete this version')"
-									:path="mdiDelete"
-									@click="removeHistoryState(state.index)" />
-							</div>
-						</li>
-					</ul>
+					<section class="entry-details__group">
+						<h3>{{ t('keenext', 'History ({count})', { count: details.history.length }) }}</h3>
+						<p class="entry-details__muted">
+							{{ t('keenext', 'Each version lists the fields that were changed in the next one.') }}
+						</p>
+						<ul class="entry-details__versions">
+							<li class="entry-details__version entry-details__version--current">
+								<div class="entry-details__version-main">
+									<strong>{{ t('keenext', 'Current version') }}</strong>
+									<span class="entry-details__muted">{{ formatDate(details.modified) }}</span>
+								</div>
+							</li>
+							<li v-for="state in details.history" :key="state.index" class="entry-details__version">
+								<div class="entry-details__version-main">
+									<strong>{{ formatDate(state.modified) }}</strong>
+									<span v-if="state.changes.length > 0" class="entry-details__chips">
+										<NcChip
+											v-for="change in state.changes"
+											:key="change"
+											:text="change"
+											noClose />
+									</span>
+								</div>
+								<div class="entry-details__version-actions">
+									<NcButton @click="historyIndex = state.index">
+										{{ t('keenext', 'View') }}
+									</NcButton>
+									<NcButton v-if="database.writable" @click="restore(state.index)">
+										<template #icon>
+											<NcIconSvgWrapper :path="mdiRestore" />
+										</template>
+										{{ t('keenext', 'Restore this version') }}
+									</NcButton>
+									<IconButton
+										v-if="database.writable"
+										:label="t('keenext', 'Delete this version')"
+										:path="mdiDelete"
+										@click="removeHistoryState(state.index)" />
+								</div>
+							</li>
+						</ul>
+					</section>
 				</div>
 
-				<dl v-else class="entry-details__info">
-					<div v-for="row in details.info" :key="row.label" class="entry-details__info-row">
-						<dt>{{ row.label }}</dt>
-						<dd>
-							<span>{{ row.value }}</span>
-							<IconButton
-								v-if="row.copy"
-								:label="t('keenext', 'Copy {field}', { field: row.label })"
-								:title="t('keenext', 'Copy')"
-								:path="mdiContentCopy"
-								@click="copy(row.value, t('keenext', 'Copied'))" />
-						</dd>
-					</div>
-				</dl>
+				<section v-else class="entry-details__group">
+					<h3>{{ t('keenext', 'Info') }}</h3>
+					<dl class="entry-details__info">
+						<div v-for="row in details.info" :key="row.label" class="entry-details__info-row">
+							<dt>{{ row.label }}</dt>
+							<dd>
+								<span>{{ row.value }}</span>
+								<IconButton
+									v-if="row.copy"
+									:label="t('keenext', 'Copy {field}', { field: row.label })"
+									:title="t('keenext', 'Copy')"
+									:path="mdiContentCopy"
+									@click="copy(row.value, t('keenext', 'Copied'))" />
+							</dd>
+						</div>
+					</dl>
+				</section>
 			</template>
 
 			<NcEmptyContent v-else :name="t('keenext', 'Entry not found')" />
@@ -568,13 +575,16 @@ function removeHistoryState(index: number): void {
 .entry-details__column {
 	display: flex;
 	flex-direction: column;
-	gap: 32px;
+	gap: var(--entry-gap);
 	min-width: 0;
 }
 
-/* A group is a bold heading over its rows, divided by hairlines, like the groups of the editor. */
+/* A group is a card with a bold heading over its rows, divided by hairlines, like the cards of the editor. */
 .entry-details__group {
 	min-width: 0;
+	padding: 16px var(--entry-card-padding);
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius-large);
 }
 
 .entry-details__group h3 {
@@ -586,17 +596,11 @@ function removeHistoryState(index: number): void {
 .entry-details__group dl {
 	margin: 0;
 	padding: 0;
-	border-top: 1px solid var(--color-border);
 }
 
 .entry-details__group ul {
 	display: flex;
 	flex-direction: column;
-}
-
-/* The one-time password row comes from a component with several roots, which the scoped styles do not reach. */
-.entry-details__group dl :deep(.field-row:last-child) {
-	border-bottom: 1px solid var(--color-border);
 }
 
 .entry-details__attachment {
@@ -612,9 +616,8 @@ function removeHistoryState(index: number): void {
 }
 
 .entry-details__versions {
-	margin: 0;
+	margin: 8px 0 0;
 	padding: 0;
-	border-top: 1px solid var(--color-border);
 	list-style: none;
 }
 
@@ -625,11 +628,11 @@ function removeHistoryState(index: number): void {
 	justify-content: space-between;
 	gap: 8px 16px;
 	padding-block: 12px;
-	border-bottom: 1px solid var(--color-border);
+	border-top: 1px solid var(--color-border);
 }
 
 .entry-details__version--current strong {
-	color: var(--color-primary-element-text, var(--color-primary-element));
+	color: var(--color-primary-element);
 }
 
 .entry-details__version-main {
@@ -654,7 +657,6 @@ function removeHistoryState(index: number): void {
 .entry-details__info {
 	margin: 0;
 	padding: 0;
-	border-top: 1px solid var(--color-border);
 }
 
 .entry-details__info-row {
@@ -664,6 +666,10 @@ function removeHistoryState(index: number): void {
 	gap: 4px 16px;
 	padding-block: 6px;
 	border-bottom: 1px solid var(--color-border);
+}
+
+.entry-details__info-row:last-child {
+	border-bottom: 0;
 }
 
 .entry-details__info-row dt {

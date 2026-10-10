@@ -1,6 +1,6 @@
 <template>
 	<div class="form-field">
-		<label class="form-field__label" :for="id">{{ label }}</label>
+		<label class="form-field__label" :class="{ 'hidden-visually': hideLabel }" :for="id">{{ label }}</label>
 		<slot :id="id" />
 	</div>
 </template>
@@ -15,6 +15,8 @@ import { useId } from 'vue'
  */
 defineProps<{
 	label: string
+	/** Keep the label for assistive technology only, e.g. under a heading that says the same. */
+	hideLabel?: boolean
 }>()
 
 const id = useId()
