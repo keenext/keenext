@@ -45,3 +45,5 @@ Strings are marked with `t('keenext', …)` / `n('keenext', …)` imported from 
 ## License
 
 AGPL-3.0-or-later, see [LICENSE](LICENSE). `packages/kdbxweb` is MIT (its own `LICENSE`). The passphrase word list is the EFF Large Wordlist (CC BY 3.0 US), see `src/core/wordlists/`.
+
+Contributions: [CONTRIBUTING.md](CONTRIBUTING.md). Security reports: [SECURITY.md](SECURITY.md).
