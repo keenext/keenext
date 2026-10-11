@@ -56,7 +56,7 @@
     "eslint": "^10.12.0",
     "happy-dom": "^20.14.5",
     "sass": "^1.105.1",
-    "typescript": "~5.9.3",
+    "typescript": "~7.0.2",
     "vite": "^7.3.6",
     "vitest": "^4.1.11",
     "vue-tsc": "^3.3.12"
