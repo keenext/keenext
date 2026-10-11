@@ -10,7 +10,7 @@ build:
 	npm run l10n
 
 # Tarball for the App Store or a manual install into custom_apps/.
-appstore: build
+appstore: clean build
 	rm -rf $(package) $(package).tar.gz
 	mkdir -p $(package)
 	cp -r appinfo css img js l10n lib templates $(package)/
