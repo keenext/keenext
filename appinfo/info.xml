@@ -9,15 +9,30 @@
 - Databases are decrypted only in your browser; the server never sees your master password or the contents.
 - Open `.kdbx` files from the Files app with a click, or from the app with the file picker and a list of recently opened databases.
 - Changes made elsewhere (KeePassXC through the desktop client, another browser) are merged instead of overwritten.
-- KDBX 3.1 and 4.x, Argon2d/Argon2id, AES-KDF, AES and ChaCha20, key files.
-- Groups, search with KeePassXC syntax, entry history, attachments, TOTP, password generator.]]></description>
+- KDBX 3.1 and 4.x, Argon2d/Argon2id, AES-KDF, AES, ChaCha20 and Twofish, key files.
+- Groups, search with KeePassXC syntax, entry history, attachments, TOTP, password generator.
+
+**Network requests.** Nothing about your databases is sent to third parties. Two features you start yourself contact other servers: the breach check in the health report sends the first 5 characters of each password's SHA-1 hash from your browser to api.pwnedpasswords.com, and downloading an entry's favicon makes your Nextcloud server request the icon from that entry's website.
+
+KeeNext has not been independently audited. Keep a backup of every database you open with it.]]></description>
 	<version>0.1.0</version>
-	<licence>agpl</licence>
-	<author>Jan-Hendrik Meyer</author>
+	<licence>AGPL-3.0-or-later</licence>
+	<author mail="keenext@famiex.de" homepage="https://github.com/keenext">Jan-Hendrik Meyer</author>
 	<namespace>KeeNext</namespace>
+	<documentation>
+		<user>https://github.com/keenext/keenext/blob/main/docs/features.md</user>
+		<developer>https://github.com/keenext/keenext/blob/main/docs/architecture.md</developer>
+	</documentation>
 	<category>security</category>
 	<category>tools</category>
+	<bugs>https://github.com/keenext/keenext/issues</bugs>
+	<repository type="git">https://github.com/keenext/keenext.git</repository>
+	<screenshot>https://raw.githubusercontent.com/keenext/keenext/main/docs/screenshots/entry.png</screenshot>
+	<screenshot>https://raw.githubusercontent.com/keenext/keenext/main/docs/screenshots/unlock.png</screenshot>
+	<screenshot>https://raw.githubusercontent.com/keenext/keenext/main/docs/screenshots/files.png</screenshot>
+	<screenshot>https://raw.githubusercontent.com/keenext/keenext/main/docs/screenshots/generator.png</screenshot>
 	<dependencies>
+		<php min-version="8.2"/>
 		<nextcloud min-version="33" max-version="35"/>
 	</dependencies>
 	<navigations>
