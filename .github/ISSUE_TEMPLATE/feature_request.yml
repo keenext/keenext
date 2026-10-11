@@ -1,0 +1,14 @@
+name: Feature request
+description: Something KeePassXC does that KeeNext does not, or a new idea
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: Check [docs/features.md](https://github.com/keenext/keenext/blob/main/docs/features.md) first; it lists what is missing and what a web app cannot do.
+  - type: textarea
+    id: what
+    attributes:
+      label: What you need
+      description: The task you are trying to do, not only the feature you have in mind.
+    validations:
+      required: true

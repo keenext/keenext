@@ -1,0 +1,45 @@
+name: Bug report
+description: Something does not work as described
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Never attach a real database, key file or password. If a file is needed to reproduce the problem, create a new one with the same settings and a throwaway password.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happens
+      description: What you did, what you expected, and what you got instead.
+    validations:
+      required: true
+  - type: input
+    id: keenext
+    attributes:
+      label: KeeNext version
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: nextcloud
+    attributes:
+      label: Nextcloud version
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+    validations:
+      required: true
+  - type: input
+    id: database
+    attributes:
+      label: Database
+      description: KDBX version, cipher and KDF, and the program that wrote the file (KeePassXC, KeePass, KeePassDX, KeeNext).
+  - type: textarea
+    id: log
+    attributes:
+      label: Browser console output
+      description: Remove anything that identifies your entries or your server.
+      render: shell

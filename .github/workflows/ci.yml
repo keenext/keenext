@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      # The compatibility tests in tests/compat drive keepassxc-cli.
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends keepassxc
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - name: l10n/*.js is generated from l10n/*.json
+        run: npm run l10n && git diff --exit-code -- l10n
+
+  backend:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        php: ['8.2', '8.4']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: ${{ matrix.php }}
+          tools: composer
+          coverage: none
+      - run: composer install --no-progress --prefer-dist
+      - run: composer test
+      - if: matrix.php == '8.2'
+        run: composer psalm
+      - if: matrix.php == '8.2'
+        run: composer cs:check
