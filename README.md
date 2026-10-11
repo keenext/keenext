@@ -11,7 +11,7 @@ A Nextcloud app (id `keenext`) for opening and editing KeePass databases (`.kdbx
 
 ![An entry with TOTP, attachments and history](docs/screenshots/entry.png)
 
-What is covered compared to KeePassXC, and what is not yet: [docs/features.md](docs/features.md). How the code is organised: [docs/architecture.md](docs/architecture.md). The KDBX library is a fork of kdbxweb in [packages/kdbxweb](packages/kdbxweb/FORK.md).
+What is covered compared to KeePassXC, and what is not yet: [docs/features.md](docs/features.md). How the code is organised: [docs/architecture.md](docs/architecture.md). The KDBX library is [`@keenext/kdbxweb`](https://github.com/keenext/kdbxweb), a fork of kdbxweb with its own repository.
 
 Requires Nextcloud 33–35.
 
@@ -30,13 +30,13 @@ The compose file mounts the checkout as `custom_apps/keenext`, enables the app a
 
 | Command | |
 |---|---|
-| `npm test` | Unit and KeePassXC compatibility tests, then the kdbxweb fork's suite (Vitest) |
+| `npm test` | Unit and KeePassXC compatibility tests (Vitest) |
 | `npm run test:e2e` | Browser tests against the compose Nextcloud (Playwright, uses the installed Chrome) |
 | `npm run typecheck` / `npm run lint` | `vue-tsc`, ESLint with the Nextcloud config |
 | `composer test` / `composer psalm` / `composer cs:check` | PHPUnit, Psalm, Nextcloud PHP coding standard |
 | `npm run l10n` | Regenerates `l10n/*.js` from `l10n/*.json` |
 | `make appstore` | Builds `build/keenext.tar.gz` |
-| `tests/fixtures/generate.sh` | Regenerates the KeePassXC-written fixtures (needs `npm run build -w kdbxweb`) |
+| `tests/fixtures/generate.sh` | Regenerates the KeePassXC-written fixtures (needs `keepassxc-cli`) |
 
 ### Translations
 
@@ -44,6 +44,6 @@ Strings are marked with `t('keenext', …)` / `n('keenext', …)` imported from 
 
 ## License
 
-AGPL-3.0-or-later, see [LICENSE](LICENSE). `packages/kdbxweb` is MIT (its own `LICENSE`). The passphrase word list is the EFF Large Wordlist (CC BY 3.0 US), see `src/core/wordlists/`.
+AGPL-3.0-or-later, see [LICENSE](LICENSE). The KDBX library [`@keenext/kdbxweb`](https://github.com/keenext/kdbxweb) is MIT. The passphrase word list is the EFF Large Wordlist (CC BY 3.0 US), see `src/core/wordlists/`.
 
 Contributions: [CONTRIBUTING.md](CONTRIBUTING.md). Security reports: [SECURITY.md](SECURITY.md).

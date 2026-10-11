@@ -8,7 +8,7 @@
 |---|---|---|
 | KDBX 3.1, 4.0, 4.1 | ✅ | Unmodified files resave without differences in KeePassXC's XML export (`tests/compat`). A file is saved as 4.1 once it holds values only 4.1 stores (e.g. group tags); KDBX 3.1 keeps its AES-KDF then. |
 | AES-KDF, Argon2d, Argon2id | ✅ | Argon2 v1.3 only; v1.0 was never written by KDBX 4 clients. |
-| AES-256, ChaCha20, Twofish | ✅ | Twofish in the kdbxweb fork (`packages/kdbxweb/FORK.md`), checked against KeePassXC both ways. |
+| AES-256, ChaCha20, Twofish | ✅ | Twofish in the kdbxweb fork ([FORK.md](https://github.com/keenext/kdbxweb/blob/main/FORK.md)), checked against KeePassXC both ways. |
 | Password, key file, both | ✅ | Key file from Nextcloud or from the device. XML (`.keyx`, v1/v2), 32-byte, hex and arbitrary files. |
 | YubiKey challenge-response | 🚫 | Browsers block the YubiKey OTP interface: WebHID refuses devices that report as keyboards, WebUSB refuses HID and smart card devices. Would need a native helper. Databases protected this way cannot be opened. |
 | Create database | ✅ | KDBX 4, Argon2id 64 MiB, ChaCha20. |

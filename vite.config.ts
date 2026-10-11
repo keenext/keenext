@@ -12,8 +12,6 @@ export default createAppConfig({
 		resolve: {
 			alias: {
 				'@': fileURLToPath(new URL('./src', import.meta.url)),
-				// The fork is bundled from source; its dist/ build is for Node scripts and type declarations.
-				kdbxweb: fileURLToPath(new URL('./packages/kdbxweb/lib/index.ts', import.meta.url)),
 			},
 		},
 		worker: {

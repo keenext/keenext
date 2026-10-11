@@ -3,8 +3,7 @@
 ## Layers
 
 ```
-packages/kdbxweb/ Our fork of kdbxweb (KDBX format and crypto), see its FORK.md.
-src/core/        KeePass logic on top of kdbxweb. No Vue, no Nextcloud; runs in Node for tests.
+src/core/        KeePass logic on top of @keenext/kdbxweb (imported as `kdbxweb`, see package.json). No Vue, no Nextcloud; runs in Node for tests.
 src/services/    Browser and Nextcloud adapters: WebDAV storage, OCS API, file picker, clipboard, Argon2 worker.
 src/stores/      Pinia: open databases (vault.ts) and user settings.
 src/components/  Vue 3 / @nextcloud/vue 9 views.
@@ -40,9 +39,9 @@ Entries are edited as plain `EntryDraft` copies (core/entries.ts). `applyDraft` 
 
 ## Crypto
 
-kdbxweb (the fork in `packages/kdbxweb`) uses WebCrypto for AES, SHA and HMAC and its own ChaCha20 and Twofish. Argon2 comes from hash-wasm (WebAssembly), installed into kdbxweb by `core/crypto.ts`. In the browser each derivation runs in its own module worker (`workers/argon2.worker.ts`, which imports only `core/argon2.ts` to stay small); the worker is terminated afterwards, which also frees its WebAssembly memory. Cancelling an unlock aborts the `AbortSignal` passed to `Kdbx.load`: that terminates the Argon2 worker, and AES-KDF stops at its next chunk of rounds. The page's CSP allows `wasm-unsafe-eval`, same-origin workers and, for the opt-in breach check, `api.pwnedpasswords.com` (PageController).
+kdbxweb (our [fork](https://github.com/keenext/kdbxweb), `@keenext/kdbxweb`) uses WebCrypto for AES, SHA and HMAC and its own ChaCha20 and Twofish. Argon2 comes from hash-wasm (WebAssembly), installed into kdbxweb by `core/crypto.ts`. In the browser each derivation runs in its own module worker (`workers/argon2.worker.ts`, which imports only `core/argon2.ts` to stay small); the worker is terminated afterwards, which also frees its WebAssembly memory. Cancelling an unlock aborts the `AbortSignal` passed to `Kdbx.load`: that terminates the Argon2 worker, and AES-KDF stops at its next chunk of rounds. The page's CSP allows `wasm-unsafe-eval`, same-origin workers and, for the opt-in breach check, `api.pwnedpasswords.com` (PageController).
 
-The fork has no Node fallbacks: it needs WebCrypto and a global `DOMParser`/`XMLSerializer`, which browsers provide and the Node test setups (`tests/setup.ts`, `packages/kdbxweb/test/setup.ts`) install from `@xmldom/xmldom`. Vite and Vitest compile the fork from `packages/kdbxweb/lib`; its `dist/` build serves Node scripts and type declarations (`npm install` builds it).
+The fork has no Node fallbacks: it needs WebCrypto and a global `DOMParser`/`XMLSerializer`, which browsers provide and the Node test setups (`tests/setup.ts`) install from `@xmldom/xmldom`. Vite and Vitest use the package's `dist/` build.
 
 ## Data from the file is untrusted
 
@@ -62,7 +61,6 @@ The key derivation settings come from the file and run before the key can be che
 - `tests/core`: unit tests of the core layer (Vitest, Node).
 - `tests/services`: services that can run without a browser, e.g. the Argon2 worker lifecycle against a stand-in `Worker`.
 - `tests/compat`: kdbxweb against KeePassXC-written files, checked with `keepassxc-cli`: unmodified saves, edits, cipher changes, CSV/XML export and import. The fixture source is `tests/fixtures/source.xml`; `generate.sh` builds the files.
-- `packages/kdbxweb/test`: upstream's suite plus the fork's tests (FORK.md).
 - `tests/l10n.spec.ts`: translations complete and consistent.
 - `tests/php`: PHPUnit for the services.
 - `tests/e2e`: Playwright against the compose Nextcloud, including edits made with `keepassxc-cli` while the database is open in the browser.

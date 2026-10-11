@@ -2,5 +2,4 @@
 *.kdbx binary
 *.key -text
 *.keyx -text
-packages/kdbxweb/resources/** -text
 tests/fixtures/** -text

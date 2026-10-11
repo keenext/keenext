@@ -7,7 +7,6 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			'@': fileURLToPath(new URL('./src', import.meta.url)),
-			kdbxweb: fileURLToPath(new URL('./packages/kdbxweb/lib/index.ts', import.meta.url)),
 		},
 	},
 	test: {
