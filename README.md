@@ -11,7 +11,7 @@ A Nextcloud app (id `keenext`) for opening and editing KeePass databases (`.kdbx
 - Import from CSV (KeePassXC, Bitwarden, browsers …), Bitwarden JSON, KeePass XML and other `.kdbx` files; export as KeePass XML or CSV.
 - Health check (weak, reused, expiring passwords) with an opt-in Have I Been Pwned lookup; TOTP with QR codes.
 
-![An entry with TOTP, attachments and history](docs/screenshots/entry.png)
+![An entry with TOTP, tags, notes and history](docs/screenshots/entry.png)
 
 What is covered compared to KeePassXC, and what is not yet: [docs/features.md](docs/features.md). How the code is organised: [docs/architecture.md](docs/architecture.md). The KDBX library is [`@keenext/kdbxweb`](https://github.com/keenext/kdbxweb), a fork of kdbxweb with its own repository.
 
@@ -38,6 +38,7 @@ The compose file mounts the checkout as `custom_apps/keenext`, enables the app a
 | `composer test` / `composer psalm` / `composer cs:check` | PHPUnit, Psalm, Nextcloud PHP coding standard |
 | `npm run l10n` | Regenerates `l10n/*.js` from `l10n/*.json` |
 | `make appstore` | Builds `build/keenext.tar.gz` |
+| `node tools/screenshots.mjs` | Regenerates `docs/screenshots` from invented demo databases (needs a build and the compose Nextcloud) |
 | `tests/fixtures/generate.sh` | Regenerates the KeePassXC-written fixtures (needs `keepassxc-cli`) |
 
 ### Translations
