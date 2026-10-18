@@ -37,7 +37,8 @@ The compose file mounts the checkout as `custom_apps/keenext`, enables the app a
 | `npm run typecheck` / `npm run lint` | `vue-tsc`, ESLint with the Nextcloud config |
 | `composer test` / `composer psalm` / `composer cs:check` | PHPUnit, Psalm, Nextcloud PHP coding standard |
 | `npm run l10n` | Regenerates `l10n/*.js` from `l10n/*.json` |
-| `make appstore` | Builds `build/keenext.tar.gz` |
+| `make appstore` | Builds the unsigned tarball `build/keenext.tar.gz` |
+| `make release KEY=… CRT=…` | Same, signed with the app certificate for the App Store (needs the compose Nextcloud) |
 | `node tools/screenshots.mjs` | Regenerates `docs/screenshots` from invented demo databases (needs a build and the compose Nextcloud) |
 | `tests/fixtures/generate.sh` | Regenerates the KeePassXC-written fixtures (needs `keepassxc-cli`) |
 
