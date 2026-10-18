@@ -1,5 +1,3 @@
-<!-- A bot asks for a one-time signature of the CLA (CLA.md) on your first pull request. -->
-
 ## What changes and why
 
 ## Checked
