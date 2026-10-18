@@ -26,6 +26,7 @@ Open and edit KeePass databases (.kdbx) directly in Nextcloud, compatible with K
 	</documentation>
 	<category>security</category>
 	<category>tools</category>
+	<website>https://keenext.github.io/keenext/</website>
 	<bugs>https://github.com/keenext/keenext/issues</bugs>
 	<repository type="git">https://github.com/keenext/keenext.git</repository>
 	<screenshot>https://raw.githubusercontent.com/keenext/keenext/main/docs/screenshots/entry.png</screenshot>
