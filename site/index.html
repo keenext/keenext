@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>KeeNext – KeePass databases in Nextcloud</title>
+	<meta name="description" content="Open and edit KeePass (.kdbx) databases stored in your Nextcloud. Decrypted only in your browser. Open source, alpha.">
+	<meta property="og:type" content="website">
+	<meta property="og:title" content="KeeNext – KeePass databases in Nextcloud">
+	<meta property="og:description" content="Open and edit .kdbx files from your Nextcloud, decrypted only in your browser. Open source, alpha.">
+	<meta property="og:image" content="https://keenext.github.io/keenext/screenshots/entry.png">
+	<link rel="icon" href="favicon.svg" type="image/svg+xml">
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<div class="wrap">
+	<header class="site-header">
+		<a class="brand" href="./"><img src="favicon.svg" alt="" width="32" height="32">KeeNext</a>
+		<nav class="site-nav" aria-label="Main">
+			<a href="#how">How it works</a>
+			<a href="#features">Features</a>
+			<a href="#limits" class="optional">Limits</a>
+			<a href="#privacy" class="optional">Privacy</a>
+			<a href="#try">Try it</a>
+			<a href="https://github.com/keenext/keenext">GitHub</a>
+		</nav>
+	</header>
+</div>
+
+<main id="main">
+	<div class="wrap hero">
+		<p class="badge">Alpha · open source · AGPL-3.0</p>
+		<h1>Your KeePass databases, inside your Nextcloud</h1>
+		<p class="lead">Open and edit <code>.kdbx</code> files from the Files app. They are decrypted in your browser; the server stores and serves the encrypted file and nothing else.</p>
+		<div class="actions">
+			<a class="button" href="https://github.com/keenext/keenext">View on GitHub</a>
+			<a class="button secondary" href="#try">Try it</a>
+		</div>
+
+		<aside class="notice" role="note" aria-label="Alpha notice">
+			<p><strong>Alpha software.</strong> KeeNext is under active development and has not been independently audited. It is provided as is, without warranty and without liability, as the AGPL states in <a href="https://github.com/keenext/keenext/blob/main/LICENSE">sections 15 and 16</a>. Keep your own backups of every database, and do not make KeeNext the only copy of your passwords or the only way to reach them.</p>
+		</aside>
+
+		<figure class="shot">
+			<div class="frame">
+				<div class="bar" aria-hidden="true"><i></i><i></i><i></i></div>
+				<img src="screenshots/entry.png" width="1440" height="900" alt="KeeNext showing an entry with username, password, one-time code, notes and an attachment, next to the group tree and the entry list">
+			</div>
+			<figcaption>An entry with a one-time code, notes and an attachment, in the Nextcloud interface.</figcaption>
+		</figure>
+	</div>
+
+	<section id="how" class="soft">
+		<div class="wrap">
+			<h2>The server never sees your passwords</h2>
+			<p class="section-lead">KeeNext is an app inside your own Nextcloud. There is no account and no service of ours in between.</p>
+			<div class="flow">
+				<div class="node secret">
+					<h3>Your browser</h3>
+					<ul>
+						<li>You type the master password here</li>
+						<li>Decrypts and edits the database</li>
+						<li>Saves the encrypted file again</li>
+					</ul>
+				</div>
+				<div class="link" aria-hidden="true">
+					<svg viewBox="0 0 52 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6h46m-6-5 6 5-6 5M50 14H4m6-5-6 5 6 5"/></svg>
+					<span>encrypted file only</span>
+				</div>
+				<div class="node">
+					<h3>Your Nextcloud</h3>
+					<ul>
+						<li>Stores and serves the <code>.kdbx</code> file</li>
+						<li>Never receives the master password, key files or contents</li>
+						<li>Its file versions keep earlier states of the file</li>
+					</ul>
+				</div>
+			</div>
+			<p class="note">Changes made elsewhere, for example with KeePassXC through the desktop client, are merged into the open database instead of overwriting it.</p>
+		</div>
+	</section>
+
+	<section id="features">
+		<div class="wrap">
+			<h2>What it does</h2>
+			<p class="section-lead">Made for people who already use KeePass and keep their databases in Nextcloud.</p>
+			<div class="grid">
+				<div class="card">
+					<h3>Opens like any file</h3>
+					<p>Click a <code>.kdbx</code> in the Files app, or create one from the “New” menu. Recently opened databases remember their key file.</p>
+				</div>
+				<div class="card">
+					<h3>Works with your databases</h3>
+					<p>KDBX 3.1 and 4.x, Argon2d/Argon2id and AES-KDF, AES-256, ChaCha20 and Twofish, password and/or key file. Tested against files written by KeePassXC, and files saved here open in KeePassXC.</p>
+				</div>
+				<div class="card">
+					<h3>Merges, never overwrites</h3>
+					<p>Edits from the desktop client or another tab are detected and merged, so a sync does not silently replace your work.</p>
+				</div>
+				<div class="card">
+					<h3>Entries in detail</h3>
+					<p>Groups, tags, attachments, history with restore, one-time codes with QR codes, and search with KeePassXC syntax.</p>
+				</div>
+				<div class="card">
+					<h3>Password health</h3>
+					<p>Finds weak, reused and expiring passwords. An optional breach check sends only 5-character hash prefixes.</p>
+				</div>
+				<div class="card">
+					<h3>Import and export</h3>
+					<p>Import CSV (KeePassXC, Bitwarden, browsers), Bitwarden JSON, KeePass XML and other databases. Export as KeePass XML or CSV.</p>
+				</div>
+				<div class="card">
+					<h3>Generator</h3>
+					<p>Character groups as in KeePassXC, plus passphrases from the EFF word list.</p>
+				</div>
+				<div class="card">
+					<h3>Locks itself</h3>
+					<p>Can lock after inactivity or when the tab is hidden, clears the clipboard after a delay, and opens read-only shares read-only.</p>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<section class="soft" aria-labelledby="gallery-title">
+		<div class="wrap">
+			<h2 id="gallery-title">A look around</h2>
+			<p class="section-lead">The app is built from Nextcloud's own interface components.</p>
+			<div class="gallery">
+				<figure>
+					<div class="frame"><img src="screenshots/unlock.png" width="1440" height="900" loading="lazy" alt="The unlock screen with a password field, buttons for a key file from Nextcloud or from this device, and the note that the password is never sent to the server"></div>
+					<figcaption>Unlocking a database</figcaption>
+				</figure>
+				<figure>
+					<div class="frame"><img src="screenshots/files.png" width="1440" height="900" loading="lazy" alt="The Nextcloud Files app listing several .kdbx files with their own icon"></div>
+					<figcaption>Databases in the Files app</figcaption>
+				</figure>
+				<figure>
+					<div class="frame"><img src="screenshots/generator.png" width="1440" height="900" loading="lazy" alt="The password generator dialog with a generated password, a strength meter, a length slider and character groups"></div>
+					<figcaption>Password generator</figcaption>
+				</figure>
+			</div>
+		</div>
+	</section>
+
+	<section id="limits">
+		<div class="wrap">
+			<h2>What it does not do</h2>
+			<p class="section-lead">KeePassXC is a desktop program and does more. The full comparison is in the <a href="https://github.com/keenext/keenext/blob/main/docs/features.md">feature list</a>.</p>
+			<div class="two">
+				<div>
+					<h3>A web page cannot do this</h3>
+					<ul>
+						<li>Auto-Type <span>into other programs</span></li>
+						<li>Browser integration <span>(KeePassXC-Browser)</span></li>
+						<li>SSH agent</li>
+						<li>YubiKey challenge-response <span>— browsers block the YubiKey OTP interface, so databases protected this way cannot be opened</span></li>
+					</ul>
+				</div>
+				<div>
+					<h3>Not there yet</h3>
+					<ul>
+						<li>Public link shares</li>
+						<li>Regular expressions in search</li>
+						<li>Uploading custom icons</li>
+						<li>HTML export</li>
+						<li>Camera scanning for one-time codes</li>
+						<li>Import from 1Password and KeePass 1 (<code>.kdb</code>)</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<section id="privacy" class="soft">
+		<div class="wrap">
+			<h2>Privacy and trust</h2>
+			<p class="section-lead">Nothing about your databases is sent to third parties.</p>
+			<div class="two">
+				<div>
+					<h3>Two features you start yourself reach other servers</h3>
+					<ul>
+						<li>The breach check in the health report sends the first 5 characters of each password's SHA-1 hash from your browser to <code>api.pwnedpasswords.com</code>. The passwords themselves never leave the browser.</li>
+						<li>Downloading an entry's favicon makes your Nextcloud server request the icon from that entry's website.</li>
+					</ul>
+				</div>
+				<div>
+					<h3>Check it yourself</h3>
+					<ul>
+						<li>The app is <a href="https://github.com/keenext/keenext/blob/main/LICENSE">AGPL-3.0-or-later</a>. The KDBX library is a separate MIT-licensed package, <a href="https://github.com/keenext/kdbxweb">@keenext/kdbxweb</a>.</li>
+						<li>It has not been independently audited. Please report vulnerabilities <a href="https://github.com/keenext/keenext/blob/main/SECURITY.md">privately</a>.</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<section id="try">
+		<div class="wrap">
+			<h2>Try it</h2>
+			<p class="section-lead">KeeNext is not in the Nextcloud App Store yet. It needs Nextcloud 33 to 35 and PHP 8.2 or newer. To try it today, run it against a disposable Nextcloud on your own machine (Node 24, PHP 8.2+, Composer and Docker):</p>
+<pre><code>git clone https://github.com/keenext/keenext.git
+cd keenext
+npm ci
+composer install
+npm run build
+docker compose up -d    # Nextcloud on http://localhost:8091, admin / admin</code></pre>
+			<p class="note">The compose file mounts the checkout as an app and copies test databases (password <code>test</code>) into the admin's <code>KeePass</code> folder. Do not point an alpha version at the only copy of a real database.</p>
+		</div>
+	</section>
+</main>
+
+<footer class="site-footer">
+	<div class="wrap">
+		<ul>
+			<li><a href="https://github.com/keenext/keenext">Source on GitHub</a></li>
+			<li><a href="https://github.com/keenext/keenext/issues">Issues</a></li>
+			<li><a href="https://github.com/keenext/keenext/blob/main/docs/features.md">Feature list</a></li>
+			<li><a href="https://github.com/keenext/keenext/blob/main/CHANGELOG.md">Changelog</a></li>
+			<li><a href="https://github.com/keenext/keenext/blob/main/SECURITY.md">Security</a></li>
+			<li><a href="https://github.com/keenext/keenext/blob/main/LICENSE">License</a></li>
+		</ul>
+		<p>KeeNext is an independent project. It is not affiliated with or endorsed by Nextcloud GmbH, KeePass or KeePassXC. Nextcloud, KeePass and KeePassXC are names of their respective owners.</p>
+		<p>This page sets no cookies and loads nothing from other servers.</p>
+	</div>
+</footer>
+</body>
+</html>
