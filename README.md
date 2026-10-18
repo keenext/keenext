@@ -1,5 +1,7 @@
 # KeeNext
 
+> **Alpha.** KeeNext is early software and has not been independently audited. It is provided as is, without warranty and without liability (AGPL-3.0, sections 15 and 16). Keep your own backups of every database you open with it, and do not make it the only copy of your passwords or the only way to reach them.
+
 A Nextcloud app (id `keenext`) for opening and editing KeePass databases (`.kdbx`) stored in Nextcloud, compatible with KeePassXC, KeePass and KeePassDX.
 
 - Databases are decrypted in the browser. The server stores and serves the encrypted file; it never receives the master password, key files or decrypted contents.

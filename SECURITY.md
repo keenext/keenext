@@ -17,4 +17,6 @@ Out of scope: weaknesses in Nextcloud itself, in a browser, or on a device that 
 
 ## Status
 
-KeeNext has not been independently audited. Keep a backup of every database you open with it; Nextcloud's file versions are not a substitute.
+KeeNext is alpha software. It has not been independently audited and is provided without warranty and without liability (AGPL-3.0, sections 15 and 16). Keep a backup of every database you open with it; Nextcloud's file versions are not a substitute.
+
+Reports are welcome, but there is no guaranteed response time and no support commitment.
