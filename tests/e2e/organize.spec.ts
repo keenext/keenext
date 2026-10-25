@@ -103,7 +103,8 @@ test('shows TOTP as QR code and reads it back from an image', async ({ page }) =
 	await navigation.getByRole('link', { name: 'Internet', exact: true }).click()
 	await page.locator('.entry-list').getByText('GitHub', { exact: true }).click()
 	await page.getByRole('button', { name: 'Show QR code' }).click()
-	const qr = await page.getByRole('img', { name: 'QR code for the authenticator app' }).screenshot()
+	// Without finishing the dialog's fade-in, the capture can be translucent over the entry and unreadable.
+	const qr = await page.getByRole('img', { name: 'QR code for the authenticator app' }).screenshot({ animations: 'disabled' })
 	await page.getByRole('dialog', { name: 'TOTP as QR code' }).getByRole('button', { name: 'Close' }).last().click()
 
 	await navigation.getByRole('link', { name: 'Banking', exact: true }).click()

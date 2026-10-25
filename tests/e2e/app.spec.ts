@@ -43,7 +43,9 @@ test('asks before an unusually expensive key derivation and can cancel it', asyn
 	const argon2Worker = page.waitForEvent('worker')
 	await page.getByRole('button', { name: 'Unlock anyway' }).click()
 	await expect(page.getByRole('button', { name: 'Unlocking…' })).toBeVisible()
-	const workerClosed = new Promise((resolve) => argon2Worker.then((worker) => worker.on('close', resolve)))
+	// Cancelling before the derivation has started never creates a worker; wait for it to run.
+	const worker = await argon2Worker
+	const workerClosed = new Promise((resolve) => worker.on('close', resolve))
 	await page.getByRole('button', { name: 'Cancel' }).click()
 	await workerClosed
 	await expect(page.getByRole('button', { name: 'Unlock anyway' })).toBeEnabled()
