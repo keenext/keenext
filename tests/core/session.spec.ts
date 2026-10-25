@@ -2,8 +2,8 @@ import type { Kdbx } from 'kdbxweb'
 import type { DatabaseStorage, StoredFile } from '@/core/session'
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { entryByTitle, newDatabase } from '../helpers/databases.ts'
-import { CostlyKdfError, createCredentials, DEFAULT_KDF_LIMITS, openDatabase, prepareCredentials, saveDatabase, setCredentials } from '@/core/database'
+import { entryByTitle, FAST_KDF, newDatabase } from '../helpers/databases.ts'
+import { applyDatabaseSettings, CostlyKdfError, createCredentials, DEFAULT_KDF_LIMITS, getDatabaseSettings, openDatabase, prepareCredentials, saveDatabase, setCredentials } from '@/core/database'
 import { applyDraft, createEntry, draftFromEntry, emptyDraft, getField } from '@/core/entries'
 import { ConflictError, DatabaseSession } from '@/core/session'
 
@@ -120,6 +120,89 @@ describe('DatabaseSession', () => {
 			createEntry(session.db, session.db.getDefaultGroup(), { ...emptyDraft(), title: 'Local' })
 			session.markChanged()
 			expect(await session.save()).toEqual({ pulled: true, pushed: true })
+		})
+	})
+
+	describe('encryption settings when merging', () => {
+		const stronger = { ...FAST_KDF, iterations: 2 }
+
+		async function storedSettings(storage: MemoryStorage) {
+			return getDatabaseSettings(await openDatabase((await storage.read()).data, createCredentials({ password: 'test' })))
+		}
+
+		it('keeps settings changed elsewhere', async () => {
+			const { storage, session } = await setup()
+			await storage.editElsewhere((db) => {
+				applyDatabaseSettings(db, { ...getDatabaseSettings(db), cipher: 'twofish', kdf: stronger })
+			})
+			createEntry(session.db, session.db.getDefaultGroup(), { ...emptyDraft(), title: 'Local' })
+			session.markChanged()
+			expect(await session.save()).toEqual({ pulled: true, pushed: true })
+
+			const settings = await storedSettings(storage)
+			expect(settings.cipher).toBe('twofish')
+			expect(settings.kdf).toEqual(stronger)
+			expect(getDatabaseSettings(session.db).kdf).toEqual(stronger)
+		})
+
+		it('keeps settings changed here', async () => {
+			const { storage, session } = await setup()
+			applyDatabaseSettings(session.db, { ...getDatabaseSettings(session.db), kdf: stronger })
+			session.markChanged()
+			await storage.editElsewhere((db) => {
+				createEntry(db, db.getDefaultGroup(), { ...emptyDraft(), title: 'Remote' })
+			})
+			expect(await session.save()).toEqual({ pulled: true, pushed: true })
+			expect((await storedSettings(storage)).kdf).toEqual(stronger)
+		})
+
+		it('takes the later change when both sides changed them', async () => {
+			vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-01-01T10:00:00Z') })
+			const { storage, session } = await setup()
+			applyDatabaseSettings(session.db, { ...getDatabaseSettings(session.db), cipher: 'aes' })
+			session.markChanged()
+			vi.setSystemTime(new Date('2026-01-01T10:00:10Z'))
+			await storage.editElsewhere((db) => {
+				applyDatabaseSettings(db, { ...getDatabaseSettings(db), kdf: stronger })
+			})
+			await session.save()
+
+			const settings = await storedSettings(storage)
+			expect(settings.kdf).toEqual(stronger)
+			expect(settings.cipher).toBe('chacha20')
+		})
+
+		async function setupKdbx3() {
+			const db = newDatabase()
+			db.setVersion(3)
+			db.header.keyEncryptionRounds = 1000
+			const storage = new MemoryStorage(await saveDatabase(db))
+			const session = await DatabaseSession.open(storage, createCredentials({ password: 'test' }))
+			createEntry(session.db, session.db.getDefaultGroup(), { ...emptyDraft(), title: 'Local' })
+			session.markChanged()
+			return { storage, session }
+		}
+
+		it('keeps raised AES-KDF rounds of a KDBX 3.1 file', async () => {
+			const { storage, session } = await setupKdbx3()
+			await storage.editElsewhere((db) => {
+				db.header.keyEncryptionRounds = 2000
+			})
+			await session.save()
+			expect((await storedSettings(storage)).kdf).toEqual({ type: 'aes', rounds: 2000 })
+		})
+
+		it('keeps an upgrade to KDBX 4 made elsewhere', async () => {
+			const { storage, session } = await setupKdbx3()
+			await storage.editElsewhere((db) => {
+				applyDatabaseSettings(db, { ...getDatabaseSettings(db), kdf: FAST_KDF })
+			})
+			await session.save()
+
+			const stored = await openDatabase((await storage.read()).data, createCredentials({ password: 'test' }))
+			expect(stored.versionMajor).toBe(4)
+			expect(getDatabaseSettings(stored).kdf).toEqual(FAST_KDF)
+			expect(() => entryByTitle(stored, 'Local')).not.toThrow()
 		})
 	})
 
