@@ -1,6 +1,6 @@
 # Contributing
 
-Setup, commands and tests are in the [README](README.md#development); how the code is organised is in [docs/architecture.md](docs/architecture.md). Before opening a pull request, `npm test`, `npm run typecheck`, `npm run lint` and `composer test` should pass. New or changed UI strings go into `l10n/de.json` and `l10n/de_DE.json`; `npm test` fails when one is missing.
+Setup, commands and tests are in the [README](README.md#development); how the code is organised is in [docs/architecture.md](docs/architecture.md). Before opening a pull request, `npm test`, `npm run typecheck`, `npm run lint` and `composer test` should pass. New or changed UI strings go into `l10n/de.json` and `l10n/de_DE.json`; `npm test` fails when one is missing. A change users can notice gets an entry under `[Unreleased]` in [CHANGELOG.md](CHANGELOG.md); versions and releases are described in [docs/releasing.md](docs/releasing.md).
 
 ## Licence
 
