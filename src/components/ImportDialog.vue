@@ -6,7 +6,7 @@
 		@update:open="(open) => open || emit('close')">
 		<div class="import">
 			<p class="import__hint">
-				{{ t('keenext', 'Supported: KeePass databases (.kdbx, merged if it is another copy of this database), KeePass XML, CSV (KeePassXC, Bitwarden, browsers and others) and unencrypted Bitwarden JSON.') }}
+				{{ t('keenext', 'Supported: KeePass databases (.kdbx, merged if it is another copy of this database), KeePass XML, CSV (KeePassXC, Bitwarden, browsers and others) and unencrypted JSON exports of Bitwarden, Passman and Nextcloud Passwords.') }}
 			</p>
 			<div v-if="!source" class="import__buttons">
 				<NcButton @click="chooseFromCloud">
@@ -75,7 +75,7 @@ import PasswordInput from './PasswordInput.vue'
 import { findGroup } from '@/composables/useDatabase'
 import { CostlyKdfError, createCredentials, kdfLimitsAllowing, openDatabase } from '@/core/database'
 import { isInRecycleBin, recycleBin } from '@/core/entries'
-import { importBitwarden, importCsv, importDatabase, loadXmlDatabase } from '@/core/transfer'
+import { importCsv, importDatabase, importJson, loadXmlDatabase, readJsonExport } from '@/core/transfer'
 import { n, t } from '@/l10n'
 import { pickImportFile } from '@/services/filePicker'
 import { resolveKeyFile } from '@/services/keyFile'
@@ -122,7 +122,7 @@ const formatLabel = computed(() => ({
 	kdbx: t('keenext', 'KeePass database'),
 	xml: t('keenext', 'KeePass XML'),
 	csv: t('keenext', 'CSV'),
-	json: t('keenext', 'Bitwarden JSON'),
+	json: t('keenext', 'JSON (Bitwarden, Passman, Nextcloud Passwords)'),
 })[format.value ?? 'csv'])
 
 const groupName = computed(() => t('keenext', 'Import {name}', { name: source.value?.name.replace(/\.\w+$/, '') ?? '' }))
@@ -178,13 +178,14 @@ async function run(): Promise<boolean> {
 					{ signal, kdfLimits: costlyKdf.value ? kdfLimitsAllowing(costlyKdf.value) : undefined },
 				)
 			: format.value === 'xml' ? await loadXmlDatabase(text) : undefined
+		const json = format.value === 'json' ? await readJsonExport(props.database.session!.db, text) : undefined
 		const name = groupName.value
 		const result: ImportResult = vault.change(props.database.id, (db) => {
 			const target = targetGroup(db)
 			if (other) {
 				return importDatabase(db, target, name, other)
 			}
-			return format.value === 'csv' ? importCsv(db, target, name, text) : importBitwarden(db, target, name, text)
+			return json ? importJson(db, target, name, json) : importCsv(db, target, name, text)
 		})
 		vault.select(props.database.id, { group: result.group.uuid.id, entry: null })
 		showSuccess(result.merged

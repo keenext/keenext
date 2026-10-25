@@ -8,7 +8,7 @@ A Nextcloud app (id `keenext`) for opening and editing KeePass databases (`.kdbx
 - Clicking a `.kdbx` file in the Files app opens it here; Files' "New" menu creates databases. Inside the app, databases are opened with the Nextcloud file picker or from the list of recently opened ones, which also remembers the key file used.
 - Changes made elsewhere while a database is open (KeePassXC through the desktop client, another browser tab) are merged rather than overwritten.
 - KDBX 3.1 and 4.x, Argon2d/Argon2id and AES-KDF, AES-256, ChaCha20 and Twofish, password and/or key file.
-- Import from CSV (KeePassXC, Bitwarden, browsers …), Bitwarden JSON, KeePass XML and other `.kdbx` files; export as KeePass XML or CSV.
+- Import from CSV (KeePassXC, Bitwarden, browsers …), the JSON exports of Bitwarden, Passman and Nextcloud Passwords, KeePass XML and other `.kdbx` files; export as KeePass XML or CSV.
 - Health check (weak, reused, expiring passwords) with an opt-in Have I Been Pwned lookup; TOTP with QR codes.
 
 ![An entry with TOTP, tags, notes and history](docs/screenshots/entry.png)
