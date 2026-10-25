@@ -1,7 +1,7 @@
-import type { Kdbx, KdbxCredentials } from 'kdbxweb'
+import type { Kdbx, KdbxCredentials, KdbxHeader } from 'kdbxweb'
 import type { KdfLimits, OpenOptions } from './database.ts'
 
-import { DEFAULT_KDF_LIMITS, getKdf, kdfLimitsAllowing, openDatabase, saveDatabase } from './database.ts'
+import { DEFAULT_KDF_LIMITS, encryptionSettings, getKdf, kdfLimitsAllowing, openDatabase, saveDatabase } from './database.ts'
 
 export interface StoredFile {
 	data: ArrayBuffer
@@ -45,6 +45,8 @@ export class DatabaseSession {
 	private queue: Promise<unknown> = Promise.resolve()
 	/** Key of the file as stored; differs from db.credentials after a master key change until the next save. */
 	private storedCredentials: KdbxCredentials
+	/** `encryptionSettings` of the file as stored; tells which side changed them when merging. */
+	private storedEncryption: string
 
 	private constructor(
 		readonly storage: DatabaseStorage,
@@ -54,6 +56,7 @@ export class DatabaseSession {
 		private readonly kdfLimits: KdfLimits,
 	) {
 		this.storedCredentials = db.credentials
+		this.storedEncryption = encryptionSettings(db.header)
 	}
 
 	static async open(storage: DatabaseStorage, credentials: KdbxCredentials, options: OpenOptions = {}): Promise<DatabaseSession> {
@@ -110,11 +113,13 @@ export class DatabaseSession {
 		for (let attempt = 0; attempt <= MAX_CONFLICT_RETRIES; attempt++) {
 			const revision = this.revision
 			const credentials = this.db.credentials
+			const encryption = encryptionSettings(this.db.header)
 			const data = await saveDatabase(this.db)
 			try {
 				const { etag } = await this.storage.write(data, this.etag)
 				this.etag = etag
 				this.storedCredentials = credentials
+				this.storedEncryption = encryption
 				this.savedRevision = revision
 				this.db.removeLocalEditState()
 				return { pulled, pushed: true }
@@ -138,12 +143,35 @@ export class DatabaseSession {
 			kdfLimits: kdfLimitsAllowing(getKdf(this.db), this.kdfLimits),
 		})
 		if (this.dirty) {
+			// Before merging: merge takes over the newer meta.settingsChanged.
+			const header = this.mergedHeader(remoteDb)
 			this.db.merge(remoteDb)
+			this.db.header = header
 		} else {
 			this.db = remoteDb
 			this.savedRevision = this.revision + 1
 		}
 		this.etag = remote.etag
+		this.storedEncryption = encryptionSettings(remoteDb.header)
 		this.revision++
+	}
+
+	/**
+	 * kdbxweb's merge leaves the header alone, so saving would revert encryption settings
+	 * changed elsewhere. The side that changed them since the stored version wins; if both
+	 * did, the later change.
+	 */
+	private mergedHeader(remoteDb: Kdbx): KdbxHeader {
+		const local = encryptionSettings(this.db.header)
+		const remote = encryptionSettings(remoteDb.header)
+		if (remote === local || remote === this.storedEncryption) {
+			return this.db.header
+		}
+		if (local === this.storedEncryption) {
+			return remoteDb.header
+		}
+		const localChanged = this.db.meta.settingsChanged?.getTime() ?? 0
+		const remoteChanged = remoteDb.meta.settingsChanged?.getTime() ?? 0
+		return localChanged > remoteChanged ? this.db.header : remoteDb.header
 	}
 }

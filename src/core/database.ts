@@ -168,6 +168,11 @@ export function getKdf(db: Kdbx): Kdf {
 	return kdfOf(db.header)
 }
 
+/** Format, cipher, compression and key derivation as a comparable value; salts and seeds, which change on every save, are left out. */
+export function encryptionSettings(header: KdbxHeader): string {
+	return JSON.stringify([header.versionMajor, header.versionMinor, header.dataCipherUuid?.id, header.compression, kdfOf(header)])
+}
+
 function kdfOf(header: KdbxHeader): Kdf {
 	const params = header.kdfParameters
 	if (!params) {
@@ -276,6 +281,7 @@ export function applyDatabaseSettings(db: Kdbx, settings: DatabaseSettings): voi
 	if (settings.historyMaxSize !== current.historyMaxSize) {
 		db.meta.historyMaxSize = settings.historyMaxSize
 	}
+	const encryption = encryptionSettings(db.header)
 	if (settings.cipher !== current.cipher) {
 		db.header.dataCipherUuid = new KdbxUuid(cipherIds[settings.cipher])
 	}
@@ -284,6 +290,10 @@ export function applyDatabaseSettings(db: Kdbx, settings: DatabaseSettings): voi
 			db.upgrade()
 		}
 		setKdf(db, settings.kdf)
+	}
+	// Decides which side's encryption settings win when both changed them (DatabaseSession).
+	if (encryptionSettings(db.header) !== encryption) {
+		db.meta.settingsChanged = new Date()
 	}
 	db.cleanup({ historyRules: true })
 }
