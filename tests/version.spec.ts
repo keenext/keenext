@@ -13,7 +13,7 @@ describe('version', () => {
 	it('is the same in info.xml, package.json and package-lock.json', () => {
 		expect(json('package.json').version).toBe(version)
 		expect(json('package-lock.json').version).toBe(version)
-		expect(json('package-lock.json').packages[''].version).toBe(version)
+		expect(json('package-lock.json').packages['']?.version).toBe(version)
 	})
 
 	it('is the newest release heading in CHANGELOG.md', () => {
