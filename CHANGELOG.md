@@ -4,7 +4,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), the
 
 ## [Unreleased]
 
-## 0.1.0 – Unreleased
+## 0.1.0 – 2026-11-06
 ### Added
 - Open and edit KeePass databases (KDBX 3.1, 4.0 and 4.1) stored in Nextcloud, with Argon2d, Argon2id and AES-KDF, AES-256, ChaCha20 and Twofish, password and key file. The master password and the contents never reach the server.
 - Open `.kdbx` files from the Files app and create databases from its "New" menu; a list of recently opened databases that follows renames and moves.
