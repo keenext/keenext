@@ -22,9 +22,12 @@ Not every commit is a release. Only a tagged commit on `main` is, and the tag `v
 2. Commit as `Release X.Y.Z` and merge to `main`.
 3. Start the compose Nextcloud (`docker compose up -d`) and run `make release KEY=… CRT=…`. It writes `build/keenext.tar.gz` and `build/keenext.tar.gz.sig`; see the [README](../README.md#development).
 4. Tag the merged commit and push the tag: `git tag -a vX.Y.Z -m "KeeNext X.Y.Z"`, `git push github vX.Y.Z`.
-5. Create the GitHub release for the tag with the entries of the changelog as its notes and both files from `build/` attached (`gh release create vX.Y.Z build/keenext.tar.gz build/keenext.tar.gz.sig --notes-file …`).
-6. In the App Store's release form, enter the URL of the attached tarball and the content of the `.sig` file.
-7. Add the compare links at the bottom of `CHANGELOG.md` (`[X.Y.Z]: https://github.com/keenext/keenext/compare/vPREVIOUS...vX.Y.Z`, `[Unreleased]: …/compare/vX.Y.Z...HEAD`).
+5. Create the GitHub release for the tag with both files from `build/` attached. Its notes are the body of the version's changelog section, without the heading, and relative links in it (`docs/features.md`) made absolute because the release page cannot resolve them:
+   `gh release create vX.Y.Z build/keenext.tar.gz build/keenext.tar.gz.sig --title "KeeNext X.Y.Z" --notes-file <notes>`.
+6. In the App Store's release form (apps.nextcloud.com/developer/apps/releases/new), enter `https://github.com/keenext/keenext/releases/download/vX.Y.Z/keenext.tar.gz` and the content of the `.sig` file; leave "nightly" unchecked. The App Store downloads the archive, verifies the signature and reads the changelog from it.
+7. Point the `[Unreleased]` link at the end of `CHANGELOG.md` to `https://github.com/keenext/keenext/compare/vX.Y.Z...HEAD`.
+
+The very first release also needs the app registered in the App Store (apps.nextcloud.com/developer/apps/new) with the certificate and the signature of the app id: `echo -n keenext | openssl dgst -sha512 -sign <key> | openssl base64`.
 
 ## The kdbxweb fork
 

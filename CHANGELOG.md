@@ -19,3 +19,5 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), the
 - English and German translations.
 
 This is an alpha release. What is missing is listed in [docs/features.md](docs/features.md).
+
+[Unreleased]: https://github.com/keenext/keenext/compare/v0.1.0...HEAD
