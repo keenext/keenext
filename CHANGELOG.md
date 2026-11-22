@@ -3,6 +3,8 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), the versions [Semantic Versioning](https://semver.org/). How a release is made: [docs/releasing.md](docs/releasing.md).
 
 ## [Unreleased]
+
+## 0.2.0 – 2026-11-22
 ### Fixed
 - An entry or group that another device moved (and changed on the way) no longer ends up twice after merging, which also made every later merge fail. Databases that already hold an entry or group twice are repaired when they are opened: each keeps the place it was moved to last and the content changed last, the other version goes into the entry's history.
 - An entry deleted for good on one device and changed later on another is no longer lost when the two are merged; a group someone added to after its deletion stays as well. What nobody touched since the deletion still goes.

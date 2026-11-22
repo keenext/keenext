@@ -1,6 +1,6 @@
 {
   "name": "keenext",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "private": true,
   "description": "KeePass (KDBX) password databases in Nextcloud",
   "license": "AGPL-3.0-or-later",
