@@ -26,4 +26,5 @@ make_from_base() {
 }
 make_from_base keepassxc-argon2id-chacha20.kdbx chacha20 4
 make_from_base keepassxc-argon2id-twofish.kdbx twofish 4
+make_from_base keepassxc-argon2d-chacha20.kdbx chacha20 4 argon2d
 make_from_base keepassxc-aeskdf-twofish.kdbx twofish 3

@@ -18,6 +18,7 @@ const cases = [
 	{ file: 'keepassxc-keyfile-only.kdbx', version: '3.1', auth: { keyFile: keyFilePath }, input: { keyFile: fixture('keepassxc-keyfile.keyx') } },
 	{ file: 'keepassxc-argon2id-chacha20.kdbx', version: '4.1', auth: { password }, input: { password } },
 	{ file: 'keepassxc-argon2id-twofish.kdbx', version: '4.1', auth: { password }, input: { password } },
+	{ file: 'keepassxc-argon2d-chacha20.kdbx', version: '4.1', auth: { password }, input: { password } },
 	{ file: 'keepassxc-aeskdf-twofish.kdbx', version: '4.1', auth: { password }, input: { password } },
 ]
 
