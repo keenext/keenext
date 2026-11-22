@@ -16,7 +16,7 @@ Open and edit KeePass databases (.kdbx) directly in Nextcloud, compatible with K
 
 **Network requests.** Nothing about your databases is sent to third parties. Two features you start yourself contact other servers: the breach check in the health report sends the first 5 characters of each password's SHA-1 hash from your browser to api.pwnedpasswords.com, and downloading an entry's favicon makes your Nextcloud server request the icon from that entry's website.
 ]]></description>
-	<version>0.1.1</version>
+	<version>0.1.2</version>
 	<licence>AGPL-3.0-or-later</licence>
 	<author mail="keenext@famiex.de" homepage="https://github.com/keenext">Jan-Hendrik Meyer</author>
 	<namespace>KeeNext</namespace>

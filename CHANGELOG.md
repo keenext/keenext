@@ -3,6 +3,8 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), the versions [Semantic Versioning](https://semver.org/). How a release is made: [docs/releasing.md](docs/releasing.md).
 
 ## [Unreleased]
+
+## 0.1.2 – 2026-11-22
 ### Security
 - Tags of entries and groups are read in linear time. A tags field with a long run of spaces made opening the database freeze the browser tab for minutes; creating such a database takes write access to it, for example to a shared one.
 
