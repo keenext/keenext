@@ -1,6 +1,6 @@
 {
   "name": "keenext",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "private": true,
   "description": "KeePass (KDBX) password databases in Nextcloud",
   "license": "AGPL-3.0-or-later",
@@ -37,7 +37,7 @@
     "@nextcloud/vue": "^9.14.1",
     "hash-wasm": "^4.13.0",
     "jsqr": "^1.4.0",
-    "kdbxweb": "npm:@keenext/kdbxweb@2.2.0-keenext.3",
+    "kdbxweb": "npm:@keenext/kdbxweb@3.0.0",
     "pinia": "^3.0.4",
     "uqr": "^0.1.3",
     "vue": "^3.5.45"

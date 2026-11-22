@@ -16,6 +16,26 @@ export function isStandardField(key: string): boolean {
 	return standardFieldNames.has(key)
 }
 
+export type FieldNameProblem = 'empty' | 'reserved' | 'duplicate'
+
+/** By field index. Names are checked trimmed, as they are saved, so " PIN " collides with "PIN". */
+export function fieldNameProblems(fields: readonly { key: string }[]): Map<number, FieldNameProblem> {
+	const problems = new Map<number, FieldNameProblem>()
+	const seen = new Set<string>()
+	fields.forEach((field, index) => {
+		const key = field.key.trim()
+		if (key === '') {
+			problems.set(index, 'empty')
+		} else if (isStandardField(key)) {
+			problems.set(index, 'reserved')
+		} else if (seen.has(key)) {
+			problems.set(index, 'duplicate')
+		}
+		seen.add(key)
+	})
+	return problems
+}
+
 export function fieldText(value: KdbxEntryField | undefined): string {
 	if (value === undefined) {
 		return ''
@@ -244,10 +264,24 @@ export function createEntry(db: Kdbx, group: KdbxGroup, draft: EntryDraft): Kdbx
 	return entry
 }
 
+/** A file without the setting has the recycle bin on, as in KeePass. */
+export function recycleBinEnabled(db: Kdbx): boolean {
+	return db.meta.recycleBinEnabled ?? true
+}
+
 export function recycleBin(db: Kdbx): KdbxGroup | undefined {
-	return db.meta.recycleBinEnabled && db.meta.recycleBinUuid
+	return recycleBinEnabled(db) && db.meta.recycleBinUuid
 		? db.getGroup(db.meta.recycleBinUuid)
 		: undefined
+}
+
+/**
+ * Creates the bin when the file has none yet. kdbxweb's `remove` deletes
+ * permanently instead when the file names no bin.
+ */
+export function moveToRecycleBin(db: Kdbx, item: KdbxEntry | KdbxGroup): void {
+	db.createRecycleBin()
+	db.move(item, db.getGroup(db.meta.recycleBinUuid!))
 }
 
 export function isInRecycleBin(db: Kdbx, item: KdbxEntry | KdbxGroup): boolean {
@@ -268,8 +302,8 @@ export function isInRecycleBin(db: Kdbx, item: KdbxEntry | KdbxGroup): boolean {
  * already there or the database has no recycle bin (KeePassXC behaviour).
  */
 export function deleteEntry(db: Kdbx, entry: KdbxEntry): 'recycled' | 'deleted' {
-	if (db.meta.recycleBinEnabled && !isInRecycleBin(db, entry)) {
-		db.remove(entry)
+	if (recycleBinEnabled(db) && !isInRecycleBin(db, entry)) {
+		moveToRecycleBin(db, entry)
 		return 'recycled'
 	}
 	db.move(entry, null)

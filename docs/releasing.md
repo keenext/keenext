@@ -31,4 +31,4 @@ The very first release also needs the app registered in the App Store (apps.next
 
 ## The kdbxweb fork
 
-The fork `@keenext/kdbxweb` is versioned on its own: the upstream version it is based on, a `-keenext.N` suffix, and a tag `vX.Y.Z-keenext.N` in [keenext/kdbxweb](https://github.com/keenext/kdbxweb). `package.json` pins an exact version, so a new fork release reaches KeeNext as a normal dependency change and, if users can notice it, a changelog entry.
+The fork `@keenext/kdbxweb` has its own Semantic Versioning from 3.0.0 on, independent of KeeNext's version and of upstream, which is no longer maintained; its tags (`vX.Y.Z`) and changelog live in [keenext/kdbxweb](https://github.com/keenext/kdbxweb), see its `FORK.md`. `package.json` pins an exact version, so a new fork release reaches KeeNext as a normal dependency change and, if users can notice it, a changelog entry here.

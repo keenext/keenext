@@ -4,6 +4,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), the
 
 ## [Unreleased]
 
+## 0.2.0 – 2026-11-22
+### Fixed
+- An entry or group that another device moved (and changed on the way) no longer ends up twice after merging, which also made every later merge fail. Databases that already hold an entry or group twice are repaired when they are opened: each keeps the place it was moved to last and the content changed last, the other version goes into the entry's history.
+- An entry deleted for good on one device and changed later on another is no longer lost when the two are merged; a group someone added to after its deletion stays as well. What nobody touched since the deletion still goes.
+- Merging keeps custom icons that nothing uses at the moment.
+- Notes and fields with Windows line breaks (CR LF) keep them when saving; before, the first save turned them into LF throughout the file.
+- Databases from apps that leave out a group's search or Auto-Type setting could no longer be opened in KeePassXC after saving here ("invalid value for EnableSearching"). Missing settings are now written with KeePass' defaults, and a missing recycle bin setting as "on", which KeePassXC had read as "off".
+- In databases without a recycle bin setting or without a recycle bin, deleting moves to the recycle bin (creating it if needed) instead of deleting for good.
+- Deleting a group that contains the recycle bin no longer loses the group, its entries and the bin on the next save. The bin moves to the top level first, then the group goes into it.
+- Unlocking with a key file of exactly 32 bytes chosen from the device works again after a first attempt with a wrong password.
+- Custom field names are checked the way they are saved, without leading or trailing spaces: " PIN " no longer overwrites "PIN", and "Title " no longer the title.
+- The password generator's strength with "at least one of each group" counts exactly the passwords it can make; short passwords were rated too high.
+- Saving or loading that the server never answers gives up after a minute (longer for big files) instead of holding up every later save and locking. A full server says so.
+- After a master password change whose confirmation from the server got lost, the next save no longer fails with "wrong password".
+
+### Security
+- Searching with wildcards (`*`) takes linear time. A pattern like `a*a*b` on an entry with long notes froze the tab for minutes; anyone with write access to a shared database could plant such an entry.
+
 ## 0.1.2 – 2026-11-22
 ### Security
 - Tags of entries and groups are read in linear time. A tags field with a long run of spaces made opening the database freeze the browser tab for minutes; creating such a database takes write access to it, for example to a shared one.

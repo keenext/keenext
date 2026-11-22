@@ -99,9 +99,37 @@ export function generatePassword(options: PasswordOptions = DEFAULT_PASSWORD_OPT
 	return shuffle(chars).join('')
 }
 
+/**
+ * Bits of the number of passwords the options allow. With `everyGroup` those
+ * are the ones holding a character of every group, counted by inclusion and
+ * exclusion as size^length · Σ (−1)^|S| (1 − |S's characters|/size)^length.
+ */
 export function passwordEntropy(options: PasswordOptions): number {
-	const size = poolsFor(options).join('').length
-	return size > 0 ? options.length * Math.log2(size) : 0
+	const pools = poolsFor(options)
+	const size = pools.join('').length
+	if (size === 0) {
+		return 0
+	}
+	const bits = options.length * Math.log2(size)
+	if (!options.everyGroup) {
+		return bits
+	}
+	if (options.length < pools.length) {
+		return 0
+	}
+	let share = 0
+	for (let subset = 0; subset < 2 ** pools.length; subset++) {
+		let missing = 0
+		let sign = 1
+		pools.forEach((pool, index) => {
+			if (subset & (1 << index)) {
+				missing += pool.length
+				sign = -sign
+			}
+		})
+		share += sign * ((size - missing) / size) ** options.length
+	}
+	return bits + Math.log2(share)
 }
 
 export type WordCase = 'lower' | 'upper' | 'title' | 'mixed'

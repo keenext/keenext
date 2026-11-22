@@ -3,7 +3,7 @@ import type { Raw } from 'vue'
 import type { CredentialsInput, OpenOptions } from '@/core/database'
 import type { RecentFile } from '@/services/api'
 
-import { showError, showSuccess } from '@nextcloud/dialogs'
+import { showError, showInfo, showSuccess } from '@nextcloud/dialogs'
 import { defineStore } from 'pinia'
 import { computed, markRaw, ref } from 'vue'
 import { useSettingsStore } from './settings.ts'
@@ -57,6 +57,8 @@ function describeError(error: unknown): string {
 			case 'not-found': return t('keenext', 'The file no longer exists')
 			case 'locked': return t('keenext', 'The file is locked by another application')
 			case 'exists': return t('keenext', 'A file with this name already exists')
+			case 'full': return t('keenext', 'There is not enough storage space left on the server')
+			case 'timeout': return t('keenext', 'The server did not answer in time')
 		}
 	}
 	return error instanceof Error ? error.message : String(error)
@@ -134,6 +136,10 @@ export const useVaultStore = defineStore('vault', () => {
 		database.session = markRaw(session)
 		database.selectedGroup ??= session.db.getDefaultGroup().uuid.id
 		refresh(database)
+		if (session.repairedDuplicates > 0) {
+			showInfo(t('keenext', '{name} held some entries or groups twice. Each now appears once; other versions of an entry are in its history.', { name: database.name }))
+			scheduleAutosave(database)
+		}
 
 		const { settings } = useSettingsStore()
 		const keyFileId = settings.rememberKeyFile ? (input.keyFileId ?? null) : null

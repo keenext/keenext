@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { entryByTitle, openRichFixture } from '../helpers/databases.ts'
+import { entryByTitle, newDatabase, openRichFixture } from '../helpers/databases.ts'
 import { getField } from '@/core/entries'
 import { resolvedField, resolvePlaceholders } from '@/core/placeholders'
 import { parseQuery, searchEntries } from '@/core/search'
@@ -41,6 +41,21 @@ describe('searchEntries', () => {
 	it('supports exact and wildcard matches', async () => {
 		expect(await titles('+t:github')).toEqual(['GitHub'])
 		expect(await titles('t:g*api*')).toEqual(['GitHub API (reference)'])
+		expect(await titles('+t:git*b')).toEqual(['GitHub'])
+		expect(await titles('+t:g*ub*')).toEqual(['GitHub', 'GitHub API (reference)'])
+		expect(await titles('+t:gith*thub')).toEqual([])
+		expect(await titles('t:api*git')).toEqual([])
+	})
+
+	it('matches wildcards on huge fields in linear time', () => {
+		const db = newDatabase()
+		const entry = db.createEntry(db.getDefaultGroup())
+		entry.fields.set('Notes', 'a'.repeat(200_000))
+		const start = performance.now()
+		expect(searchEntries(db, 'a*a*a*b')).toEqual([])
+		expect(searchEntries(db, '+n:a*a*b')).toEqual([])
+		expect(searchEntries(db, 'a*a*a')).toEqual([entry])
+		expect(performance.now() - start).toBeLessThan(1000)
 	})
 
 	it('finds expired entries', async () => {

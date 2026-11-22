@@ -222,7 +222,7 @@ import TextAreaInput from './TextAreaInput.vue'
 import TextInput from './TextInput.vue'
 import TotpSetupDialog from './TotpSetupDialog.vue'
 import { findEntry, findGroup, useDatabaseView } from '@/composables/useDatabase'
-import { applyDraft, attachFile, createEntry, draftFromEntry, emptyDraft, isStandardField } from '@/core/entries'
+import { applyDraft, attachFile, createEntry, draftFromEntry, emptyDraft, fieldNameProblems } from '@/core/entries'
 import { iconFor, storeIcon } from '@/core/favicons'
 import { OTP_FIELD } from '@/core/totp'
 import { t } from '@/l10n'
@@ -268,18 +268,15 @@ const otpField = computed(() => draft.customFields.find((field) => field.key ===
 const hasTotp = computed(() => otpField.value !== undefined && otpField.value.value !== '')
 
 const fieldErrors = computed(() => {
+	const messages = {
+		empty: t('keenext', 'Name is required'),
+		reserved: t('keenext', 'This name is reserved'),
+		duplicate: t('keenext', 'Name already used'),
+	}
 	const errors: Record<number, string> = {}
-	const seen = new Set<string>()
-	draft.customFields.forEach((field, index) => {
-		if (field.key.trim() === '') {
-			errors[index] = t('keenext', 'Name is required')
-		} else if (isStandardField(field.key)) {
-			errors[index] = t('keenext', 'This name is reserved')
-		} else if (seen.has(field.key)) {
-			errors[index] = t('keenext', 'Name already used')
-		}
-		seen.add(field.key)
-	})
+	for (const [index, problem] of fieldNameProblems(draft.customFields)) {
+		errors[index] = messages[problem]
+	}
 	return errors
 })
 

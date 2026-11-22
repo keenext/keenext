@@ -1,7 +1,8 @@
 import type { Kdbx, KdbxCredentials, KdbxHeader } from 'kdbxweb'
 import type { KdfLimits, OpenOptions } from './database.ts'
 
-import { DEFAULT_KDF_LIMITS, encryptionSettings, getKdf, kdfLimitsAllowing, openDatabase, saveDatabase } from './database.ts'
+import { DatabaseOpenError, DEFAULT_KDF_LIMITS, encryptionSettings, getKdf, kdfLimitsAllowing, openDatabase, saveDatabase } from './database.ts'
+import { removeDuplicates } from './repair.ts'
 
 export interface StoredFile {
 	data: ArrayBuffer
@@ -41,6 +42,8 @@ const MAX_CONFLICT_RETRIES = 3
  */
 export class DatabaseSession {
 	revision = 0
+	/** Copies dropped by `removeDuplicates` (kdbxweb cannot merge such files); the repair counts as a change. */
+	repairedDuplicates = 0
 	private savedRevision = 0
 	private queue: Promise<unknown> = Promise.resolve()
 	/** Key of the file as stored; differs from db.credentials after a master key change until the next save. */
@@ -62,7 +65,12 @@ export class DatabaseSession {
 	static async open(storage: DatabaseStorage, credentials: KdbxCredentials, options: OpenOptions = {}): Promise<DatabaseSession> {
 		const file = await storage.read()
 		const db = await openDatabase(file.data, credentials, options)
-		return new DatabaseSession(storage, db, file.etag, options.kdfLimits ?? DEFAULT_KDF_LIMITS)
+		const session = new DatabaseSession(storage, db, file.etag, options.kdfLimits ?? DEFAULT_KDF_LIMITS)
+		session.repairedDuplicates = removeDuplicates(db)
+		if (session.repairedDuplicates > 0) {
+			session.markChanged()
+		}
+		return session
 	}
 
 	/** For a database created in memory and already written once. */
@@ -139,9 +147,9 @@ export class DatabaseSession {
 	 * otherwise it is merged in and the result counts as a local change.
 	 */
 	private async integrate(remote: StoredFile): Promise<void> {
-		const remoteDb = await openDatabase(remote.data, this.storedCredentials, {
-			kdfLimits: kdfLimitsAllowing(getKdf(this.db), this.kdfLimits),
-		})
+		const remoteDb = await this.openRemote(remote)
+		const repaired = removeDuplicates(remoteDb)
+		this.repairedDuplicates += repaired
 		if (this.dirty) {
 			// Before merging: merge takes over the newer meta.settingsChanged.
 			const header = this.mergedHeader(remoteDb)
@@ -149,11 +157,31 @@ export class DatabaseSession {
 			this.db.header = header
 		} else {
 			this.db = remoteDb
-			this.savedRevision = this.revision + 1
+			if (repaired === 0) {
+				this.savedRevision = this.revision + 1
+			}
 		}
 		this.etag = remote.etag
 		this.storedEncryption = encryptionSettings(remoteDb.header)
 		this.revision++
+	}
+
+	/**
+	 * A save whose response got lost (timeout) may have stored the file with a new
+	 * master key already; then only the new key opens it.
+	 */
+	private async openRemote(remote: StoredFile): Promise<Kdbx> {
+		const options = { kdfLimits: kdfLimitsAllowing(getKdf(this.db), this.kdfLimits) }
+		try {
+			return await openDatabase(remote.data, this.storedCredentials, options)
+		} catch (error) {
+			if (!(error instanceof DatabaseOpenError && error.reason === 'invalid-key') || this.db.credentials === this.storedCredentials) {
+				throw error
+			}
+			const remoteDb = await openDatabase(remote.data, this.db.credentials, options)
+			this.storedCredentials = this.db.credentials
+			return remoteDb
+		}
 	}
 
 	/**

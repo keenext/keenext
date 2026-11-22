@@ -287,4 +287,62 @@ describe('master key change', () => {
 		const reopened = await openDatabase(stored, createCredentials({ password: 'new' }))
 		expect(() => entryByTitle(reopened, 'Remote')).not.toThrow()
 	})
+
+	it('recognises a save with the new key whose response got lost', async () => {
+		const { storage, session } = await setup()
+		setCredentials(session.db, await prepareCredentials({ password: 'new' }))
+		session.markChanged()
+		const write = storage.write.bind(storage)
+		storage.write = async (data, etag) => {
+			await write(data, etag)
+			throw new Error('timeout')
+		}
+		await expect(session.save()).rejects.toThrow('timeout')
+		storage.write = write
+		createEntry(session.db, session.db.getDefaultGroup(), { ...emptyDraft(), title: 'Later' })
+		session.markChanged()
+
+		expect(await session.save()).toEqual({ pulled: true, pushed: true })
+
+		const reopened = await openDatabase((await storage.read()).data, createCredentials({ password: 'new' }))
+		expect(() => entryByTitle(reopened, 'Later')).not.toThrow()
+	})
+})
+
+describe('merging moves', () => {
+	it('keeps an entry moved and changed elsewhere in one place, and merges again later', async () => {
+		const { storage, session } = await setup()
+		// First is merged before Second, the entry's group
+		const root = session.db.getDefaultGroup()
+		const first = session.db.createGroup(root, 'First')
+		const second = session.db.createGroup(root, 'Second')
+		root.groups = [first, second, ...root.groups.filter((group) => group !== first && group !== second)]
+		session.db.move(entryByTitle(session.db, 'Shared'), second)
+		session.markChanged()
+		await session.save()
+		await storage.editElsewhere((db) => {
+			const entry = entryByTitle(db, 'Shared')
+			db.move(entry, db.getGroup(first.uuid)!)
+			applyDraft(db, entry, { ...draftFromEntry(entry), password: 'moved' })
+			// KDBX keeps whole seconds; the test runs within one
+			entry.times.locationChanged = new Date(Date.now() + 60_000)
+			entry.times.lastModTime = new Date(Date.now() + 60_000)
+		})
+		createEntry(session.db, session.db.getDefaultGroup(), { ...emptyDraft(), title: 'Local' })
+		session.markChanged()
+
+		await session.save()
+		await storage.editElsewhere((db) => {
+			createEntry(db, db.getDefaultGroup(), { ...emptyDraft(), title: 'Remote' })
+		})
+		createEntry(session.db, session.db.getDefaultGroup(), { ...emptyDraft(), title: 'Local 2' })
+		session.markChanged()
+		expect(await session.save()).toEqual({ pulled: true, pushed: true })
+
+		const stored = await openDatabase((await storage.read()).data, createCredentials({ password: 'test' }))
+		const shared = [...stored.getDefaultGroup().allEntries()].filter((entry) => getField(entry, 'Title') === 'Shared')
+		expect(shared).toHaveLength(1)
+		expect(shared[0]!.parentGroup!.name).toBe('First')
+		expect(getField(shared[0]!, 'Password')).toBe('moved')
+	})
 })
