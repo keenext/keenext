@@ -47,4 +47,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), the
 
 This is an alpha release. What is missing is listed in [docs/features.md](docs/features.md).
 
-[Unreleased]: https://github.com/keenext/keenext/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/keenext/keenext/compare/v0.2.0...HEAD
