@@ -4,6 +4,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), the
 
 ## [Unreleased]
 
+## 0.1.1 – 2026-11-22
+### Changed
+- Updated the Nextcloud interface libraries: notifications appear as Nextcloud's classic toasts again, and the file picker and dialogs come with their upstream fixes.
+- Updated hash-wasm, which derives the keys with Argon2, to 4.13.0. The derived keys are unchanged: checked against the previous version and, for Argon2d and Argon2id, against KeePassXC.
+
 ## 0.1.0 – 2026-11-06
 ### Added
 - Open and edit KeePass databases (KDBX 3.1, 4.0 and 4.1) stored in Nextcloud, with Argon2d, Argon2id and AES-KDF, AES-256, ChaCha20 and Twofish, password and key file. The master password and the contents never reach the server.
