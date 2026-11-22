@@ -70,9 +70,7 @@ export function parseQuery(query: string): SearchTerm[] {
 function compile(term: SearchTerm): (text: string) => boolean {
 	const needle = term.value.toLowerCase()
 	if (needle.includes('*')) {
-		const source = needle.split('*').map(escapeRegExp).join('.*')
-		const pattern = new RegExp(term.exact ? `^${source}$` : source, 'is')
-		return (text) => pattern.test(text)
+		return wildcard(needle, term.exact)
 	}
 	if (term.exact) {
 		return (text) => text.toLowerCase() === needle
@@ -80,8 +78,36 @@ function compile(term: SearchTerm): (text: string) => boolean {
 	return (text) => text.toLowerCase().includes(needle)
 }
 
-function escapeRegExp(value: string): string {
-	return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+/**
+ * `*` stands for any run of characters. The parts between are searched left to
+ * right, which takes linear time; the equivalent regular expression backtracks
+ * and freezes the page on long fields of a shared database (`a*a*b`).
+ */
+function wildcard(needle: string, exact: boolean): (text: string) => boolean {
+	const parts = needle.split('*')
+	const first = parts[0]!
+	const last = parts.at(-1)!
+	const inner = exact ? parts.slice(1, -1) : parts
+	return (text) => {
+		const haystack = text.toLowerCase()
+		let from = 0
+		let to = haystack.length
+		if (exact) {
+			if (haystack.length < first.length + last.length || !haystack.startsWith(first) || !haystack.endsWith(last)) {
+				return false
+			}
+			from = first.length
+			to = haystack.length - last.length
+		}
+		for (const part of inner) {
+			const index = haystack.indexOf(part, from)
+			if (index < 0 || index + part.length > to) {
+				return false
+			}
+			from = index + part.length
+		}
+		return true
+	}
 }
 
 function candidates(entry: KdbxEntry, field: SearchField): string[] {

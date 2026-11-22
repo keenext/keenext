@@ -8,7 +8,7 @@ import { getFileInfo } from './api.ts'
 import { ConflictError } from '@/core/session'
 
 export class StorageError extends Error {
-	constructor(readonly reason: 'locked' | 'forbidden' | 'not-found' | 'exists' | 'unknown', message: string, options?: { cause?: unknown }) {
+	constructor(readonly reason: 'locked' | 'forbidden' | 'not-found' | 'exists' | 'full' | 'timeout' | 'unknown', message: string, options?: { cause?: unknown }) {
 		super(message, options)
 		this.name = 'StorageError'
 	}
@@ -32,14 +32,29 @@ function etagFrom(headers: Record<string, unknown>): string | undefined {
 	return typeof value === 'string' && value !== '' ? quoteEtag(value) : undefined
 }
 
+/**
+ * Without a limit, a request a proxy swallows never settles, and the session's
+ * queue (every later save, and locking, which saves first) waits forever.
+ */
+const READ_TIMEOUT = 120_000
+
+/** A minute, plus time for big files on slow lines (50 kB/s). */
+function writeTimeout(data: ArrayBuffer): number {
+	return 60_000 + data.byteLength / 50
+}
+
 function storageError(error: unknown): unknown {
-	if (!isAxiosError(error) || !error.response) {
+	if (!isAxiosError(error)) {
 		return error
 	}
-	switch (error.response.status) {
+	if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+		return new StorageError('timeout', 'The server did not answer in time', { cause: error })
+	}
+	switch (error.response?.status) {
 		case 403: return new StorageError('forbidden', 'You are not allowed to change this file', { cause: error })
 		case 404: return new StorageError('not-found', 'The file no longer exists', { cause: error })
 		case 423: return new StorageError('locked', 'The file is locked by another application', { cause: error })
+		case 507: return new StorageError('full', 'There is not enough storage space left', { cause: error })
 		default: return error
 	}
 }
@@ -49,6 +64,7 @@ export async function downloadFile(path: string): Promise<StoredFile> {
 		const response = await axios.get<ArrayBuffer>(davUrl(path), {
 			responseType: 'arraybuffer',
 			headers: { 'Cache-Control': 'no-cache' },
+			timeout: READ_TIMEOUT,
 		})
 		return { data: response.data, etag: etagFrom(response.headers) ?? '' }
 	} catch (error) {
@@ -88,6 +104,7 @@ export async function createFile(path: string, data: ArrayBuffer): Promise<{ eta
 	try {
 		const response = await axios.put(davUrl(path), data, {
 			headers: { 'Content-Type': 'application/octet-stream', 'If-None-Match': '*' },
+			timeout: writeTimeout(data),
 		})
 		return {
 			etag: etagFrom(response.headers) ?? '',
@@ -122,6 +139,7 @@ export class NextcloudFileStorage implements DatabaseStorage {
 		try {
 			const response = await axios.put(davUrl(this.path), data, {
 				headers: { 'Content-Type': 'application/octet-stream', 'If-Match': etag },
+				timeout: writeTimeout(data),
 			})
 			return { etag: etagFrom(response.headers) ?? quoteEtag((await getFileInfo(this.fileId)).etag) }
 		} catch (error) {

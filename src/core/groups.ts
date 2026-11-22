@@ -1,7 +1,7 @@
 import type { Kdbx, KdbxGroup } from 'kdbxweb'
 
 import { KdbxUuid } from 'kdbxweb'
-import { recycleBin } from './entries.ts'
+import { moveToRecycleBin, recycleBin, recycleBinEnabled } from './entries.ts'
 
 export function createGroup(db: Kdbx, parent: KdbxGroup, name: string): KdbxGroup {
 	return db.createGroup(parent, name)
@@ -62,8 +62,13 @@ export function deleteGroup(db: Kdbx, group: KdbxGroup): 'recycled' | 'deleted' 
 	if (group === bin) {
 		throw new Error('The recycle bin cannot be deleted, empty it instead')
 	}
-	if (db.meta.recycleBinEnabled && !(bin && isDescendant(group, bin))) {
-		db.remove(group)
+	if (recycleBinEnabled(db) && !(bin && isDescendant(group, bin))) {
+		// KeePass lets any group be the bin; one inside the deleted group moves to the top
+		// first, or the group would go into its own subtree.
+		if (bin && isDescendant(bin, group)) {
+			db.move(bin, db.getDefaultGroup())
+		}
+		moveToRecycleBin(db, group)
 		return 'recycled'
 	}
 	db.move(group, null)

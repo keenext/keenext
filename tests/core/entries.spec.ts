@@ -11,6 +11,7 @@ import {
 	deleteEntry,
 	draftFromEntry,
 	emptyDraft,
+	fieldNameProblems,
 	getField,
 	isExpired,
 	isInRecycleBin,
@@ -110,6 +111,19 @@ describe('editing', () => {
 	})
 })
 
+describe('fieldNameProblems', () => {
+	it('checks names trimmed, as they are saved', () => {
+		const problems = fieldNameProblems([
+			{ key: 'PIN' },
+			{ key: ' PIN ' },
+			{ key: 'Title ' },
+			{ key: '  ' },
+			{ key: 'Other' },
+		])
+		expect([...problems]).toEqual([[1, 'duplicate'], [2, 'reserved'], [3, 'empty']])
+	})
+})
+
 describe('deleting', () => {
 	it('recycles first, then deletes permanently', async () => {
 		const db = await openRichFixture()
@@ -130,6 +144,37 @@ describe('deleting', () => {
 		expect(recycleBin(db)!.groups).toHaveLength(0)
 		expect(() => deleteGroup(db, root)).toThrow()
 		expect(() => deleteGroup(db, recycleBin(db)!)).toThrow()
+	})
+
+	it('moves a recycle bin inside a deleted group to the top first', async () => {
+		const db = newDatabase()
+		const root = db.getDefaultGroup()
+		const holder = createGroup(db, root, 'Holder')
+		const bin = createGroup(db, holder, 'Bin')
+		db.meta.recycleBinUuid = bin.uuid
+		db.createEntry(holder)
+		db.createEntry(bin)
+		expect(deleteGroup(db, holder)).toBe('recycled')
+		expect(bin.parentGroup).toBe(root)
+		expect(holder.parentGroup).toBe(bin)
+
+		const loaded = await openDatabase(await db.save(), createCredentials({ password: 'test' }))
+		expect([...loaded.getDefaultGroup().allEntries()]).toHaveLength(2)
+		expect(recycleBin(loaded)!.groups.map((group) => group.name)).toEqual(['Holder'])
+	})
+
+	it('treats a missing recycle bin setting as on and creates the bin when needed', () => {
+		const db = newDatabase()
+		const entry = db.createEntry(db.getDefaultGroup())
+		const group = createGroup(db, db.getDefaultGroup(), 'Temp')
+		const bin = recycleBin(db)!
+		db.move(bin, null)
+		// as read from a file that has neither the setting nor a bin
+		Object.assign(db.meta, { _recycleBinEnabled: undefined, _recycleBinUuid: undefined })
+		expect(deleteEntry(db, entry)).toBe('recycled')
+		expect(deleteGroup(db, group)).toBe('recycled')
+		expect(isInRecycleBin(db, entry)).toBe(true)
+		expect(isInRecycleBin(db, group)).toBe(true)
 	})
 
 	it('refuses to move a group into its own subtree', () => {

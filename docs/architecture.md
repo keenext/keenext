@@ -21,8 +21,9 @@ A database is addressed by its Nextcloud **file id**, not by path. `NextcloudFil
 
 - `save()` writes with `If-Match: <etag>`. A `412` (or `404` after a move) becomes `ConflictError`; the session then reads the current file, merges it into the local database with kdbxweb's `merge` (CRDT over entries, groups, history and deleted objects) and retries. `merge` does not touch the header, so the session picks the encryption settings (format, cipher, key derivation) itself: those of the side that changed them since the stored version, or the later change by `meta.settingsChanged` if both did.
 - `sync()` checks for a newer version. Without local changes the remote copy replaces the local one; with local changes it is merged and pushed.
-- Saves and syncs are serialised through one promise queue.
-- After a master key change the file on the server still has the old key until the next successful save; the session keeps those credentials separately for reading the remote copy.
+- Saves and syncs are serialised through one promise queue. WebDAV requests time out (services/webdav.ts), so a request that never settles cannot hold up the queue, and with it locking, which saves first.
+- After a master key change the file on the server still has the old key until the next successful save; the session keeps those credentials separately for reading the remote copy. If they no longer open it, a save whose response got lost has stored the new key already, and the session switches to it.
+- kdbxweb refuses to merge a file that holds an entry or group twice. `removeDuplicates` (core/repair.ts) runs on the opened database and on every remote copy before merging; a repair counts as a local change.
 
 The vault store drives the session: autosave 1.5 s after the last change, `sync()` on an interval, when the tab becomes visible and on demand.
 

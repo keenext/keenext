@@ -260,6 +260,7 @@ import {
 	isExpired,
 	isInRecycleBin,
 	moveEntry,
+	recycleBinEnabled,
 	restoreHistory,
 	StandardField,
 } from '@/core/entries'
@@ -450,7 +451,7 @@ function move(groupId: string): void {
 
 async function remove(): Promise<void> {
 	const id = entry.value!.uuid.id
-	if (details.value.inRecycleBin || !view.value!.db.meta.recycleBinEnabled) {
+	if (details.value.inRecycleBin || !recycleBinEnabled(view.value!.db)) {
 		const confirmed = await showConfirmation({
 			name: t('keenext', 'Delete permanently'),
 			text: t('keenext', 'Permanently delete "{title}"? This cannot be undone.', { title: details.value.title }),

@@ -66,6 +66,15 @@ describe('generatePassword', () => {
 	it('reports entropy from pool size', () => {
 		expect(passwordEntropy({ ...DEFAULT_PASSWORD_OPTIONS, length: 10, groups: ['digits'], excludeLookAlike: false })).toBeCloseTo(10 * Math.log2(10))
 	})
+
+	it('counts only the passwords holding every group', () => {
+		const options = { ...DEFAULT_PASSWORD_OPTIONS, groups: ['lower', 'digits'] as const, excludeLookAlike: false, everyGroup: true }
+		// one of 26 and one of 10, in either order
+		expect(passwordEntropy({ ...options, groups: [...options.groups], length: 2 })).toBeCloseTo(Math.log2(2 * 26 * 10))
+		// 36^3 minus the all-letter and all-digit ones
+		expect(passwordEntropy({ ...options, groups: [...options.groups], length: 3 })).toBeCloseTo(Math.log2(36 ** 3 - 26 ** 3 - 10 ** 3))
+		expect(passwordEntropy({ ...options, groups: [...options.groups], length: 64 })).toBeCloseTo(64 * Math.log2(36), 3)
+	})
 })
 
 describe('passphrases', () => {

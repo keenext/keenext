@@ -143,6 +143,21 @@ describe.runIf(hasKeepassxc)('KDBX 4.1 values written here, read by KeePassXC', 
 	})
 })
 
+describe.runIf(hasKeepassxc)('values from sparse files, written here, read by KeePassXC', () => {
+	it('opens groups without searching settings and keeps CR LF and the recycle bin on', async () => {
+		const db = newDatabase()
+		// as read from a file that leaves these out
+		Object.assign(db.meta, { _recycleBinEnabled: undefined })
+		const group = createGroup(db, db.getDefaultGroup(), 'Bare')
+		Object.assign(group, { icon: undefined, expanded: undefined, enableAutoType: undefined, enableSearching: undefined })
+		createEntry(db, group, { ...emptyDraft(), title: 'Windows', notes: 'line 1\r\nline 2' })
+		const path = writeTemp('sparse.kdbx', await saveDatabase(db))
+
+		expect(keepassxc('show', path, { password }, ['-s', '-a', 'Notes', '/Bare/Windows'])).toBe('line 1\r\nline 2\n')
+		expect(exportXml(path, { password })).toContain('<RecycleBinEnabled>True</RecycleBinEnabled>')
+	})
+})
+
 describe.runIf(hasKeepassxc)('key files that KeePassXC hashes as a whole', () => {
 	it.each([
 		['an SVG image', '<svg xmlns="http://www.w3.org/2000/svg"><rect width="1" height="1"/></svg>'],
