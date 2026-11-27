@@ -112,6 +112,17 @@
 						</dl>
 					</section>
 
+					<section v-if="details.passkey" class="entry-details__group">
+						<h3>{{ t('keenext', 'Passkey') }}</h3>
+						<p class="entry-details__muted">
+							{{ t('keenext', 'Saved by KeePassXC. It is kept as it is; signing in with it needs KeePassXC and its browser extension.') }}
+						</p>
+						<dl>
+							<FieldRow :label="t('keenext', 'Website')" :value="details.passkey.relyingParty" @copy="copy(details.passkey.relyingParty, t('keenext', 'Copied'))" />
+							<FieldRow :label="t('keenext', 'Username')" :value="details.passkey.username" @copy="copy(details.passkey.username, t('keenext', 'Username copied'))" />
+						</dl>
+					</section>
+
 					<section v-if="details.customFields.length > 0" class="entry-details__group">
 						<h3>{{ t('keenext', 'Additional attributes') }}</h3>
 						<dl>
@@ -133,6 +144,11 @@
 								<NcIconSvgWrapper :path="mdiPaperclip" :size="20" />
 								<span class="entry-details__attachment-name">{{ attachment.name }}</span>
 								<span class="entry-details__muted">{{ formatSize(attachment.size) }}</span>
+								<IconButton
+									v-if="previewKind(attachment.name, attachment.size)"
+									:label="t('keenext', 'Preview {name}', { name: attachment.name })"
+									:path="mdiEyeOutline"
+									@click="previewName = attachment.name" />
 								<IconButton :label="t('keenext', 'Download {name}', { name: attachment.name })" :path="mdiDownload" @click="download(attachment.name)" />
 							</li>
 						</ul>
@@ -213,6 +229,12 @@
 			:canRestore="database.writable"
 			@restore="restore(historyIndex!)"
 			@close="historyIndex = null" />
+		<AttachmentPreviewDialog
+			v-if="previewName !== null && previewData"
+			:name="previewName"
+			:data="previewData"
+			@download="download(previewName!)"
+			@close="previewName = null" />
 		<MoveDialog
 			v-if="moving && entry"
 			:database="database"
@@ -226,7 +248,7 @@
 import type { EntryChanges, StandardChange } from '@/core/entries'
 import type { OpenDatabase } from '@/stores/vault'
 
-import { mdiClockOutline, mdiContentCopy, mdiContentDuplicate, mdiDelete, mdiDownload, mdiFolderMove, mdiImageSearchOutline, mdiPaperclip, mdiPencil, mdiRestore } from '@mdi/js'
+import { mdiClockOutline, mdiContentCopy, mdiContentDuplicate, mdiDelete, mdiDownload, mdiEyeOutline, mdiFolderMove, mdiImageSearchOutline, mdiPaperclip, mdiPencil, mdiRestore } from '@mdi/js'
 import { showConfirmation, showError, showSuccess } from '@nextcloud/dialogs'
 import { formatFileSize } from '@nextcloud/files'
 import { computed, ref } from 'vue'
@@ -239,6 +261,7 @@ import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
 import NcRadioGroup from '@nextcloud/vue/components/NcRadioGroup'
 import NcRadioGroupButton from '@nextcloud/vue/components/NcRadioGroupButton'
+import AttachmentPreviewDialog from './AttachmentPreviewDialog.vue'
 import EntryEditor from './EntryEditor.vue'
 import EntryIcon from './EntryIcon.vue'
 import FieldRow from './FieldRow.vue'
@@ -259,13 +282,16 @@ import {
 	getField,
 	isExpired,
 	isInRecycleBin,
+	isPasskeyField,
 	moveEntry,
+	readPasskey,
 	recycleBinEnabled,
 	restoreHistory,
 	StandardField,
 } from '@/core/entries'
 import { iconFor, storeIcon } from '@/core/favicons'
 import { resolvedField, resolvePlaceholders } from '@/core/placeholders'
+import { previewKind } from '@/core/preview'
 import { entryOtpUri, readTotp } from '@/core/totp'
 import { t } from '@/l10n'
 import { copySecret } from '@/services/clipboard'
@@ -310,8 +336,9 @@ const details = computed(() => {
 		notes: getField(current, StandardField.Notes),
 		totp: readTotp(current),
 		totpUri: entryOtpUri(current),
+		passkey: readPasskey(current),
 		customFields: draft.customFields
-			.filter((field) => !hiddenFields.has(field.key))
+			.filter((field) => !hiddenFields.has(field.key) && !isPasskeyField(field.key))
 			.map((field) => ({ ...field, value: resolvePlaceholders(db, current, field.value) })),
 		tags: draft.tags,
 		expires: draft.expires,
@@ -332,6 +359,7 @@ const details = computed(() => {
 			...(current.times.lastAccessTime ? [{ label: t('keenext', 'Last accessed'), value: formatDate(current.times.lastAccessTime), copy: false }] : []),
 			...(current.times.usageCount ? [{ label: t('keenext', 'Times opened'), value: String(current.times.usageCount), copy: false }] : []),
 			{ label: t('keenext', 'Expires'), value: draft.expires ? formatDate(draft.expires) : t('keenext', 'No expiry date'), copy: false },
+			...(draft.excludeFromReports ? [{ label: t('keenext', 'Health check'), value: t('keenext', 'Excluded'), copy: false }] : []),
 			{ label: t('keenext', 'Attachments'), value: draft.attachments.length > 0 ? `${draft.attachments.length} (${formatSize(draft.attachments.reduce((sum, attachment) => sum + attachmentData(attachment).byteLength, 0))})` : '0', copy: false },
 			{ label: t('keenext', 'Entry ID'), value: uuidHex(current.uuid.id), copy: true },
 		],
@@ -356,6 +384,8 @@ function changeLabels(changes: EntryChanges): string[] {
 		expires: t('keenext', 'Expires'),
 		attachments: t('keenext', 'Attachments'),
 		icon: t('keenext', 'Icon'),
+		color: t('keenext', 'Color'),
+		healthCheck: t('keenext', 'Health check'),
 	}
 	// The one-time password is stored in several attributes but is one thing to the user.
 	const custom = changes.custom.map((key) => hiddenFields.has(key) ? t('keenext', 'TOTP') : key)
@@ -378,6 +408,14 @@ async function copy(value: string, message: string): Promise<void> {
 	await copySecret(value, settingsStore.settings.clipboardClearSeconds)
 	showSuccess(message)
 }
+
+const previewName = ref<string | null>(null)
+const previewData = computed(() => {
+	const attachment = previewName.value && entry.value
+		? draftFromEntry(entry.value).attachments.find((candidate) => candidate.name === previewName.value)
+		: undefined
+	return attachment ? attachmentData(attachment) : undefined
+})
 
 function download(name: string): void {
 	const attachment = draftFromEntry(entry.value!).attachments.find((candidate) => candidate.name === name)

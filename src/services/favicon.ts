@@ -32,7 +32,12 @@ function loadImage(blob: Blob): Promise<HTMLImageElement> {
  */
 export async function downloadFavicon(address: string): Promise<Uint8Array> {
 	const { mime, data } = await getFavicon(address)
-	const image = await loadImage(new Blob([decodeBase64(data)], { type: mime }))
+	return iconPng(new Blob([decodeBase64(data)], { type: mime }))
+}
+
+/** Any image the browser can decode, scaled to icon size and stored as PNG. */
+export async function iconPng(blob: Blob): Promise<Uint8Array> {
+	const image = await loadImage(blob)
 	// SVG without a size reports 0 × 0.
 	const { width, height } = fitSize(image.naturalWidth || 128, image.naturalHeight || 128)
 	const canvas = document.createElement('canvas')

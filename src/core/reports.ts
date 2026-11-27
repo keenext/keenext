@@ -1,7 +1,7 @@
 import type { Kdbx, KdbxEntry } from 'kdbxweb'
 import type { StrengthLevel } from './generator.ts'
 
-import { getField, isExpired, isInRecycleBin, StandardField } from './entries.ts'
+import { excludedFromReports, getField, isExpired, isInRecycleBin, StandardField } from './entries.ts'
 import { estimateStrength } from './generator.ts'
 import { hasPlaceholders } from './placeholders.ts'
 
@@ -13,6 +13,21 @@ export interface HealthIssue {
 }
 
 export const EXPIRING_DAYS = 30
+
+/** Empty passwords, references and entries with "QualityCheck" off are not rated. */
+function checksPassword(entry: KdbxEntry): boolean {
+	const password = getField(entry, StandardField.Password)
+	return password !== '' && !hasPlaceholders(password) && !excludedFromReports(entry)
+}
+
+/** The strength level if the password counts as weak in the health check. */
+export function weakness(entry: KdbxEntry): StrengthLevel | undefined {
+	if (!checksPassword(entry)) {
+		return undefined
+	}
+	const { level } = estimateStrength(getField(entry, StandardField.Password))
+	return level === 'poor' || level === 'weak' ? level : undefined
+}
 
 /**
  * KeePassXC's database health check: weak and reused passwords, expired and
@@ -35,14 +50,14 @@ export function healthReport(db: Kdbx, now = new Date()): HealthIssue[] {
 			issues.push({ entry, kind: 'expiring', detail: days })
 		}
 
-		const password = getField(entry, StandardField.Password)
-		if (password === '' || hasPlaceholders(password) || entry.qualityCheck === false) {
+		if (!checksPassword(entry)) {
 			continue
 		}
-		const { level } = estimateStrength(password)
-		if (level === 'poor' || level === 'weak') {
+		const level = weakness(entry)
+		if (level) {
 			issues.push({ entry, kind: 'weak', detail: level })
 		}
+		const password = getField(entry, StandardField.Password)
 		byPassword.set(password, [...(byPassword.get(password) ?? []), entry])
 	}
 
