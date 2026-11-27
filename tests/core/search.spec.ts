@@ -1,3 +1,4 @@
+import { ProtectedValue } from 'kdbxweb'
 import { describe, expect, it } from 'vitest'
 import { entryByTitle, newDatabase, openRichFixture } from '../helpers/databases.ts'
 import { getField } from '@/core/entries'
@@ -12,10 +13,20 @@ async function titles(query: string) {
 describe('parseQuery', () => {
 	it('understands modifiers, fields and quotes', () => {
 		expect(parseQuery('-user:"jan doe" +url:x tag:work foo:bar')).toEqual([
-			{ field: 'username', value: 'jan doe', exclude: true, exact: false },
-			{ field: 'url', value: 'x', exclude: false, exact: true },
-			{ field: 'tag', value: 'work', exclude: false, exact: false },
-			{ field: 'default', value: 'foo:bar', exclude: false, exact: false },
+			{ field: 'username', value: 'jan doe', exclude: true, exact: false, regex: false },
+			{ field: 'url', value: 'x', exclude: false, exact: true, regex: false },
+			{ field: 'tag', value: 'work', exclude: false, exact: false, regex: false },
+			{ field: 'default', value: 'foo:bar', exclude: false, exact: false, regex: false },
+		])
+	})
+
+	it('reads attribute names, quoted ones too, and the regex modifier', () => {
+		expect(parseQuery('_PIN2:1234 _KP2A_URL_1:example _"Security Question":blue *t:\\d+ snake_case')).toEqual([
+			{ field: 'custom', attribute: 'PIN2', value: '1234', exclude: false, exact: false, regex: false },
+			{ field: 'custom', attribute: 'KP2A_URL_1', value: 'example', exclude: false, exact: false, regex: false },
+			{ field: 'custom', attribute: 'Security Question', value: 'blue', exclude: false, exact: false, regex: false },
+			{ field: 'title', value: '\\d+', exclude: false, exact: false, regex: true },
+			{ field: 'default', value: 'snake_case', exclude: false, exact: false, regex: false },
 		])
 	})
 })
@@ -60,6 +71,39 @@ describe('searchEntries', () => {
 
 	it('finds expired entries', async () => {
 		expect(await titles('is:expired')).toEqual(['Alte Karte (abgelaufen)'])
+	})
+
+	it('searches one additional attribute by name, case-insensitively', async () => {
+		expect(await titles('_iban:DE')).toEqual(['Hausbank'])
+		expect(await titles('_"IBAN":DE')).toEqual(['Hausbank'])
+		expect(await titles('_Missing:DE')).toEqual([])
+	})
+
+	it('matches regular expressions, and nothing for an invalid one', async () => {
+		expect(await titles('*t:^git.*\\(reference\\)$')).toEqual(['GitHub API (reference)'])
+		expect(await titles('*t:(')).toEqual([])
+		expect(await titles('-*t:^git')).not.toContain('GitHub')
+	})
+
+	it('filters by what entries have and are', async () => {
+		expect(await titles('has:totp')).toEqual(['GitHub'])
+		expect(await titles('has:attachments')).toEqual(['GitHub'])
+		expect(await titles('has:tag')).toContain('GitHub')
+		expect(await titles('has:passkey')).toEqual([])
+		expect(await titles('has:unknown')).toEqual([])
+		const db = newDatabase()
+		const weak = db.createEntry(db.getDefaultGroup())
+		weak.fields.set('Password', ProtectedValue.fromString('1234'))
+		const strong = db.createEntry(db.getDefaultGroup())
+		strong.fields.set('Password', ProtectedValue.fromString('correct horse battery staple 9!'))
+		const excluded = db.createEntry(db.getDefaultGroup())
+		excluded.fields.set('Password', ProtectedValue.fromString('1234'))
+		excluded.qualityCheck = false
+		expect(searchEntries(db, 'is:weak')).toEqual([weak])
+		const soon = db.createEntry(db.getDefaultGroup())
+		soon.times.expires = true
+		soon.times.expiryTime = new Date(Date.now() + 86_400_000)
+		expect(searchEntries(db, 'is:expiring')).toEqual([soon])
 	})
 
 	it('skips the recycle bin', async () => {
