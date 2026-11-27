@@ -3,6 +3,8 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), the versions [Semantic Versioning](https://semver.org/). How a release is made: [docs/releasing.md](docs/releasing.md).
 
 ## [Unreleased]
+### Changed
+- Before writing, saving opens the new version once more. If it does not open, the file on the server stays as it was and an error is shown, instead of a database that can no longer be unlocked replacing it (#39). Saving takes a moment longer, about as long as unlocking.
 
 ## 0.2.0 – 2026-11-22
 ### Fixed

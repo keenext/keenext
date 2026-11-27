@@ -131,8 +131,27 @@ function classifyOpenError(error: unknown): DatabaseOpenError {
 	return new DatabaseOpenError('unknown', message, { cause: error })
 }
 
+/** What saving produced did not open again; nothing was written. */
+export class UnreadableSaveError extends Error {
+	constructor(options?: { cause?: unknown }) {
+		super('The saved database could not be opened again', options)
+		this.name = 'UnreadableSaveError'
+	}
+}
+
+/**
+ * Opens the result once more before returning it, so a bug in writing never replaces a
+ * stored file with one that no longer opens. Costs a second key derivation per save.
+ */
 export async function saveDatabase(db: Kdbx): Promise<ArrayBuffer> {
-	return db.save()
+	const data = await db.save()
+	try {
+		// A copy: loading may wipe the buffer it decrypts.
+		await openDatabase(data.slice(0), db.credentials, { kdfLimits: kdfLimitsAllowing(getKdf(db)) })
+	} catch (error) {
+		throw new UnreadableSaveError({ cause: error })
+	}
+	return data
 }
 
 export interface KdfSettings {

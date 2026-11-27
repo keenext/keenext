@@ -238,6 +238,7 @@ OC.L10N.register(
 		"The database is decrypted in your browser. Your password is never sent to the server.": "Die Datenbank wird in Ihrem Browser entschlüsselt. Ihr Passwort wird nie an den Server gesendet.",
 		"The export contains all passwords unencrypted. It is downloaded to this device only; delete it when you no longer need it.": "Der Export enthält alle Passwörter unverschlüsselt. Er wird nur auf dieses Gerät heruntergeladen; löschen Sie ihn, sobald Sie ihn nicht mehr benötigen.",
 		"The file is locked by another application": "Die Datei ist von einer anderen Anwendung gesperrt",
+		"The saved version could not be opened again, so the file was left unchanged": "Die gespeicherte Version ließ sich nicht wieder öffnen, deshalb bleibt die Datei unverändert",
 		"The server did not answer in time": "Der Server hat nicht rechtzeitig geantwortet",
 		"There is not enough storage space left on the server": "Auf dem Server ist nicht mehr genug Speicherplatz frei",
 		"The file is not a valid KeePass database": "Die Datei ist keine gültige KeePass-Datenbank",
