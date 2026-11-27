@@ -254,7 +254,10 @@ export const useVaultStore = defineStore('vault', () => {
 		}
 	}
 
-	/** Picks up changes made elsewhere; silent unless something was merged. */
+	/**
+	 * Picks up changes made elsewhere; silent unless something was merged. Writes local
+	 * changes only with autosave on: with it off, only saving or locking writes.
+	 */
 	async function sync(id: string): Promise<void> {
 		const database = find(id)
 		const session = database.session
@@ -262,8 +265,8 @@ export const useVaultStore = defineStore('vault', () => {
 			return
 		}
 		try {
-			const result = await session.sync()
-			if (result.pulled && result.pushed) {
+			const result = await session.sync({ push: useSettingsStore().settings.autosave && database.writable })
+			if (result.pulled && (result.pushed || session.dirty)) {
 				showSuccess(t('keenext', 'Changes made elsewhere were merged into {name}', { name: database.name }))
 			}
 		} catch {
