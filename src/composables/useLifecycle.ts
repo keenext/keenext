@@ -29,7 +29,7 @@ export function useLifecycle(): void {
 	}
 
 	const onBeforeUnload = (event: BeforeUnloadEvent) => {
-		if (vault.anyDirty) {
+		if (vault.anyDirty || vault.editorDirty) {
 			event.preventDefault()
 		}
 	}
