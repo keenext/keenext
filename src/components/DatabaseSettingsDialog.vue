@@ -56,8 +56,17 @@
 						<TextInput v-model="kdfMemoryMiB" type="number" :label="t('keenext', 'Memory (MiB)')" />
 						<TextInput v-model="kdfParallelism" type="number" :label="t('keenext', 'Parallelism')" />
 					</div>
+					<div class="database-settings__benchmark">
+						<NcButton :disabled="benchmarking" @click="benchmark">
+							<template #icon>
+								<NcLoadingIcon v-if="benchmarking" :size="20" />
+								<NcIconSvgWrapper v-else :path="mdiTimerOutline" />
+							</template>
+							{{ t('keenext', 'Set iterations for 1 second') }}
+						</NcButton>
+					</div>
 					<p class="database-settings__muted">
-						{{ t('keenext', 'Higher values make guessing the password slower, but also unlocking on every device.') }}
+						{{ t('keenext', 'Higher values make guessing the password slower, but also unlocking on every device. The measurement uses this browser at the memory above; KeePassXC derives faster.') }}
 					</p>
 				</template>
 			</FormSection>
@@ -90,10 +99,14 @@ import type { DatabaseSettings } from '@/core/database'
 import type { KeyFileChoice } from '@/services/keyFile'
 import type { OpenDatabase } from '@/stores/vault'
 
+import { mdiTimerOutline } from '@mdi/js'
+import { showError } from '@nextcloud/dialogs'
 import { computed, ref } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
+import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
+import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
 import NcSelect from '@nextcloud/vue/components/NcSelect'
 import FormField from './FormField.vue'
@@ -103,8 +116,10 @@ import PasswordInput from './PasswordInput.vue'
 import StrengthMeter from './StrengthMeter.vue'
 import TextAreaInput from './TextAreaInput.vue'
 import TextInput from './TextInput.vue'
+import { argon2IterationsFor } from '@/core/benchmark'
 import { applyDatabaseSettings, DEFAULT_KDF, getDatabaseSettings, prepareCredentials, setCredentials } from '@/core/database'
 import { t } from '@/l10n'
+import { createWorkerArgon2 } from '@/services/argon2Worker'
 import { resolveKeyFile } from '@/services/keyFile'
 import { useVaultStore } from '@/stores/vault'
 
@@ -160,6 +175,19 @@ function switchToArgon2(): void {
 	form.value!.kdf = { ...DEFAULT_KDF }
 }
 
+const benchmarking = ref(false)
+
+async function benchmark(): Promise<void> {
+	benchmarking.value = true
+	try {
+		argon().iterations = await argon2IterationsFor(createWorkerArgon2(), argon(), 1000)
+	} catch (cause) {
+		showError(t('keenext', 'The measurement failed: {error}', { error: cause instanceof Error ? cause.message : String(cause) }))
+	} finally {
+		benchmarking.value = false
+	}
+}
+
 const keyValid = computed(() => !changeKey.value
 	|| ((newPassword.value !== '' || newKeyFile.value !== null) && newPassword.value === repeatPassword.value))
 
@@ -205,6 +233,10 @@ const buttons = computed(() => [
 	display: flex;
 	flex-direction: column;
 	gap: 32px;
+}
+
+.database-settings__benchmark {
+	margin-top: 8px;
 }
 
 .database-settings__row {
