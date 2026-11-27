@@ -244,6 +244,24 @@ describe('DatabaseSession', () => {
 		expect(() => entryByTitle(session.db, 'Remote')).not.toThrow()
 	})
 
+	it('merges remote changes on sync but leaves local ones unsaved when told not to push', async () => {
+		const { storage, session } = await setup()
+		createEntry(session.db, session.db.getDefaultGroup(), { ...emptyDraft(), title: 'Local' })
+		session.markChanged()
+		expect(await session.sync({ push: false })).toEqual({ pulled: false, pushed: false })
+
+		await storage.editElsewhere((db) => {
+			createEntry(db, db.getDefaultGroup(), { ...emptyDraft(), title: 'Remote' })
+		})
+		expect(await session.sync({ push: false })).toEqual({ pulled: true, pushed: false })
+		expect(storage.writes).toBe(0)
+		expect(session.dirty).toBe(true)
+		expect(() => entryByTitle(session.db, 'Local')).not.toThrow()
+		expect(() => entryByTitle(session.db, 'Remote')).not.toThrow()
+
+		expect(await session.save()).toEqual({ pulled: false, pushed: true })
+	})
+
 	it('does nothing on sync when nothing changed', async () => {
 		const { storage, session } = await setup()
 		expect(await session.sync()).toEqual({ pulled: false, pushed: false })

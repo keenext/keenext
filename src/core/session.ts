@@ -93,16 +93,17 @@ export class DatabaseSession {
 
 	/**
 	 * Pulls remote changes if the file changed, then pushes local changes, if any.
-	 * Used on focus/interval to pick up edits made elsewhere.
+	 * Used on focus/interval to pick up edits made elsewhere. With `push: false`
+	 * local changes are merged with the remote ones but stay unsaved.
 	 */
-	sync(): Promise<SyncResult> {
+	sync({ push = true }: { push?: boolean } = {}): Promise<SyncResult> {
 		return this.serialize(async () => {
 			const remote = await this.storage.read()
 			if (remote.etag === this.etag) {
-				return this.dirty ? this.push() : { pulled: false, pushed: false }
+				return push && this.dirty ? this.push() : { pulled: false, pushed: false }
 			}
 			await this.integrate(remote)
-			if (!this.dirty) {
+			if (!push || !this.dirty) {
 				return { pulled: true, pushed: false }
 			}
 			const result = await this.push()
