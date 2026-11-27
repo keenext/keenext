@@ -7,7 +7,7 @@ import { showError, showInfo, showSuccess } from '@nextcloud/dialogs'
 import { defineStore } from 'pinia'
 import { computed, markRaw, ref } from 'vue'
 import { useSettingsStore } from './settings.ts'
-import { createCredentials, createDatabase, DatabaseOpenError, saveDatabase } from '@/core/database'
+import { createCredentials, createDatabase, DatabaseOpenError, saveDatabase, UnreadableSaveError } from '@/core/database'
 import { DatabaseSession } from '@/core/session'
 import { t } from '@/l10n'
 import { getFileInfo, getRecent, touchRecent } from '@/services/api'
@@ -60,6 +60,9 @@ function describeError(error: unknown): string {
 			case 'full': return t('keenext', 'There is not enough storage space left on the server')
 			case 'timeout': return t('keenext', 'The server did not answer in time')
 		}
+	}
+	if (error instanceof UnreadableSaveError) {
+		return t('keenext', 'The saved version could not be opened again, so the file was left unchanged')
 	}
 	return error instanceof Error ? error.message : String(error)
 }

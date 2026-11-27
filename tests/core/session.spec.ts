@@ -3,7 +3,7 @@ import type { DatabaseStorage, StoredFile } from '@/core/session'
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { entryByTitle, FAST_KDF, newDatabase } from '../helpers/databases.ts'
-import { applyDatabaseSettings, CostlyKdfError, createCredentials, DEFAULT_KDF_LIMITS, getDatabaseSettings, openDatabase, prepareCredentials, saveDatabase, setCredentials } from '@/core/database'
+import { applyDatabaseSettings, CostlyKdfError, createCredentials, DEFAULT_KDF_LIMITS, getDatabaseSettings, openDatabase, prepareCredentials, saveDatabase, setCredentials, UnreadableSaveError } from '@/core/database'
 import { applyDraft, createEntry, draftFromEntry, emptyDraft, getField } from '@/core/entries'
 import { ConflictError, DatabaseSession } from '@/core/session'
 
@@ -258,6 +258,18 @@ describe('DatabaseSession', () => {
 		expect(results.map((result) => result.pushed)).toEqual([true, false, false])
 		expect(storage.writes).toBe(1)
 		expect(session.dirty).toBe(false)
+	})
+
+	it('leaves the stored file alone when what saving produced does not open again', async () => {
+		const { storage, session } = await setup()
+		const save = session.db.save.bind(session.db)
+		session.db.save = async () => (await save()).slice(0, 300)
+		createEntry(session.db, session.db.getDefaultGroup(), { ...emptyDraft(), title: 'Local' })
+		session.markChanged()
+
+		await expect(session.save()).rejects.toThrow(UnreadableSaveError)
+		expect(storage.writes).toBe(0)
+		expect(session.dirty).toBe(true)
 	})
 
 	it('surfaces non-conflict storage errors', async () => {
