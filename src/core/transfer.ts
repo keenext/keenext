@@ -17,8 +17,35 @@ export interface ImportResult {
 
 // ---------------------------------------------------------------- CSV
 
+/** UTF-8, or Windows-1252 for bytes that are no valid UTF-8 (what Excel saves as "CSV" in Western Europe). */
+export function decodeText(data: Uint8Array): string {
+	try {
+		return new TextDecoder('utf-8', { fatal: true }).decode(data)
+	} catch {
+		return new TextDecoder('windows-1252').decode(data)
+	}
+}
+
+const DELIMITERS = [',', ';', '\t'] as const
+
+/** The separator used most often in the header line, outside quotes; a comma if there is none. */
+export function detectDelimiter(text: string): string {
+	const counts = new Map<string, number>(DELIMITERS.map((delimiter) => [delimiter, 0]))
+	let quoted = false
+	for (const char of text.replace(/^\uFEFF/, '')) {
+		if (char === '"') {
+			quoted = !quoted
+		} else if (!quoted && (char === '\n' || char === '\r')) {
+			break
+		} else if (!quoted && counts.has(char)) {
+			counts.set(char, counts.get(char)! + 1)
+		}
+	}
+	return [...counts].reduce((best, current) => current[1] > best[1] ? current : best)[0]
+}
+
 /** RFC 4180: quoted fields, doubled quotes, line breaks inside quotes, CRLF or LF. */
-export function parseCsv(text: string): string[][] {
+export function parseCsv(text: string, delimiter = detectDelimiter(text)): string[][] {
 	const rows: string[][] = []
 	let row: string[] = []
 	let field = ''
@@ -37,7 +64,7 @@ export function parseCsv(text: string): string[][] {
 			}
 		} else if (char === '"' && field === '') {
 			quoted = true
-		} else if (char === ',') {
+		} else if (char === delimiter) {
 			row.push(field)
 			field = ''
 		} else if (char === '\n' || char === '\r') {
@@ -105,38 +132,68 @@ export function exportXml(db: Kdbx): Promise<string> {
 	return db.saveXml(true)
 }
 
+/**
+ * Headers, lower-cased, of KeePassXC, KeePass, Bitwarden, 1Password, LastPass,
+ * Proton Pass, browsers and hand-made German lists.
+ */
 const csvColumns: Record<string, keyof Pick<EntryDraft, 'title' | 'username' | 'password' | 'url' | 'notes'> | 'group' | 'totp' | 'tags' | 'modified' | 'created' | 'icon'> = {
 	group: 'group',
 	groups: 'group',
 	folder: 'group',
+	grouping: 'group',
+	vault: 'group',
+	gruppe: 'group',
+	ordner: 'group',
+	kategorie: 'group',
 	title: 'title',
 	name: 'title',
 	account: 'title',
+	titel: 'title',
+	bezeichnung: 'title',
+	konto: 'title',
 	username: 'username',
 	'user name': 'username',
 	user: 'username',
 	login: 'username',
 	login_username: 'username',
 	email: 'username',
+	'e-mail': 'username',
+	benutzername: 'username',
+	benutzer: 'username',
+	anmeldename: 'username',
 	password: 'password',
 	pass: 'password',
 	login_password: 'password',
+	passwort: 'password',
+	kennwort: 'password',
 	url: 'url',
 	'web site': 'url',
 	website: 'url',
 	login_uri: 'url',
 	uri: 'url',
+	webseite: 'url',
+	adresse: 'url',
 	notes: 'notes',
 	note: 'notes',
 	comments: 'notes',
 	extra: 'notes',
+	notizen: 'notes',
+	notiz: 'notes',
+	bemerkung: 'notes',
+	bemerkungen: 'notes',
+	kommentar: 'notes',
 	totp: 'totp',
 	otp: 'totp',
+	otpauth: 'totp',
 	login_totp: 'totp',
 	'one-time password': 'totp',
 	tags: 'tags',
+	schlagwörter: 'tags',
+	stichwörter: 'tags',
 	'last modified': 'modified',
+	modifytime: 'modified',
 	created: 'created',
+	createtime: 'created',
 	icon: 'icon',
 }
 
@@ -183,8 +240,10 @@ function ensureGroup(db: Kdbx, parent: KdbxGroup, path: string[], created: { cou
 	return current
 }
 
+/** ISO dates, or Unix times in seconds (Proton Pass) or milliseconds. */
 function parseDate(value: string | undefined): Date | undefined {
-	const date = value ? new Date(value) : undefined
+	const epoch = value && /^\d{9,13}$/.test(value.trim()) ? Number(value) : undefined
+	const date = epoch !== undefined ? new Date(epoch < 1e11 ? epoch * 1000 : epoch) : value ? new Date(value) : undefined
 	return date && !Number.isNaN(date.getTime()) ? date : undefined
 }
 
@@ -246,7 +305,13 @@ export function importCsv(db: Kdbx, target: KdbxGroup, name: string, text: strin
 					icon = Number.parseInt(value, 10)
 					break
 				default:
-					draft[kind] = value
+					// Two columns for one field (Proton Pass: email and username): the first
+					// value wins, a different second one is kept as an attribute.
+					if (draft[kind] === '') {
+						draft[kind] = value
+					} else if (value !== '' && value !== draft[kind] && header[column]) {
+						customFields.push({ key: header[column]!.trim(), value, protected: false })
+					}
 			}
 		})
 		const otp = totp ? totpToOtpUri(totp, draft.username || draft.title) : undefined
