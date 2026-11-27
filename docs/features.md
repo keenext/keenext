@@ -14,15 +14,15 @@
 | Create database | ✅ | KDBX 4, Argon2id 64 MiB, ChaCha20. |
 | Change master key, KDF, cipher | ✅ | Database settings dialog. AES-KDF databases can be upgraded to Argon2id/KDBX 4. |
 | Name, description, default username, recycle bin, history limits | ✅ | |
-| Benchmark KDF to a target time | ❌ | Iterations are entered manually. |
+| Benchmark KDF to a target time | ✅ | Argon2 iterations for one second, measured in this browser at the chosen memory; KeePassXC derives faster. |
 | Several open databases | ✅ | Listed in the navigation, each locked or unlocked on its own. |
 | Autosave | ✅ | Per user setting, 1.5 s after the last change. |
 | Changes made elsewhere | ✅ | Detected via ETag on save and by polling; merged, not overwritten. |
 | Backup before saving | ◐ | Not done by the app; Nextcloud's file versions keep previous states. |
 | Merge another database | ✅ | Import a `.kdbx`: another copy of the same database is merged, a different one is copied into a new group. |
-| Import | ◐ | CSV (KeePassXC, KeePass, Bitwarden, browsers; columns by header), unencrypted JSON from Bitwarden, Passman (with attachments) and Nextcloud Passwords (database backup), KeePass XML, KDBX. 1Password and KeePass 1 (.kdb) missing. |
+| Import | ◐ | CSV (KeePassXC, KeePass, Bitwarden, 1Password, LastPass, Proton Pass, browsers, German column names; columns by header; comma, semicolon or tab; UTF-8 or Windows-1252), unencrypted JSON from Bitwarden, Passman (with attachments) and Nextcloud Passwords (database backup), KeePass XML, KDBX. 1Password's 1PUX and KeePass 1 (.kdb) missing. |
 | Export | ◐ | KeePass XML and CSV with KeePassXC's columns, as a download. HTML missing. |
-| Health check (weak, reused, expired, expiring passwords) | ✅ | Per database, from its menu. Entries with "QualityCheck" off are skipped. |
+| Health check (weak, reused, expired, expiring passwords) | ✅ | Per database, from its menu. Entries can be excluded in the editor ("QualityCheck" off, KDBX 4.1); KeePassXC's older "KnownBad" flag is honoured. |
 | Have I Been Pwned check | ✅ | Opt-in from the health check; k-anonymity (5-character SHA-1 prefixes), padded responses, no cookies. |
 
 ## Entries
@@ -31,17 +31,18 @@
 |---|---|---|
 | Title, username, password, URL, notes | ✅ | |
 | Additional attributes, protected attributes | ✅ | |
-| Attachments | ◐ | Add, remove, download. No preview. |
+| Attachments | ✅ | Add, remove, download; preview of images and text files (SVG is not shown). |
 | Tags | ✅ | |
 | Expiry | ✅ | Expired entries are struck through. |
 | History | ✅ | List, view an old version with changed fields marked, restore, delete. |
-| Standard and custom icons | ◐ | Shown and selectable. Favicons are downloaded per entry (the Nextcloud server fetches them from the entry's website). Uploading other custom icons is missing. |
-| Foreground/background colour | ◐ | Kept in the file; not shown or editable. |
+| Standard and custom icons | ✅ | Shown and selectable. Favicons are downloaded per entry (the Nextcloud server fetches them from the entry's website); own images are scaled to 128 px and stored as PNG. |
+| Foreground/background colour | ✅ | Editable; shown as a marker in the list, not as row color. |
 | TOTP | ✅ | KeePassXC `otp`, legacy `TOTP Seed`/`TOTP Settings`, KeePass `TimeOtp-*`; SHA-1/256/512, Steam. Setup dialog reads QR codes from images or pasted screenshots; entries show their QR code for authenticator apps. Camera scanning missing. |
 | Placeholders | ◐ | `{REF:…}`, `{S:…}`, `{TITLE}` etc. Date, environment and other placeholders are not resolved. |
 | Clone, move, delete to recycle bin | ✅ | Clone has no "reference username/password" options. |
 | Drag and drop between groups | ✅ | Entries and groups onto groups in the tree. |
 | Auto-Type | 🚫 | Settings are kept in the file. |
+| Passkeys (KeePassXC) | ◐ | Shown (website, username) and kept unchanged; signing in with them needs KeePassXC. |
 | Browser integration (KeePassXC-Browser) | 🚫 | |
 | SSH agent | 🚫 | |
 
@@ -59,9 +60,9 @@
 
 | Feature | | Notes |
 |---|---|---|
-| KeePassXC search syntax | ✅ | Field prefixes, `-`/`!`, `+`, `*`, quotes, `is:expired`. |
-| Regular expressions in search | ❌ | |
-| Sorting and column choice | ❌ | List is sorted by title. |
+| KeePassXC search syntax | ✅ | Field prefixes, `_Name:` for additional attributes, `-`/`!`, `+`, `*` wildcards, quotes, `is:expired`/`expiring`/`weak`, `has:totp`/`attachment`/`tag`/`url`/`notes`/`passkey`. |
+| Regular expressions in search | ✅ | A leading `*` (`*title:^git`); an invalid expression matches nothing. |
+| Sorting and column choice | ◐ | Sort by title, username, URL, dates or expiry, either direction; second line shows username, URL, modification date or nothing. Kept per browser. No table with columns. |
 | Password generator | ✅ | Character groups as in KeePassXC, extended ASCII, include/exclude, look-alikes, every group. |
 | Passphrases | ◐ | EFF large word list, separator, case. Custom word lists missing. |
 | Password strength | ◐ | Entropy estimate; no dictionary check (KeePassXC uses zxcvbn). |
@@ -74,6 +75,7 @@
 | Lock after inactivity, lock when the tab is hidden, lock all | ✅ | |
 | Clear clipboard after a delay | ✅ | Cleared when the page next has focus if it had none. |
 | Protected values hidden until revealed | ✅ | |
+| Unapplied edits | ✅ | Choosing another entry, a new entry, another database, locking or closing by hand asks first, closing the tab warns. Automatic locking discards them. |
 
 ## Nextcloud integration
 
