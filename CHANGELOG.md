@@ -8,6 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), the
 
 ### Fixed
 - With automatic saving turned off, looking for changes made elsewhere (every 60 seconds by default and when returning to the tab) no longer saves your own changes along the way. Changes made elsewhere are still merged in; your changes are written when you save or lock.
+- A change made in the moment a save was running is no longer left out when locking right afterwards; locking saves until nothing is pending.
+- A history version deleted (or a history limit changed) while a save was running stays that way when changes made elsewhere are merged in afterwards.
 
 ## 0.2.0 – 2026-11-22
 ### Fixed

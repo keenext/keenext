@@ -4,12 +4,14 @@ import type { DatabaseStorage, StoredFile } from '@/core/session'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { entryByTitle, FAST_KDF, newDatabase } from '../helpers/databases.ts'
 import { applyDatabaseSettings, CostlyKdfError, createCredentials, DEFAULT_KDF_LIMITS, getDatabaseSettings, openDatabase, prepareCredentials, saveDatabase, setCredentials, UnreadableSaveError } from '@/core/database'
-import { applyDraft, createEntry, draftFromEntry, emptyDraft, getField } from '@/core/entries'
+import { applyDraft, createEntry, deleteHistory, draftFromEntry, emptyDraft, getField } from '@/core/entries'
 import { ConflictError, DatabaseSession } from '@/core/session'
 
 /** In-memory stand-in for a WebDAV file with ETag checks. */
 class MemoryStorage implements DatabaseStorage {
 	writes = 0
+	/** Runs while the next write is under way, like an edit made before the server has answered. */
+	duringNextWrite?: () => void
 	private version = 0
 	constructor(private data: ArrayBuffer) {}
 
@@ -21,6 +23,8 @@ class MemoryStorage implements DatabaseStorage {
 		if (etag !== `v${this.version}`) {
 			throw new ConflictError()
 		}
+		this.duringNextWrite?.()
+		this.duringNextWrite = undefined
 		this.data = data.slice(0)
 		this.version++
 		this.writes++
@@ -54,6 +58,32 @@ describe('DatabaseSession', () => {
 		expect(await session.save()).toEqual({ pulled: false, pushed: true })
 		expect(session.dirty).toBe(false)
 		expect(storage.writes).toBe(1)
+	})
+
+	it('keeps a history state deleted while a save was under way deleted when merging later', async () => {
+		const { storage, session } = await setup()
+		const shared = () => entryByTitle(session.db, 'Shared')
+		applyDraft(session.db, shared(), { ...draftFromEntry(shared()), password: 'two' })
+		session.markChanged()
+		await session.save()
+		expect(shared().history).toHaveLength(1)
+
+		createEntry(session.db, session.db.getDefaultGroup(), { ...emptyDraft(), title: 'Local' })
+		session.markChanged()
+		storage.duringNextWrite = () => {
+			deleteHistory(shared(), 0)
+			session.markChanged()
+		}
+		await session.save()
+		expect(session.dirty).toBe(true)
+
+		await storage.editElsewhere((db) => {
+			createEntry(db, db.getDefaultGroup(), { ...emptyDraft(), title: 'Remote' })
+		})
+		expect(await session.save()).toEqual({ pulled: true, pushed: true })
+		expect(shared().history).toHaveLength(0)
+		const stored = await openDatabase((await storage.read()).data, createCredentials({ password: 'test' }))
+		expect(entryByTitle(stored, 'Shared').history).toHaveLength(0)
 	})
 
 	it('merges remote changes on conflict instead of overwriting them', async () => {

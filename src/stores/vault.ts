@@ -160,14 +160,22 @@ export const useVaultStore = defineStore('vault', () => {
 	 */
 	async function lock(id: string): Promise<boolean> {
 		const database = find(id)
-		if (!database.session) {
+		const session = database.session
+		if (!session) {
 			return true
 		}
-		if (database.session.dirty && !(await save(id))) {
-			return false
+		// A save covers what was changed before it started; an edit made while it ran needs another.
+		while (session.dirty) {
+			if (!(await save(id))) {
+				return false
+			}
+		}
+		if (database.session !== session) {
+			// Locked meanwhile by another call (idle timer, tab hidden, Ctrl+L).
+			return database.session === null
 		}
 		clearTimeout(autosaveTimers.get(id))
-		releaseIcons(database.session.db)
+		releaseIcons(session.db)
 		database.session = null
 		database.selectedEntry = null
 		database.query = ''
