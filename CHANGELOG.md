@@ -10,13 +10,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), the
 - With automatic saving turned off, looking for changes made elsewhere (every 60 seconds by default and when returning to the tab) no longer saves your own changes along the way. Changes made elsewhere are still merged in; your changes are written when you save or lock.
 - A change made in the moment a save was running is no longer left out when locking right afterwards; locking saves until nothing is pending.
 - A history version deleted (or a history limit changed) while a save was running stays that way when changes made elsewhere are merged in afterwards.
-
-### Security
-- Downloading a favicon gives up after 20 seconds in total. A website that answered very slowly, a byte every few seconds, could keep the server busy with one lookup for hours; a signed-in user could use that to block the server's PHP workers.
+- An import that fails half way leaves nothing behind. Before, the new group stayed with the entries read so far and was saved with the next change.
+- CSV files with values in a column that has no header import again ("Invalid custom field name"); those values are skipped.
 
 ### Security
 - An entry whose field refers to itself several times (`{USERNAME}{USERNAME}…`) no longer freezes the tab when its group is shown. At most 100 placeholders are resolved per field; the rest stay as written. Anyone with write access to a shared database could plant such an entry.
 - A one-time password entry can ask for at most 10 digits, the longest code TOTP can produce. A crafted entry could ask for a code of any length.
+- Downloading a favicon gives up after 20 seconds in total. A website that answered very slowly, a byte every few seconds, could keep the server busy with one lookup for hours; a signed-in user could use that to block the server's PHP workers.
 
 ## 0.2.0 – 2026-11-22
 ### Fixed
