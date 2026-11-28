@@ -1,3 +1,4 @@
+import { ProtectedValue } from 'kdbxweb'
 import { describe, expect, it } from 'vitest'
 import { entryByTitle, newDatabase, openRichFixture } from '../helpers/databases.ts'
 import { createCredentials, openDatabase, saveDatabase } from '@/core/database'
@@ -30,6 +31,20 @@ describe('decodeText', () => {
 	it('reads UTF-8, and Windows-1252 when the bytes are no valid UTF-8', () => {
 		expect(decodeText(new TextEncoder().encode('Grüße'))).toBe('Grüße')
 		expect(decodeText(new Uint8Array([0x47, 0x72, 0xFC, 0xDF, 0x65, 0x80]))).toBe('Grüße€')
+	})
+
+	it('reads UTF-16 with a byte order mark, as Excel saves "Unicode Text"', () => {
+		expect(decodeText(new Uint8Array([0xFF, 0xFE, 0x47, 0x00, 0xFC, 0x00, 0xAC, 0x20]))).toBe('Gü€')
+		expect(decodeText(new Uint8Array([0xFE, 0xFF, 0x00, 0x47, 0x00, 0xFC, 0x20, 0xAC]))).toBe('Gü€')
+	})
+})
+
+describe('parseCsv', () => {
+	it('takes the separator from Excel\'s "sep=" line and drops that line', () => {
+		expect(parseCsv('sep=;\r\nTitel;Kennwort\r\nBank;a,b\r\n')).toEqual([['Titel', 'Kennwort'], ['Bank', 'a,b']])
+		expect(parseCsv('\uFEFFSEP=\t\na\tb\n')).toEqual([['a', 'b']])
+		// An explicit separator wins; the line is no row either way.
+		expect(parseCsv('sep=;\na,b\n', ',')).toEqual([['a', 'b']])
 	})
 })
 
@@ -71,6 +86,15 @@ describe('CSV round trip', () => {
 		const forum = draftFromEntry(entryByTitle(db, 'Forum'))
 		expect(forum.username).toBe('me@example.org')
 		expect(forum.customFields).toContainEqual({ key: 'username', value: 'me', protected: false })
+	})
+
+	it('keeps a second, different password protected', () => {
+		const db = newDatabase()
+		importCsv(db, db.getDefaultGroup(), 'x', 'name,password,pass\nSite,first,second\n')
+		const site = entryByTitle(db, 'Site')
+		expect(draftFromEntry(site).password).toBe('first')
+		expect(draftFromEntry(site).customFields).toContainEqual({ key: 'pass', value: 'second', protected: true })
+		expect(site.fields.get('pass')).toBeInstanceOf(ProtectedValue)
 	})
 
 	it('rejects files without title or password column', () => {

@@ -187,7 +187,7 @@ async function run(): Promise<boolean> {
 			}
 			return json ? importJson(db, target, name, json) : importCsv(db, target, name, text)
 		})
-		vault.select(props.database.id, { group: result.group.uuid.id, entry: null })
+		void vault.selectAsking(props.database.id, { group: result.group.uuid.id, entry: null })
 		showSuccess(result.merged
 			? t('keenext', 'Merged {name} into this database', { name: source.value.name })
 			: n('keenext', 'Imported {count} entry', 'Imported {count} entries', result.entries, { count: result.entries }))

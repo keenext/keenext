@@ -17,8 +17,17 @@ export interface ImportResult {
 
 // ---------------------------------------------------------------- CSV
 
-/** UTF-8, or Windows-1252 for bytes that are no valid UTF-8 (what Excel saves as "CSV" in Western Europe). */
+/**
+ * UTF-8, or Windows-1252 for bytes that are no valid UTF-8 (what Excel saves as "CSV" in
+ * Western Europe). UTF-16 is recognised by its byte order mark (Excel's "Unicode Text").
+ */
 export function decodeText(data: Uint8Array): string {
+	if (data[0] === 0xFF && data[1] === 0xFE) {
+		return new TextDecoder('utf-16le').decode(data)
+	}
+	if (data[0] === 0xFE && data[1] === 0xFF) {
+		return new TextDecoder('utf-16be').decode(data)
+	}
 	try {
 		return new TextDecoder('utf-8', { fatal: true }).decode(data)
 	} catch {
@@ -44,8 +53,20 @@ export function detectDelimiter(text: string): string {
 	return [...counts].reduce((best, current) => current[1] > best[1] ? current : best)[0]
 }
 
-/** RFC 4180: quoted fields, doubled quotes, line breaks inside quotes, CRLF or LF. */
-export function parseCsv(text: string, delimiter = detectDelimiter(text)): string[][] {
+/** Excel's first line naming the separator, "sep=;"; it is no row of the table. */
+const SEPARATOR_HINT = /^\uFEFF?sep=([^\r\n])(?:\r\n|\r|\n|$)/i
+
+/**
+ * RFC 4180: quoted fields, doubled quotes, line breaks inside quotes, CRLF or LF.
+ * Without `delimiter`, a "sep=" line decides, otherwise the header line.
+ */
+export function parseCsv(text: string, delimiter?: string): string[][] {
+	const hint = SEPARATOR_HINT.exec(text)
+	if (hint) {
+		text = text.slice(hint[0].length)
+		delimiter ??= hint[1]!
+	}
+	delimiter ??= detectDelimiter(text)
 	const rows: string[][] = []
 	let row: string[] = []
 	let field = ''
@@ -310,7 +331,8 @@ export function importCsv(db: Kdbx, target: KdbxGroup, name: string, text: strin
 					if (draft[kind] === '') {
 						draft[kind] = value
 					} else if (value !== '' && value !== draft[kind] && header[column]) {
-						customFields.push({ key: header[column]!.trim(), value, protected: false })
+						// A second password is still a password: it must not end up readable in the file's XML.
+						customFields.push({ key: header[column]!.trim(), value, protected: kind === 'password' })
 					}
 			}
 		})

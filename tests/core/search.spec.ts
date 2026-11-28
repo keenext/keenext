@@ -91,6 +91,12 @@ describe('searchEntries', () => {
 		expect(await titles('has:tag')).toContain('GitHub')
 		expect(await titles('has:passkey')).toEqual([])
 		expect(await titles('has:unknown')).toEqual([])
+		// Members every object inherits are no flags and no fields.
+		for (const query of ['is:constructor', 'is:__proto__', 'has:constructor', 'has:__proto__', 'is:toString']) {
+			expect(await titles(query)).toEqual([])
+		}
+		expect(parseQuery('constructor:git')).toMatchObject([{ field: 'default', value: 'constructor:git' }])
+		expect(await titles('constructor:git')).toEqual([])
 		const db = newDatabase()
 		const weak = db.createEntry(db.getDefaultGroup())
 		weak.fields.set('Password', ProtectedValue.fromString('1234'))

@@ -61,7 +61,9 @@ export function parseQuery(query: string): SearchTerm[] {
 	for (const match of query.matchAll(tokenPattern)) {
 		const [, negation, exact, regex, prefix, quoted, bare] = match
 		const attribute = prefix?.startsWith('_') ? prefix.slice(1).replace(/^"(.*)"$/, '$1') : undefined
-		const field = attribute !== undefined ? 'custom' : prefix ? fieldAliases[prefix.toLowerCase()] : 'default'
+		// Own keys only: "constructor:" and the like are no fields.
+		const alias = prefix?.toLowerCase()
+		const field = attribute !== undefined ? 'custom' : alias ? (Object.hasOwn(fieldAliases, alias) ? fieldAliases[alias] : undefined) : 'default'
 		// Unknown prefix: treat "foo:bar" as a plain term, like KeePassXC.
 		const value = field ? (quoted ?? bare ?? '') : `${prefix}:${quoted ?? bare ?? ''}`
 		if (value === '') {
@@ -179,7 +181,9 @@ function flag(term: SearchTerm, now: Date): (entry: KdbxEntry) => boolean {
 				passkey: (entry) => [...entry.fields.keys()].some(isPasskeyField),
 			}
 	const name = term.value.toLowerCase()
-	return tests[name] ?? tests[name.replace(/s$/, '')] ?? (() => false)
+	// Own keys only: "is:constructor" or "is:__proto__" would otherwise find Object's members.
+	const known = [name, name.replace(/s$/, '')].find((candidate) => Object.hasOwn(tests, candidate))
+	return known !== undefined ? tests[known]! : () => false
 }
 
 export function matcher(terms: SearchTerm[], now = new Date()): (entry: KdbxEntry) => boolean {

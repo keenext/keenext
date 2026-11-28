@@ -133,9 +133,10 @@ const state = computed(() => {
 // Local state: KeePass stores "expanded" in the file, but toggling it is not an edit worth saving on its own.
 const expanded = ref(props.group.expanded ?? true)
 
-function select(): void {
-	vault.select(props.database.id, { group: props.group.uuid.id, entry: null })
-	navigation.close()
+async function select(): Promise<void> {
+	if (await vault.selectAsking(props.database.id, { group: props.group.uuid.id, entry: null })) {
+		navigation.close()
+	}
 }
 
 function toggle(open: boolean): void {
@@ -152,7 +153,7 @@ function submitDialog(values: GroupDraft): void {
 			return group
 		})
 		toggle(true)
-		vault.select(props.database.id, { group: created.uuid.id, entry: null })
+		void vault.selectAsking(props.database.id, { group: created.uuid.id, entry: null })
 	} else {
 		vault.change(props.database.id, (db) => {
 			const group = findGroup(db, id)

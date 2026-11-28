@@ -180,7 +180,13 @@ const benchmarking = ref(false)
 async function benchmark(): Promise<void> {
 	benchmarking.value = true
 	try {
-		argon().iterations = await argon2IterationsFor(createWorkerArgon2(), argon(), 1000)
+		// The fields stay editable while measuring; iterations only fit the function, memory and parallelism they were measured with.
+		const measured = { ...argon() }
+		const iterations = await argon2IterationsFor(createWorkerArgon2(), measured, 1000)
+		const current = form.value?.kdf
+		if (current?.type === measured.type && current.memory === measured.memory && current.parallelism === measured.parallelism) {
+			current.iterations = iterations
+		}
 	} catch (cause) {
 		showError(t('keenext', 'The measurement failed: {error}', { error: cause instanceof Error ? cause.message : String(cause) }))
 	} finally {
