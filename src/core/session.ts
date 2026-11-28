@@ -130,7 +130,12 @@ export class DatabaseSession {
 				this.storedCredentials = credentials
 				this.storedEncryption = encryption
 				this.savedRevision = revision
-				this.db.removeLocalEditState()
+				// Edits made while this save was under way are not in the file yet. Their merge state
+				// (history states deleted, limits changed) has to last until the save that writes them,
+				// or a merge in between brings back what was deleted.
+				if (this.revision === revision) {
+					this.db.removeLocalEditState()
+				}
 				return { pulled, pushed: true }
 			} catch (error) {
 				if (!(error instanceof ConflictError)) {
