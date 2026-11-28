@@ -3,7 +3,7 @@ import type { Raw } from 'vue'
 import type { CredentialsInput, OpenOptions } from '@/core/database'
 import type { RecentFile } from '@/services/api'
 
-import { showError, showInfo, showSuccess } from '@nextcloud/dialogs'
+import { showConfirmation, showError, showInfo, showSuccess } from '@nextcloud/dialogs'
 import { defineStore } from 'pinia'
 import { computed, markRaw, ref } from 'vue'
 import { useSettingsStore } from './settings.ts'
@@ -75,6 +75,29 @@ export const useVaultStore = defineStore('vault', () => {
 
 	const active = computed(() => databases.value.find((database) => database.id === activeId.value) ?? null)
 	const anyDirty = computed(() => databases.value.some((database) => database.dirty))
+	/** The entry editor holds changes that are not applied yet (set by EntryEditor). */
+	const editorDirty = ref(false)
+
+	/**
+	 * Asks before an action closes the editor with unapplied changes. Automatic
+	 * locking does not ask: it would stay unlocked for as long as nobody answers.
+	 */
+	async function confirmDiscardEdits(): Promise<boolean> {
+		if (!editorDirty.value) {
+			return true
+		}
+		const confirmed = await showConfirmation({
+			name: t('keenext', 'Discard changes?'),
+			text: t('keenext', 'The entry you are editing has changes that are not saved yet.'),
+			labelConfirm: t('keenext', 'Discard changes'),
+			labelReject: t('keenext', 'Keep editing'),
+			severity: 'warning',
+		})
+		if (confirmed) {
+			editorDirty.value = false
+		}
+		return confirmed
+	}
 
 	function find(id: string): OpenDatabase {
 		const database = databases.value.find((candidate) => candidate.id === id)
@@ -323,6 +346,8 @@ export const useVaultStore = defineStore('vault', () => {
 		activeId,
 		active,
 		anyDirty,
+		editorDirty,
+		confirmDiscardEdits,
 		recent,
 		loadRecent,
 		openFile,

@@ -75,7 +75,7 @@ import PasswordInput from './PasswordInput.vue'
 import { findGroup } from '@/composables/useDatabase'
 import { CostlyKdfError, createCredentials, kdfLimitsAllowing, openDatabase } from '@/core/database'
 import { isInRecycleBin, recycleBin } from '@/core/entries'
-import { importCsv, importDatabase, importJson, loadXmlDatabase, readJsonExport } from '@/core/transfer'
+import { decodeText, importCsv, importDatabase, importJson, loadXmlDatabase, readJsonExport } from '@/core/transfer'
 import { n, t } from '@/l10n'
 import { pickImportFile } from '@/services/filePicker'
 import { resolveKeyFile } from '@/services/keyFile'
@@ -169,7 +169,7 @@ async function run(): Promise<boolean> {
 	const { signal } = controller
 	try {
 		const data = source.value.data ?? await downloadFileById(source.value.fileId!)
-		const text = format.value === 'kdbx' ? '' : new TextDecoder().decode(data)
+		const text = format.value === 'kdbx' ? '' : format.value === 'csv' ? decodeText(data) : new TextDecoder().decode(data)
 		// Async parts first: vault.change runs the mutation synchronously.
 		const other = format.value === 'kdbx'
 			? await openDatabase(

@@ -10,9 +10,9 @@
 			:showDetails="vault.active.selectedEntry !== null || creatingEntry"
 			layout="vertical-split"
 			:pageHeading="vault.active.name"
-			@update:showDetails="(show: unknown) => onShowDetails(Boolean(show))">
+			@update:showDetails="(show: unknown) => void onShowDetails(Boolean(show))">
 			<template #list>
-				<EntryList :database="vault.active" @createEntry="creatingEntry = true" />
+				<EntryList :database="vault.active" @createEntry="startCreating" />
 			</template>
 			<EntryDetails
 				v-if="vault.active.selectedEntry !== null || creatingEntry"
@@ -75,10 +75,14 @@ const creatingEntry = ref(false)
 
 useLifecycle()
 useKeyboardShortcuts({
-	newEntry: () => {
-		creatingEntry.value = true
-	},
+	newEntry: () => void startCreating(),
 })
+
+async function startCreating(): Promise<void> {
+	if (await vault.confirmDiscardEdits()) {
+		creatingEntry.value = true
+	}
+}
 
 async function open(fileId: number): Promise<void> {
 	try {
@@ -90,13 +94,13 @@ async function open(fileId: number): Promise<void> {
 
 async function openFromPicker(): Promise<void> {
 	const file = await pickDatabase()
-	if (file) {
+	if (file && await vault.confirmDiscardEdits()) {
 		await open(file.fileId)
 	}
 }
 
-function onShowDetails(show: boolean): void {
-	if (!show && vault.active) {
+async function onShowDetails(show: boolean): Promise<void> {
+	if (!show && vault.active && await vault.confirmDiscardEdits()) {
 		vault.active.selectedEntry = null
 		creatingEntry.value = false
 	}

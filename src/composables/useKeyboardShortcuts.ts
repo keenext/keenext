@@ -19,7 +19,11 @@ export function useKeyboardShortcuts(actions: { newEntry: () => void }): void {
 				break
 			case 'l':
 				event.preventDefault()
-				void vault.lockAll()
+				void vault.confirmDiscardEdits().then(async (confirmed) => {
+					if (confirmed) {
+						await vault.lockAll()
+					}
+				})
 				break
 			case 'n':
 				if (active?.session && active.writable) {

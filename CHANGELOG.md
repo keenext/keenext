@@ -3,6 +3,18 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), the versions [Semantic Versioning](https://semver.org/). How a release is made: [docs/releasing.md](docs/releasing.md).
 
 ## [Unreleased]
+### Added
+- The entry list can be sorted by title, username, URL, creation or modification date or expiry, in either direction, and its second line shows the username, the URL, the modification date or nothing. The choice is kept per browser.
+- Search: `_Name:` looks in the additional attribute "Name" (`_"Two words":` for names with spaces), a leading `*` makes a term a regular expression, and `is:weak`, `is:expiring`, `has:totp`, `has:attachment`, `has:tag`, `has:url`, `has:notes` and `has:passkey` filter the list.
+- Entries get a text and a background color in the editor, shown as a marker in the list.
+- Entries can be excluded from the health check in the editor. KeePassXC's older way of marking them is recognised too.
+- Pictures of your own can be used as icons for entries and groups; they are scaled down and stored as PNG.
+- Images and text files attached to an entry can be previewed.
+- Passkeys saved by KeePassXC are shown with their website and username and kept unchanged.
+- The database settings can measure how many Argon2 iterations take one second in this browser.
+- Leaving the entry editor with changes that are not saved yet asks first: choosing another entry, a new entry, another database, locking or closing it by hand. Closing the tab warns. Locking automatically after inactivity still discards them.
+- CSV import reads files separated by semicolons or tabs and files in Windows encoding, as a German Excel saves them, and knows the columns of 1Password, LastPass, Proton Pass and German lists (Titel, Benutzername, Kennwort, Webseite, Bemerkung, Ordner …). When two columns hold the same field, such as Proton Pass' email and username, an empty one no longer overwrites the other; a second, different value is kept as an attribute.
+
 ### Changed
 - Before writing, saving opens the new version once more. If it does not open, the file on the server stays as it was and an error is shown, instead of a database that can no longer be unlocked replacing it (#39). Saving takes a moment longer, about as long as unlocking.
 

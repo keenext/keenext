@@ -42,17 +42,38 @@
 				</button>
 			</div>
 		</template>
+
+		<div v-if="database.writable" class="icon-picker__upload">
+			<NcButton @click="fileInput?.click()">
+				<template #icon>
+					<NcIconSvgWrapper :path="mdiUpload" />
+				</template>
+				{{ t('keenext', 'Use an image of your own') }}
+			</NcButton>
+			<input
+				ref="fileInput"
+				type="file"
+				accept="image/*"
+				hidden
+				@change="upload">
+		</div>
 	</NcDialog>
 </template>
 
 <script setup lang="ts">
 import type { OpenDatabase } from '@/stores/vault'
 
-import { computed } from 'vue'
+import { mdiUpload } from '@mdi/js'
+import { showError } from '@nextcloud/dialogs'
+import { computed, ref } from 'vue'
+import NcButton from '@nextcloud/vue/components/NcButton'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
+import { iconFor, storeIcon } from '@/core/favicons'
 import { t } from '@/l10n'
+import { iconPng } from '@/services/favicon'
 import { customIconUrl, STANDARD_ICON_COUNT, standardIconPath } from '@/services/icons'
+import { useVaultStore } from '@/stores/vault'
 
 const props = defineProps<{
 	database: OpenDatabase
@@ -72,6 +93,39 @@ const customIcons = computed(() => {
 	}
 	return [...db.meta.customIcons].map(([id, custom]) => ({ id, name: custom.name ?? '', url: customIconUrl(db, id) }))
 })
+
+const vault = useVaultStore()
+const fileInput = ref<HTMLInputElement>()
+
+/** Decoding a huge file would block the tab; icons are shown at 128 px at most. */
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+
+/**
+ * Stores the image in the database right away, as KeePassXC does; an identical icon is
+ * reused. It stays in the database even if the entry or group is not saved.
+ */
+async function upload(event: Event): Promise<void> {
+	const input = event.target as HTMLInputElement
+	const file = input.files?.[0]
+	input.value = ''
+	if (!file) {
+		return
+	}
+	try {
+		if (file.size > MAX_UPLOAD_BYTES) {
+			throw new Error('too large')
+		}
+		const data = await iconPng(file)
+		const id = vault.change(props.database.id, (db) => {
+			const icon = iconFor(db, data)
+			storeIcon(db, icon)
+			return icon.id
+		})
+		emit('select', { icon: props.icon, customIcon: id })
+	} catch {
+		showError(t('keenext', 'The image could not be used as icon'))
+	}
+}
 
 const buttons = computed(() => [
 	{ label: t('keenext', 'Close'), callback: () => emit('close') },
@@ -120,5 +174,9 @@ const buttons = computed(() => [
 .icon-picker__image {
 	width: 24px;
 	height: 24px;
+}
+
+.icon-picker__upload {
+	margin-top: 16px;
 }
 </style>

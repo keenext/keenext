@@ -11,10 +11,13 @@ import {
 	deleteEntry,
 	draftFromEntry,
 	emptyDraft,
+	excludedFromReports,
 	fieldNameProblems,
 	getField,
 	isExpired,
 	isInRecycleBin,
+	isPasskeyField,
+	readPasskey,
 	recycleBin,
 	restoreHistory,
 } from '@/core/entries'
@@ -44,6 +47,42 @@ describe('reading a KeePassXC database', () => {
 		expect(isExpired(entryByTitle(db, 'Alte Karte (abgelaufen)'))).toBe(true)
 		expect(isExpired(entryByTitle(db, 'Hausbank'), new Date('2025-01-01'))).toBe(false)
 		expect(draftFromEntry(entryByTitle(db, 'Hausbank')).expires?.toISOString()).toBe('2030-12-31T23:00:00.000Z')
+	})
+})
+
+describe('colors, health check and passkeys', () => {
+	it('writes colors and the health check flag, and lists them as changes', () => {
+		const db = newDatabase()
+		const entry = db.createEntry(db.getDefaultGroup())
+		const before = draftFromEntry(entry)
+		expect(before).toMatchObject({ fgColor: null, bgColor: null, excludeFromReports: false })
+		const after = { ...before, fgColor: '#aa0000', bgColor: '#ffffcc', excludeFromReports: true }
+		expect(applyDraft(db, entry, after)).toBe(true)
+		expect([entry.fgColor, entry.bgColor, entry.qualityCheck]).toEqual(['#aa0000', '#ffffcc', false])
+		expect(changedFields(before, draftFromEntry(entry)).standard).toEqual(['color', 'healthCheck'])
+		applyDraft(db, entry, { ...after, fgColor: null, excludeFromReports: false })
+		expect([entry.fgColor, entry.qualityCheck]).toEqual([undefined, undefined])
+	})
+
+	it('reads KeePassXC\'s older KnownBad flag and drops it when the entry is included again', () => {
+		const db = newDatabase()
+		const entry = db.createEntry(db.getDefaultGroup())
+		entry.customData = new Map([['KnownBad', { value: 'true' }], ['Other', { value: 'x' }]])
+		expect(excludedFromReports(entry)).toBe(true)
+		applyDraft(db, entry, { ...draftFromEntry(entry), excludeFromReports: false })
+		expect(excludedFromReports(entry)).toBe(false)
+		expect([...entry.customData.keys()]).toEqual(['Other'])
+	})
+
+	it('recognises KeePassXC passkeys', () => {
+		const db = newDatabase()
+		const entry = db.createEntry(db.getDefaultGroup())
+		expect(readPasskey(entry)).toBeUndefined()
+		entry.fields.set('KPEX_PASSKEY_RELYING_PARTY', 'example.org')
+		entry.fields.set('KPEX_PASSKEY_USERNAME', 'jan')
+		entry.fields.set('KPEX_PASSKEY_PRIVATE_KEY_PEM', ProtectedValue.fromString('-----BEGIN PRIVATE KEY-----'))
+		expect(readPasskey(entry)).toEqual({ relyingParty: 'example.org', username: 'jan' })
+		expect(isPasskeyField('KPEX_PASSKEY_USER_HANDLE')).toBe(true)
 	})
 })
 

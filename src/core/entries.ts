@@ -78,6 +78,35 @@ export interface EntryDraft {
 	icon: number
 	/** UUID of a custom icon in the database; takes precedence over `icon` */
 	customIcon: string | null
+	/** "#rrggbb" as KeePass stores it; null = default */
+	fgColor: string | null
+	bgColor: string | null
+	/** KeePass "QualityCheck" off: left out of the health check and Have I Been Pwned */
+	excludeFromReports: boolean
+}
+
+/** KeePassXC before 2.7 marked entries with this custom data key instead of QualityCheck. */
+const KNOWN_BAD = 'KnownBad'
+
+export function excludedFromReports(entry: KdbxEntry): boolean {
+	return entry.qualityCheck === false || entry.customData?.get(KNOWN_BAD)?.value?.toLowerCase() === 'true'
+}
+
+const PASSKEY_PREFIX = 'KPEX_PASSKEY_'
+
+/** KeePassXC stores a passkey as attributes; they are kept as they are and not edited here. */
+export function isPasskeyField(key: string): boolean {
+	return key.startsWith(PASSKEY_PREFIX)
+}
+
+export function readPasskey(entry: KdbxEntry): { relyingParty: string, username: string } | undefined {
+	if (![...entry.fields.keys()].some(isPasskeyField)) {
+		return undefined
+	}
+	return {
+		relyingParty: getField(entry, `${PASSKEY_PREFIX}RELYING_PARTY`),
+		username: getField(entry, `${PASSKEY_PREFIX}USERNAME`),
+	}
 }
 
 export function draftFromEntry(entry: KdbxEntry): EntryDraft {
@@ -99,10 +128,13 @@ export function draftFromEntry(entry: KdbxEntry): EntryDraft {
 		attachments: [...entry.binaries].map(([name, value]) => ({ name, value })),
 		icon: entry.icon ?? 0,
 		customIcon: entry.customIcon?.id ?? null,
+		fgColor: entry.fgColor || null,
+		bgColor: entry.bgColor || null,
+		excludeFromReports: excludedFromReports(entry),
 	}
 }
 
-export type StandardChange = 'title' | 'username' | 'password' | 'url' | 'notes' | 'tags' | 'expires' | 'attachments' | 'icon'
+export type StandardChange = 'title' | 'username' | 'password' | 'url' | 'notes' | 'tags' | 'expires' | 'attachments' | 'icon' | 'color' | 'healthCheck'
 
 export interface EntryChanges {
 	standard: StandardChange[]
@@ -131,6 +163,12 @@ export function changedFields(before: EntryDraft, after: EntryDraft): EntryChang
 	if (before.icon !== after.icon || before.customIcon !== after.customIcon) {
 		standard.push('icon')
 	}
+	if (before.fgColor !== after.fgColor || before.bgColor !== after.bgColor) {
+		standard.push('color')
+	}
+	if (before.excludeFromReports !== after.excludeFromReports) {
+		standard.push('healthCheck')
+	}
 
 	const names = [...new Set([...before.customFields, ...after.customFields].map((field) => field.key))]
 	const custom = names.filter((name) => {
@@ -154,11 +192,17 @@ export function emptyDraft(defaultUser = ''): EntryDraft {
 		attachments: [],
 		icon: 0,
 		customIcon: null,
+		fgColor: null,
+		bgColor: null,
+		excludeFromReports: false,
 	}
 }
 
 export function draftsEqual(a: EntryDraft, b: EntryDraft): boolean {
 	return a.title === b.title
+		&& a.fgColor === b.fgColor
+		&& a.bgColor === b.bgColor
+		&& a.excludeFromReports === b.excludeFromReports
 		&& a.username === b.username
 		&& a.password === b.password
 		&& a.url === b.url
@@ -235,6 +279,17 @@ function writeDraft(db: Kdbx, entry: KdbxEntry, draft: EntryDraft): void {
 	entry.binaries = new Map(draft.attachments.map((attachment) => [attachment.name, attachment.value]))
 	entry.icon = draft.icon
 	entry.customIcon = draft.customIcon ? new KdbxUuid(draft.customIcon) : undefined
+	entry.fgColor = draft.fgColor ?? undefined
+	entry.bgColor = draft.bgColor ?? undefined
+
+	// QualityCheck is written only when off (it raises the file to KDBX 4.1); the legacy
+	// KnownBad flag goes once the entry is included again, so both clients agree.
+	if (draft.excludeFromReports !== excludedFromReports(entry)) {
+		entry.qualityCheck = draft.excludeFromReports ? false : undefined
+		if (!draft.excludeFromReports) {
+			entry.customData?.delete(KNOWN_BAD)
+		}
+	}
 
 	entry.tags = [...new Set(draft.tags.map((tag) => tag.trim()).filter(Boolean))]
 	entry.times.expires = draft.expires !== null

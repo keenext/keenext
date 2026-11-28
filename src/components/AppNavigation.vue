@@ -50,14 +50,14 @@
 							</template>
 							{{ t('keenext', 'Export…') }}
 						</NcActionButton>
-						<NcActionButton closeAfterClick @click="vault.lock(database.id)">
+						<NcActionButton closeAfterClick @click="leaving(database.id, () => vault.lock(database.id))">
 							<template #icon>
 								<NcIconSvgWrapper :path="mdiLock" />
 							</template>
 							{{ t('keenext', 'Lock') }}
 						</NcActionButton>
 					</template>
-					<NcActionButton closeAfterClick @click="vault.close(database.id)">
+					<NcActionButton closeAfterClick @click="leaving(database.id, () => vault.close(database.id))">
 						<template #icon>
 							<NcIconSvgWrapper :path="mdiClose" />
 						</template>
@@ -146,11 +146,21 @@ const report = ref<string | null>(null)
 const importInto = ref<string | null>(null)
 const exportFrom = ref<string | null>(null)
 
-function selectDatabase(id: string): void {
+async function selectDatabase(id: string): Promise<void> {
+	if (id !== vault.activeId && !(await vault.confirmDiscardEdits())) {
+		return
+	}
 	vault.activeId = id
 	// A locked database has no groups to pick from, so the unlock form should be visible.
 	if (!vault.databases.find((database) => database.id === id)?.session) {
 		navigation.close()
+	}
+}
+
+/** Locking or closing the active database closes its editor too. */
+async function leaving(id: string, action: () => Promise<unknown>): Promise<void> {
+	if (id !== vault.activeId || await vault.confirmDiscardEdits()) {
+		await action()
 	}
 }
 

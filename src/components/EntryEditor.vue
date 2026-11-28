@@ -102,6 +102,26 @@
 			</div>
 		</FormSection>
 
+		<FormSection framed :label="t('keenext', 'Display and checks')">
+			<div class="entry-editor__colors">
+				<label v-for="color in colorFields" :key="color.key" class="entry-editor__color">
+					<input
+						type="color"
+						:value="draft[color.key] ?? color.fallback"
+						@input="draft[color.key] = ($event.target as HTMLInputElement).value">
+					<span>{{ color.label }}</span>
+					<IconButton
+						v-if="draft[color.key] !== null"
+						:label="t('keenext', 'Reset {color}', { color: color.label })"
+						:path="mdiClose"
+						@click="draft[color.key] = null" />
+				</label>
+			</div>
+			<NcCheckboxRadioSwitch v-model="draft.excludeFromReports" type="switch">
+				{{ t('keenext', 'Exclude from the health check') }}
+			</NcCheckboxRadioSwitch>
+		</FormSection>
+
 		<FormSection framed>
 			<template #label>
 				<span class="entry-editor__head">
@@ -114,10 +134,10 @@
 					</NcButton>
 				</span>
 			</template>
-			<!-- The otp field is edited through the TOTP dialog. -->
+			<!-- The otp field is edited through the TOTP dialog; passkey data is kept untouched. -->
 			<div
 				v-for="(field, index) in draft.customFields"
-				v-show="field.key !== OTP_FIELD"
+				v-show="field.key !== OTP_FIELD && !isPasskeyField(field.key)"
 				:key="index"
 				class="entry-editor__custom-field">
 				<TextInput
@@ -201,9 +221,9 @@ import type { KdbxEntry } from 'kdbxweb'
 import type { EntryDraft } from '@/core/entries'
 import type { OpenDatabase } from '@/stores/vault'
 
-import { mdiCheck, mdiDelete, mdiDiceMultiple, mdiImageSearchOutline, mdiLock, mdiLockOpenVariant, mdiPaperclip, mdiPlus, mdiTimerOutline } from '@mdi/js'
+import { mdiCheck, mdiClose, mdiDelete, mdiDiceMultiple, mdiImageSearchOutline, mdiLock, mdiLockOpenVariant, mdiPaperclip, mdiPlus, mdiTimerOutline } from '@mdi/js'
 import { showError, showSuccess } from '@nextcloud/dialogs'
-import { computed, markRaw, onBeforeUnmount, reactive, ref, toRaw } from 'vue'
+import { computed, markRaw, onBeforeUnmount, reactive, ref, toRaw, watchEffect } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
 import NcDateTimePickerNative from '@nextcloud/vue/components/NcDateTimePickerNative'
@@ -222,7 +242,7 @@ import TextAreaInput from './TextAreaInput.vue'
 import TextInput from './TextInput.vue'
 import TotpSetupDialog from './TotpSetupDialog.vue'
 import { findEntry, findGroup, useDatabaseView } from '@/composables/useDatabase'
-import { applyDraft, attachFile, createEntry, draftFromEntry, emptyDraft, fieldNameProblems } from '@/core/entries'
+import { applyDraft, attachFile, createEntry, draftFromEntry, draftsEqual, emptyDraft, fieldNameProblems, isPasskeyField } from '@/core/entries'
 import { iconFor, storeIcon } from '@/core/favicons'
 import { OTP_FIELD } from '@/core/totp'
 import { t } from '@/l10n'
@@ -255,6 +275,7 @@ function initialDraft(): EntryDraft {
 }
 
 const draft = reactive(initialDraft())
+const initial = initialDraft()
 
 const knownTags = computed(() => {
 	const tags = new Set<string>()
@@ -282,11 +303,23 @@ const fieldErrors = computed(() => {
 
 const valid = computed(() => Object.keys(fieldErrors.value).length === 0)
 
+const colorFields = [
+	{ key: 'fgColor', label: t('keenext', 'Text color'), fallback: '#000000' },
+	{ key: 'bgColor', label: t('keenext', 'Background color'), fallback: '#ffffff' },
+] as const
+
 /** A downloaded icon is only written to the database when the entry is saved. */
 const pendingIcon = ref<{ id: string, data: Uint8Array, url: string } | null>(null)
 const faviconBusy = ref(false)
 
+// Leaving the editor asks first while this is set (vault.confirmDiscardEdits).
+watchEffect(() => {
+	// The reactive draft itself, so every edit re-runs this; plainDraft() reads raw values.
+	vault.editorDirty = pendingIcon.value !== null || !draftsEqual(initial, draft)
+})
+
 onBeforeUnmount(() => {
+	vault.editorDirty = false
 	if (pendingIcon.value) {
 		URL.revokeObjectURL(pendingIcon.value.url)
 	}
@@ -467,6 +500,28 @@ function save(): void {
 .entry-editor__pending-icon {
 	width: 24px;
 	height: 24px;
+}
+
+.entry-editor__colors {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 24px;
+}
+
+.entry-editor__color {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: var(--default-clickable-area);
+}
+
+.entry-editor__color input {
+	width: 40px;
+	height: 32px;
+	padding: 0;
+	border: 1px solid var(--color-border-maxcontrast);
+	border-radius: var(--border-radius);
+	cursor: pointer;
 }
 
 .entry-editor__custom-field {

@@ -1,6 +1,6 @@
 import type { Kdbx, KdbxEntry } from 'kdbxweb'
 
-import { getField, isInRecycleBin, StandardField } from './entries.ts'
+import { excludedFromReports, getField, isInRecycleBin, StandardField } from './entries.ts'
 import { hasPlaceholders } from './placeholders.ts'
 
 /** Returns the body of `GET /range/{prefix}` of the Pwned Passwords API ("SUFFIX:COUNT" lines). */
@@ -38,7 +38,7 @@ export async function checkPwned(db: Kdbx, fetchRange: RangeFetcher, concurrency
 	const byHash = new Map<string, KdbxEntry[]>()
 	for (const entry of db.getDefaultGroup().allEntries()) {
 		const password = getField(entry, StandardField.Password)
-		if (isInRecycleBin(db, entry) || password === '' || hasPlaceholders(password) || entry.qualityCheck === false) {
+		if (isInRecycleBin(db, entry) || password === '' || hasPlaceholders(password) || excludedFromReports(entry)) {
 			continue
 		}
 		const hash = await sha1Hex(password)

@@ -3,7 +3,7 @@ import { entryByTitle, newDatabase, openRichFixture } from '../helpers/databases
 import { createCredentials, openDatabase, saveDatabase } from '@/core/database'
 import { attachmentData, draftFromEntry, getField } from '@/core/entries'
 import { readTotp } from '@/core/totp'
-import { exportCsv, exportXml, importBitwarden, importCsv, importDatabase, importJson, loadXmlDatabase, parseCsv, readJsonExport, totpToOtpUri } from '@/core/transfer'
+import { decodeText, detectDelimiter, exportCsv, exportXml, importBitwarden, importCsv, importDatabase, importJson, loadXmlDatabase, parseCsv, readJsonExport, totpToOtpUri } from '@/core/transfer'
 
 function titles(group: { allEntries(): IterableIterator<{ fields: Map<string, unknown> }> }): string[] {
 	return [...group.allEntries()].map((entry) => getField(entry as never, 'Title')).sort()
@@ -16,6 +16,20 @@ describe('parseCsv', () => {
 
 	it('skips empty lines', () => {
 		expect(parseCsv('a,b\n\n1,2\n\n')).toEqual([['a', 'b'], ['1', '2']])
+	})
+
+	it('detects semicolons and tabs in the header, outside quotes', () => {
+		expect(detectDelimiter('Titel;Benutzername;"a,b,c"\n1,2,3')).toBe(';')
+		expect(detectDelimiter('title\tpassword\n')).toBe('\t')
+		expect(detectDelimiter('title')).toBe(',')
+		expect(parseCsv('a;"b;c"\r\n1;2\n')).toEqual([['a', 'b;c'], ['1', '2']])
+	})
+})
+
+describe('decodeText', () => {
+	it('reads UTF-8, and Windows-1252 when the bytes are no valid UTF-8', () => {
+		expect(decodeText(new TextEncoder().encode('Grüße'))).toBe('Grüße')
+		expect(decodeText(new Uint8Array([0x47, 0x72, 0xFC, 0xDF, 0x65, 0x80]))).toBe('Grüße€')
 	})
 })
 
@@ -41,6 +55,22 @@ describe('CSV round trip', () => {
 		const entry = entryByTitle(db, 'Shop')
 		expect(draftFromEntry(entry)).toMatchObject({ url: 'https://shop.example', username: 'me', password: 'pw', notes: 'hello' })
 		expect(getField(entry, 'PIN')).toBe('1234')
+	})
+
+	it('reads a German Excel list and Proton Pass\' two username columns', () => {
+		const db = newDatabase()
+		const text = decodeText(new Uint8Array([...new TextEncoder().encode('Titel;Benutzername;Kennwort;Webseite;Bemerkung;Ordner\nBank;jan;geheim;https://bank.example;Gr'), 0xFC, 0xDF, ...new TextEncoder().encode(';Finanzen\n')]))
+		importCsv(db, db.getDefaultGroup(), 'Excel', text)
+		const bank = entryByTitle(db, 'Bank')
+		expect(draftFromEntry(bank)).toMatchObject({ username: 'jan', password: 'geheim', url: 'https://bank.example', notes: 'Grüß' })
+		expect(bank.parentGroup?.name).toBe('Finanzen')
+
+		importCsv(db, db.getDefaultGroup(), 'Proton', 'type,name,url,email,username,password,note,totp,createTime,modifyTime,vault\nlogin,Mail,,me@example.org,,pw,,,1700000000,1700000100,Personal\nlogin,Forum,,me@example.org,me,pw2,,,,,Personal\n')
+		expect(draftFromEntry(entryByTitle(db, 'Mail')).username).toBe('me@example.org')
+		expect(entryByTitle(db, 'Mail').times.creationTime?.toISOString()).toBe('2023-11-14T22:13:20.000Z')
+		const forum = draftFromEntry(entryByTitle(db, 'Forum'))
+		expect(forum.username).toBe('me@example.org')
+		expect(forum.customFields).toContainEqual({ key: 'username', value: 'me', protected: false })
 	})
 
 	it('rejects files without title or password column', () => {
