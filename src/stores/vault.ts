@@ -226,6 +226,21 @@ export const useVaultStore = defineStore('vault', () => {
 		}
 	}
 
+	/**
+	 * `select` for navigation that may take the entry away from an open editor: asks
+	 * first if it has unapplied changes. False if the user keeps editing.
+	 */
+	async function selectAsking(id: string, selection: { group?: string | null, entry?: string | null }): Promise<boolean> {
+		const closesEditor = id === activeId.value
+			&& selection.entry !== undefined
+			&& selection.entry !== find(id).selectedEntry
+		if (closesEditor && !(await confirmDiscardEdits())) {
+			return false
+		}
+		select(id, selection)
+		return true
+	}
+
 	function search(id: string, query: string): void {
 		find(id).query = query
 	}
@@ -348,6 +363,7 @@ export const useVaultStore = defineStore('vault', () => {
 		lockAll,
 		close,
 		select,
+		selectAsking,
 		search,
 		change,
 		save,

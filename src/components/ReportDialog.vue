@@ -145,10 +145,11 @@ const sections = computed(() => {
 	]
 })
 
-function open(id: string): void {
+async function open(id: string): Promise<void> {
 	const entry = view.value ? findEntry(view.value.db, id) : undefined
-	vault.select(props.database.id, { group: entry?.parentGroup?.uuid.id ?? null, entry: id })
-	emit('close')
+	if (await vault.selectAsking(props.database.id, { group: entry?.parentGroup?.uuid.id ?? null, entry: id })) {
+		emit('close')
+	}
 }
 
 const buttons = computed(() => [

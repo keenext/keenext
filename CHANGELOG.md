@@ -12,8 +12,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), the
 - Images and text files attached to an entry can be previewed.
 - Passkeys saved by KeePassXC are shown with their website and username and kept unchanged.
 - The database settings can measure how many Argon2 iterations take one second in this browser.
-- Leaving the entry editor with changes that are not saved yet asks first: choosing another entry, a new entry, another database, locking or closing it by hand. Closing the tab warns. Locking automatically after inactivity still discards them.
-- CSV import reads files separated by semicolons or tabs and files in Windows encoding, as a German Excel saves them, and knows the columns of 1Password, LastPass, Proton Pass and German lists (Titel, Benutzername, Kennwort, Webseite, Bemerkung, Ordner …). When two columns hold the same field, such as Proton Pass' email and username, an empty one no longer overwrites the other; a second, different value is kept as an attribute.
+- Leaving the entry editor with changes that are not saved yet asks first: choosing another entry, a group, a new entry, another database, locking or closing it by hand. Closing the tab warns. Locking automatically after inactivity still discards them.
+- CSV import reads files separated by semicolons or tabs, files in Windows encoding or UTF-16 and Excel's `sep=` line, as a German Excel saves them, and knows the columns of 1Password, LastPass, Proton Pass and German lists (Titel, Benutzername, Kennwort, Webseite, Bemerkung, Ordner …). When two columns hold the same field, such as Proton Pass' email and username, an empty one no longer overwrites the other; a second, different value is kept as an attribute.
 
 ### Changed
 - Before writing, saving opens the new version once more. If it does not open, the file on the server stays as it was and an error is shown, instead of a database that can no longer be unlocked replacing it (#39). Saving takes a moment longer, about as long as unlocking.
