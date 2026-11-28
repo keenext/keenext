@@ -90,4 +90,15 @@ describe('placeholders', () => {
 		entry.fields.set('Notes', '{NOTES}')
 		expect(resolvedField(db, entry, 'Notes')).toBe('{NOTES}')
 	})
+
+	it('gives up on a field that names itself many times instead of freezing', async () => {
+		const db = await openRichFixture()
+		const entry = entryByTitle(db, 'Hausbank')
+		entry.fields.set('UserName', '{USERNAME}'.repeat(10))
+		const started = performance.now()
+		const resolved = resolvedField(db, entry, 'UserName')
+		expect(performance.now() - started).toBeLessThan(1000)
+		expect(resolved).toMatch(/^(\{USERNAME\})+$/)
+		expect(resolved.length).toBeLessThan(20_000)
+	})
 })

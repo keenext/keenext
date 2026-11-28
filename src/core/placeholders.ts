@@ -3,6 +3,13 @@ import type { Kdbx, KdbxEntry } from 'kdbxweb'
 import { getField, StandardField } from './entries.ts'
 
 const MAX_DEPTH = 10
+/**
+ * Placeholders resolved for one value, nested ones included. Depth alone does not bound the
+ * work: a field that names itself (or a partner) several times multiplies with every level,
+ * so `{USERNAME}` six times in a username already froze the tab. Anyone with write access to
+ * a shared database could plant such an entry.
+ */
+const MAX_REPLACEMENTS = 100
 
 const refFieldCodes: Record<string, string> = {
 	T: StandardField.Title,
@@ -55,12 +62,23 @@ export function hasPlaceholders(value: string): boolean {
 	return placeholderPattern.test(value)
 }
 
-/** Resolves {REF:…}, {S:…} and the standard field placeholders; unknown ones are left as they are. */
-export function resolvePlaceholders(db: Kdbx, entry: KdbxEntry, value: string, depth = 0): string {
+/**
+ * Resolves {REF:…}, {S:…} and the standard field placeholders; unknown ones are left as they are,
+ * and so are those beyond `MAX_DEPTH` levels or `MAX_REPLACEMENTS` in total.
+ */
+export function resolvePlaceholders(db: Kdbx, entry: KdbxEntry, value: string): string {
+	return resolve(db, entry, value, 0, { left: MAX_REPLACEMENTS })
+}
+
+function resolve(db: Kdbx, entry: KdbxEntry, value: string, depth: number, budget: { left: number }): string {
 	if (depth >= MAX_DEPTH || !value.includes('{')) {
 		return value
 	}
 	return value.replace(placeholderPattern, (match, _body: string, wanted?: string, searchIn?: string, text?: string, custom?: string) => {
+		if (budget.left <= 0) {
+			return match
+		}
+		budget.left--
 		let resolved: string | undefined
 		let source = entry
 		if (wanted && searchIn && text) {
@@ -74,7 +92,7 @@ export function resolvePlaceholders(db: Kdbx, entry: KdbxEntry, value: string, d
 		} else {
 			resolved = getField(entry, entryPlaceholders[match.slice(1, -1).toUpperCase()]!)
 		}
-		return resolved === undefined ? match : resolvePlaceholders(db, source, resolved, depth + 1)
+		return resolved === undefined ? match : resolve(db, source, resolved, depth + 1, budget)
 	})
 }
 
