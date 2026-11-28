@@ -56,6 +56,10 @@ describe('otpauth URIs', () => {
 		expect(parseOtpUri('not a uri')).toBeUndefined()
 	})
 
+	it('caps the code length a file can ask for', () => {
+		expect(parseOtpUri('otpauth://totp/x?secret=JBSWY3DPEHPK3PXP&digits=100000000')!.digits).toBe(10)
+	})
+
 	it('builds URIs that parse back', () => {
 		const config: TotpConfig = { secret: base32Decode('JBSWY3DPEHPK3PXP'), period: 30, digits: 6, algorithm: 'SHA-1', encoder: 'default' }
 		expect(parseOtpUri(buildOtpUri(config, 'GitHub:jan', 'GitHub'))).toEqual(config)

@@ -85,7 +85,7 @@ export function parseOtpUri(uri: string): TotpConfig | undefined {
 	return {
 		secret: base32Decode(secret),
 		period: positiveInt(url.searchParams.get('period'), 30),
-		digits: steam ? 5 : positiveInt(url.searchParams.get('digits'), 6),
+		digits: steam ? 5 : digitCount(url.searchParams.get('digits')),
 		algorithm: normalizeAlgorithm(url.searchParams.get('algorithm')),
 		encoder: steam ? 'steam' : 'default',
 	}
@@ -94,6 +94,14 @@ export function parseOtpUri(uri: string): TotpConfig | undefined {
 function positiveInt(value: string | null | undefined, fallback: number): number {
 	const parsed = Number.parseInt(value ?? '', 10)
 	return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
+}
+
+/** The truncated HMAC is a 31-bit number, so more than 10 digits only adds leading zeros. */
+const MAX_DIGITS = 10
+
+/** Code length as stored in the file, capped: a crafted entry could ask for a code of gigabytes. */
+function digitCount(value: string | null | undefined): number {
+	return Math.min(MAX_DIGITS, positiveInt(value, 6))
 }
 
 function readLegacyKeePassXC(entry: KdbxEntry): TotpConfig | undefined {
@@ -107,7 +115,7 @@ function readLegacyKeePassXC(entry: KdbxEntry): TotpConfig | undefined {
 	return {
 		secret: base32Decode(seed),
 		period: positiveInt(period, 30),
-		digits: steam ? 5 : positiveInt(digits, 6),
+		digits: steam ? 5 : digitCount(digits),
 		algorithm: 'SHA-1',
 		encoder: steam ? 'steam' : 'default',
 	}
@@ -134,7 +142,7 @@ function readKeePass(entry: KdbxEntry): TotpConfig | undefined {
 	return {
 		secret,
 		period: positiveInt(getField(entry, 'TimeOtp-Period'), 30),
-		digits: positiveInt(getField(entry, 'TimeOtp-Length'), 6),
+		digits: digitCount(getField(entry, 'TimeOtp-Length')),
 		algorithm: normalizeAlgorithm(getField(entry, 'TimeOtp-Algorithm')),
 		encoder: 'default',
 	}

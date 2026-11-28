@@ -9,6 +9,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), the
 ### Fixed
 - With automatic saving turned off, looking for changes made elsewhere (every 60 seconds by default and when returning to the tab) no longer saves your own changes along the way. Changes made elsewhere are still merged in; your changes are written when you save or lock.
 
+### Security
+- An entry whose field refers to itself several times (`{USERNAME}{USERNAME}…`) no longer freezes the tab when its group is shown. At most 100 placeholders are resolved per field; the rest stay as written. Anyone with write access to a shared database could plant such an entry.
+- A one-time password entry can ask for at most 10 digits, the longest code TOTP can produce. A crafted entry could ask for a code of any length.
+
 ## 0.2.0 – 2026-11-22
 ### Fixed
 - An entry or group that another device moved (and changed on the way) no longer ends up twice after merging, which also made every later merge fail. Databases that already hold an entry or group twice are repaired when they are opened: each keeps the place it was moved to last and the content changed last, the other version goes into the entry's history.
