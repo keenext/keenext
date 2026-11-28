@@ -9,6 +9,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), the
 ### Fixed
 - With automatic saving turned off, looking for changes made elsewhere (every 60 seconds by default and when returning to the tab) no longer saves your own changes along the way. Changes made elsewhere are still merged in; your changes are written when you save or lock.
 
+### Security
+- Downloading a favicon gives up after 20 seconds in total. A website that answered very slowly, a byte every few seconds, could keep the server busy with one lookup for hours; a signed-in user could use that to block the server's PHP workers.
+
 ## 0.2.0 – 2026-11-22
 ### Fixed
 - An entry or group that another device moved (and changed on the way) no longer ends up twice after merging, which also made every later merge fail. Databases that already hold an entry or group twice are repaired when they are opened: each keeps the place it was moved to last and the content changed last, the other version goes into the entry's history.

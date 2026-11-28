@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\KeeNext\Service;
 
+use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Http\Client\IClient;
 use OCP\Http\Client\IClientService;
 
@@ -16,9 +17,19 @@ final class FaviconService {
 	public const MAX_ICON_BYTES = 262144;
 	private const MAX_PAGE_BYTES = 524288;
 	private const MAX_CANDIDATES = 5;
+	/** Seconds until a server has to answer, and between two parts of its answer. */
+	private const REQUEST_TIMEOUT = 8;
+	/**
+	 * Seconds one lookup may take over the page and all icon candidates. The request timeout
+	 * alone bounds nothing: a server that keeps sending a byte every few seconds never trips
+	 * it, and with up to six requests per lookup a user could tie up a PHP worker for hours
+	 * per call by pointing an entry at such a server.
+	 */
+	public const TIME_BUDGET = 20;
 
 	public function __construct(
 		private IClientService $clientService,
+		private ITimeFactory $time,
 	) {
 	}
 
@@ -33,15 +44,16 @@ final class FaviconService {
 		}
 
 		$client = $this->clientService->newClient();
+		$deadline = $this->now() + (float)self::TIME_BUDGET;
 		$candidates = [];
-		$page = $this->fetch($client, $pageUrl, self::MAX_PAGE_BYTES);
+		$page = $this->fetch($client, $pageUrl, self::MAX_PAGE_BYTES, $deadline);
 		if ($page !== null) {
 			$candidates = $this->linkedIcons($page, $pageUrl);
 		}
 		$candidates[] = $this->origin($parts) . '/favicon.ico';
 
 		foreach (array_slice(array_values(array_unique($candidates)), 0, self::MAX_CANDIDATES) as $candidate) {
-			$body = $this->fetch($client, $candidate, self::MAX_ICON_BYTES);
+			$body = $this->fetch($client, $candidate, self::MAX_ICON_BYTES, $deadline);
 			$mime = $body === null ? null : self::imageType($body);
 			if ($body !== null && $mime !== null) {
 				return ['mime' => $mime, 'data' => base64_encode($body)];
@@ -141,13 +153,23 @@ final class FaviconService {
 		return $origin . implode('/', $segments);
 	}
 
+	private function now(): float {
+		return (float)$this->time->now()->format('U.u');
+	}
+
 	/**
-	 * Body of a successful response, or null on any failure or when it exceeds $limit bytes.
+	 * Body of a successful response, or null on any failure, when it exceeds $limit bytes or
+	 * when it is not complete by $deadline.
 	 */
-	private function fetch(IClient $client, string $url, int $limit): ?string {
+	private function fetch(IClient $client, string $url, int $limit, float $deadline): ?string {
+		$remaining = $deadline - $this->now();
+		if ($remaining <= 0) {
+			return null;
+		}
+		$timeout = (int)min(self::REQUEST_TIMEOUT, ceil($remaining));
 		try {
 			$response = $client->get($url, [
-				'timeout' => 8,
+				'timeout' => $timeout,
 				'stream' => true,
 				'headers' => ['Accept' => 'image/*,text/html;q=0.8,*/*;q=0.5'],
 				'allow_redirects' => ['max' => 5, 'protocols' => ['http', 'https']],
@@ -159,11 +181,43 @@ final class FaviconService {
 			if (!is_resource($stream)) {
 				return null;
 			}
-			$body = stream_get_contents($stream, $limit + 1);
-			fclose($stream);
 		} catch (\Exception) {
 			return null;
 		}
-		return $body === false || strlen($body) > $limit ? null : $body;
+		try {
+			// Has no effect on streams that are not sockets; those do not stall either.
+			stream_set_timeout($stream, $timeout);
+			return $this->read($stream, $limit, $deadline);
+		} finally {
+			fclose($stream);
+		}
+	}
+
+	/**
+	 * @param resource $stream
+	 */
+	private function read($stream, int $limit, float $deadline): ?string {
+		$body = '';
+		while (!feof($stream)) {
+			if ($this->now() >= $deadline) {
+				return null;
+			}
+			$chunk = fread($stream, 8192);
+			if ($chunk === false) {
+				return null;
+			}
+			if ($chunk === '') {
+				if (feof($stream)) {
+					break;
+				}
+				// Nothing arrived within the timeout: an answer cut short is not an icon.
+				return null;
+			}
+			$body .= $chunk;
+			if (strlen($body) > $limit) {
+				return null;
+			}
+		}
+		return $body;
 	}
 }

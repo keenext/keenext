@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\KeeNext\Tests\Service;
 
 use OCA\KeeNext\Service\FaviconService;
+use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Http\Client\IClient;
 use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
@@ -17,28 +18,60 @@ class FaviconServiceTest extends TestCase {
 	/** @var list<string> */
 	private array $requested = [];
 
+	/** Seconds on the clock the service sees; tests move it. */
+	private float $clock = 1_700_000_000.0;
+
 	/**
-	 * @param array<string, string|int> $responses body by URL, or a status code for a failed response
+	 * @param array<string, string|int|resource> $responses body by URL (a stream to control how it arrives),
+	 *                                                      or a status code for a failed response
+	 * @param float $secondsPerRequest how far the clock moves while a request is answered
 	 */
-	private function service(array $responses): FaviconService {
+	private function service(array $responses, float $secondsPerRequest = 0.0): FaviconService {
 		$client = $this->createMock(IClient::class);
-		$client->method('get')->willReturnCallback(function (string $url) use ($responses): IResponse {
+		$client->method('get')->willReturnCallback(function (string $url) use ($responses, $secondsPerRequest): IResponse {
 			$this->requested[] = $url;
+			$this->clock += $secondsPerRequest;
 			$answer = $responses[$url] ?? 404;
 			if ($answer === 'throw') {
 				throw new \RuntimeException('connection refused');
 			}
 			$response = $this->createMock(IResponse::class);
 			$response->method('getStatusCode')->willReturn(is_int($answer) ? $answer : 200);
-			$stream = fopen('php://memory', 'r+');
-			fwrite($stream, is_int($answer) ? '' : $answer);
-			rewind($stream);
+			if (is_resource($answer)) {
+				$stream = $answer;
+			} else {
+				$stream = fopen('php://memory', 'r+');
+				fwrite($stream, is_int($answer) ? '' : $answer);
+				rewind($stream);
+			}
 			$response->method('getBody')->willReturn($stream);
 			return $response;
 		});
 		$clients = $this->createMock(IClientService::class);
 		$clients->method('newClient')->willReturn($client);
-		return new FaviconService($clients);
+		$time = $this->createMock(ITimeFactory::class);
+		$time->method('now')->willReturnCallback(
+			fn (): \DateTimeImmutable => \DateTimeImmutable::createFromFormat('U.u', sprintf('%.6F', $this->clock)),
+		);
+		return new FaviconService($clients, $time);
+	}
+
+	/**
+	 * A body that arrives one byte per read, each taking $secondsPerByte on the test's clock:
+	 * a server that never trips a per-read timeout.
+	 *
+	 * @return resource
+	 */
+	private function trickle(string $body, float $secondsPerByte) {
+		if (!in_array('trickle', stream_get_wrappers(), true)) {
+			stream_wrapper_register('trickle', TrickleStream::class);
+		}
+		TrickleStream::$body = $body;
+		TrickleStream::$reads = 0;
+		TrickleStream::$onRead = function () use ($secondsPerByte): void {
+			$this->clock += $secondsPerByte;
+		};
+		return fopen('trickle://body', 'r');
 	}
 
 	public function testUsesTheIconTheSiteAnnounces(): void {
@@ -103,6 +136,40 @@ class FaviconServiceTest extends TestCase {
 		$this->assertNull($service->find('https://example.org/'));
 	}
 
+	public function testStopsAskingOnceTheTimeBudgetIsUsedUp(): void {
+		$service = $this->service([
+			'https://example.org/' => '<link rel="icon" href="/a.png"><link rel="icon" href="/b.png"><link rel="icon" href="/c.png">',
+			'https://example.org/a.png' => '<html>Not an image</html>',
+			'https://example.org/b.png' => '<html>Not an image</html>',
+			'https://example.org/c.png' => self::PNG,
+		], secondsPerRequest: FaviconService::TIME_BUDGET / 2 + 1);
+
+		$this->assertNull($service->find('https://example.org/'));
+		$this->assertSame(['https://example.org/', 'https://example.org/a.png'], $this->requested);
+	}
+
+	public function testGivesUpOnAnAnswerThatTricklesIn(): void {
+		$service = $this->service([
+			'https://example.org/' => $this->trickle('<html>' . str_repeat(' ', 100_000) . '</html>', 1.0),
+			'https://example.org/favicon.ico' => self::PNG,
+		]);
+
+		$this->assertNull($service->find('https://example.org/'));
+		$this->assertLessThanOrEqual(FaviconService::TIME_BUDGET + 1, TrickleStream::$reads);
+		$this->assertSame(['https://example.org/'], $this->requested);
+	}
+
+	public function testReadsAnAnswerThatArrivesInPieces(): void {
+		$service = $this->service([
+			'https://example.org/' => '<html></html>',
+			'https://example.org/favicon.ico' => $this->trickle(self::PNG, 0.1),
+		]);
+
+		$icon = $service->find('https://example.org/');
+
+		$this->assertSame(self::PNG, base64_decode($icon['data'] ?? ''));
+	}
+
 	public function testOnlyHttpAddressesAreFetched(): void {
 		$this->expectException(\InvalidArgumentException::class);
 
@@ -134,5 +201,38 @@ class FaviconServiceTest extends TestCase {
 		$this->assertSame('image/jpeg', FaviconService::imageType("\xff\xd8\xff\xe0data"));
 		$this->assertSame('image/webp', FaviconService::imageType('RIFF1234WEBPdata'));
 		$this->assertNull(FaviconService::imageType('<!doctype html><html></html>'));
+	}
+}
+
+/**
+ * Stream wrapper behind FaviconServiceTest::trickle().
+ */
+class TrickleStream {
+	public static string $body = '';
+	public static int $reads = 0;
+	/** @var ?\Closure(): void */
+	public static ?\Closure $onRead = null;
+
+	/** @var resource|null */
+	public $context;
+	private int $position = 0;
+
+	public function stream_open(): bool {
+		return true;
+	}
+
+	public function stream_read(int $count): string {
+		self::$reads++;
+		(self::$onRead)?->__invoke();
+		return substr(self::$body, $this->position++, 1);
+	}
+
+	public function stream_eof(): bool {
+		return $this->position >= strlen(self::$body);
+	}
+
+	/** Timeouts cannot be set on it, which stream_set_timeout() then reports by returning false. */
+	public function stream_set_option(): bool {
+		return false;
 	}
 }
