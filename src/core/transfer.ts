@@ -15,6 +15,21 @@ export interface ImportResult {
 	merged: boolean
 }
 
+/**
+ * Every import fills a new group below `target`. If it fails half way (a row or item the
+ * file format does not allow for), that group goes again, so the database is as it was and
+ * no partial import is saved with the next change.
+ */
+function undoOnFailure(target: KdbxGroup, run: () => ImportResult): ImportResult {
+	const before = new Set(target.groups)
+	try {
+		return run()
+	} catch (error) {
+		target.groups = target.groups.filter((group) => before.has(group))
+		throw error
+	}
+}
+
 // ---------------------------------------------------------------- CSV
 
 /** RFC 4180: quoted fields, doubled quotes, line breaks inside quotes, CRLF or LF. */
@@ -195,6 +210,10 @@ function parseDate(value: string | undefined): Date | undefined {
  * exporting database's root, as in KeePassXC exports) is dropped.
  */
 export function importCsv(db: Kdbx, target: KdbxGroup, name: string, text: string): ImportResult {
+	return undoOnFailure(target, () => importCsvRows(db, target, name, text))
+}
+
+function importCsvRows(db: Kdbx, target: KdbxGroup, name: string, text: string): ImportResult {
 	const [header, ...rows] = parseCsv(text)
 	if (!header) {
 		throw new Error('The file is empty')
@@ -223,11 +242,14 @@ export function importCsv(db: Kdbx, target: KdbxGroup, name: string, text: strin
 		row.forEach((value, column) => {
 			const kind = columns[column]
 			switch (kind) {
-				case undefined:
-					if (value !== '' && header[column]) {
-						customFields.push({ key: header[column]!.trim(), value, protected: false })
+				case undefined: {
+					// A column without a name (or more cells than the header has) cannot become an attribute.
+					const key = header[column]?.trim()
+					if (value !== '' && key) {
+						customFields.push({ key, value, protected: false })
 					}
 					break
+				}
 				case 'group':
 					break
 				case 'totp':
@@ -323,7 +345,7 @@ export function importBitwarden(db: Kdbx, target: KdbxGroup, name: string, text:
 	} catch {
 		throw new Error('Not a Bitwarden JSON export')
 	}
-	return importBitwardenData(db, target, name, data)
+	return undoOnFailure(target, () => importBitwardenData(db, target, name, data))
 }
 
 function importBitwardenData(db: Kdbx, target: KdbxGroup, name: string, data: BitwardenExport): ImportResult {
@@ -623,11 +645,13 @@ export async function readJsonExport(db: Kdbx, text: string): Promise<JsonExport
 }
 
 export function importJson(db: Kdbx, target: KdbxGroup, name: string, source: JsonExport): ImportResult {
-	switch (source.format) {
-		case 'bitwarden': return importBitwardenData(db, target, name, source.data)
-		case 'passwords': return importPasswordsData(db, target, name, source.data)
-		case 'passman': return importPassmanData(db, target, name, source.data, source.attachments)
-	}
+	return undoOnFailure(target, () => {
+		switch (source.format) {
+			case 'bitwarden': return importBitwardenData(db, target, name, source.data)
+			case 'passwords': return importPasswordsData(db, target, name, source.data)
+			case 'passman': return importPassmanData(db, target, name, source.data, source.attachments)
+		}
+	})
 }
 
 // ---------------------------------------------------------------- KeePass XML and KDBX
@@ -663,10 +687,12 @@ export function importDatabase(db: Kdbx, target: KdbxGroup, name: string, source
 		const after = [...db.getDefaultGroup().allEntries()].length
 		return { group: db.getDefaultGroup(), entries: after - before, groups: 0, merged: true }
 	}
-	const group = db.createGroup(target, name)
-	const counts = { entries: 0, groups: 1 }
-	copyTree(db, source, source.getDefaultGroup(), group, counts)
-	return { group, ...counts, merged: false }
+	return undoOnFailure(target, () => {
+		const group = db.createGroup(target, name)
+		const counts = { entries: 0, groups: 1 }
+		copyTree(db, source, source.getDefaultGroup(), group, counts)
+		return { group, ...counts, merged: false }
+	})
 }
 
 /** Reads a KeePass 2 XML export (KeePass, KeePassXC) for `importDatabase`. */

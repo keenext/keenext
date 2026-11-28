@@ -47,6 +47,26 @@ describe('CSV round trip', () => {
 		const db = newDatabase()
 		expect(() => importCsv(db, db.getDefaultGroup(), 'x', 'foo,bar\n1,2\n')).toThrow()
 	})
+
+	it('skips values in a column without a name', () => {
+		const db = newDatabase()
+		const result = importCsv(db, db.getDefaultGroup(), 'x', 'Title,Password, \nA,pw,stray,more\n')
+		expect(result.entries).toBe(1)
+		const entry = entryByTitle(db, 'A')
+		expect(getField(entry, 'Password')).toBe('pw')
+		expect([...entry.fields.keys()].sort()).toEqual(['Notes', 'Password', 'Title', 'URL', 'UserName'])
+	})
+
+	it('leaves the database as it was when an import fails half way', async () => {
+		const db = newDatabase()
+		const groups = db.getDefaultGroup().groups.length
+		// The second item's folder is not a text, which the importer trips over after creating the first entry.
+		const broken = { folders: [{ id: 'f', name: 42 }], items: [{ type: 1, name: 'Fine' }, { type: 1, name: 'Broken', folderId: 'f' }] }
+		const source = await readJsonExport(db, JSON.stringify(broken))
+		expect(() => importJson(db, db.getDefaultGroup(), 'Imported', source)).toThrow()
+		expect(db.getDefaultGroup().groups.length).toBe(groups)
+		expect([...db.getDefaultGroup().allEntries()]).toHaveLength(0)
+	})
 })
 
 describe('totpToOtpUri', () => {
